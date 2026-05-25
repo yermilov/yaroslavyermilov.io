@@ -7,9 +7,4 @@ abstract: "Co-presented with Kyrylo Holodnov. A meetup repeat of the JEEConf 201
 slidesUrl: "https://www.slideshare.net/slideshow/string-and-text-processing-in-java-on-a-scale/145296175"
 photos:
   - "/talks/string-processing-rockstar-night-2019/01.jpg"
-tags:
-  - java
-  - performance
-  - jvm
-  - grammarly
 ---

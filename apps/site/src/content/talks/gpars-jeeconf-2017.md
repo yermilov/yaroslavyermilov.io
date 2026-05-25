@@ -11,8 +11,4 @@ abstract: |
   In this talk we will try to fix it. One by one, we will explore various use cases of GPars with all its pragmatism and conciseness. Not forgetting neither plain Java nor Groovy adepts, we will use Groovy to empower our solutions and ensure that everything works from Java the same way.
 slidesUrl: "https://github.com/yermilov/gpars-talk/blob/develop/presentations/GPars%20-%20Unsung%20Hero%20of%20Concurrency%20in%20Practice.pdf"
 repoUrl: "https://github.com/yermilov/gpars-talk"
-tags:
-  - concurrency
-  - groovy
-  - jvm
 ---

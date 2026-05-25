@@ -7,8 +7,4 @@ abstract: "Co-presented with Dmitry Tiagulskyi. How we hit and worked around sca
 slidesUrl: "https://www.slideshare.net/slideshow/dmitry-tiagulskyi-yaroslav-yermilov-it-scales-until-it-doesnt/116282023"
 photos:
   - "/talks/it-scales-fwdays-2018/01.jpg"
-tags:
-  - performance
-  - scaling
-  - grammarly
 ---

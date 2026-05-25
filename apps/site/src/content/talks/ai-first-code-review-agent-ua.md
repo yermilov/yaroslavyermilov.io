@@ -28,7 +28,4 @@ photos:
   - "/talks/ai-first-code-review-agent-ua/18.jpg"
   - "/talks/ai-first-code-review-agent-ua/19.jpg"
   - "/talks/ai-first-code-review-agent-ua/20.jpg"
-tags:
-  - ai-first
-  - engineering-leadership
 ---

@@ -13,7 +13,4 @@ photos:
   - "/talks/prompt-2026-berlin/03.jpg"
   - "/talks/prompt-2026-berlin/04.jpg"
   - "/talks/prompt-2026-berlin/05.jpg"
-tags:
-  - ai-first
-  - engineering-leadership
 ---

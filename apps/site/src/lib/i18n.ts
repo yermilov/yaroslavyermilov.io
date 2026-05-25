@@ -61,7 +61,6 @@ export interface Strings {
   labels: {
     published: string;
     updated: string;
-    tags: string;
     readMore: string;
     switchLanguage: string;
     backToHome: string;
@@ -123,7 +122,6 @@ const STRINGS: Record<Locale, Strings> = {
     labels: {
       published: 'Published',
       updated: 'Updated',
-      tags: 'Tags',
       readMore: 'Read more',
       switchLanguage: 'Switch language',
       backToHome: 'Back to home',
@@ -183,7 +181,6 @@ const STRINGS: Record<Locale, Strings> = {
     labels: {
       published: 'Опубліковано',
       updated: 'Оновлено',
-      tags: 'Теги',
       readMore: 'Читати далі',
       switchLanguage: 'Змінити мову',
       backToHome: 'На головну',

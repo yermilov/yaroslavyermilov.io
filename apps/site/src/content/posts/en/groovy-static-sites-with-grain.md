@@ -4,7 +4,6 @@ canonicalSlug: "groovy-static-sites-with-grain"
 language: "en"
 publishedAt: 2017-06-27
 summary: "The first option I considered when I decided to start up this blog was to use static site generator, and Jekyll as the most popular one was an obvious choice."
-tags: []
 translations:
   en: "groovy-static-sites-with-grain"
 coverImage: "/blog/groovy-static-sites-with-grain/01.png"

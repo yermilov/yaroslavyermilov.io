@@ -10,7 +10,6 @@ const posts = defineCollection({
     publishedAt: z.coerce.date(),
     updatedAt: z.coerce.date().optional(),
     summary: z.string(),
-    tags: z.array(z.string()).default([]),
     translations: z
       .object({
         en: z.string().optional(),
@@ -39,7 +38,6 @@ const talks = defineCollection({
     eventUrl: z.string().url().optional(),
     /** paths under apps/site/public/, e.g. "/talks/<slug>/01.jpg" */
     photos: z.array(z.string()).default([]),
-    tags: z.array(z.string()).default([]),
   }),
 });
 
@@ -53,7 +51,6 @@ const labs = defineCollection({
     summary: z.string(),
     /** path under src/components/lab/, e.g. "ColorClock" */
     islandComponent: z.string(),
-    tags: z.array(z.string()).default([]),
   }),
 });
 
@@ -69,7 +66,6 @@ const games = defineCollection({
     controls: z.string(),
     width: z.number().default(960),
     height: z.number().default(640),
-    tags: z.array(z.string()).default([]),
   }),
 });
 
@@ -97,7 +93,6 @@ const books = defineCollection({
     /** language of the review/notes, not the book itself */
     language: localeEnum,
     summary: z.string(),
-    tags: z.array(z.string()).default([]),
     genre: z.string().optional(),
     series: z.string().optional(),
     /** external bookstore link (Amazon, publisher, etc.) */

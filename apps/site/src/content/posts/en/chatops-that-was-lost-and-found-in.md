@@ -4,7 +4,6 @@ canonicalSlug: "chatops-that-was-lost-and-found-in"
 language: "en"
 publishedAt: 2023-09-22
 summary: "Automations for development processes unveil hidden complexity in such trivial things you could never imagine there would be any problems. Believe me, today I will talk about a task to print a date and a time."
-tags: []
 translations:
   en: "chatops-that-was-lost-and-found-in"
 coverImage: "/blog/chatops-that-was-lost-and-found-in/01.png"

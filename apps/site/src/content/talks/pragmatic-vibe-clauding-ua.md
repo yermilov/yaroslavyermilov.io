@@ -13,8 +13,4 @@ photos:
   - "/talks/pragmatic-vibe-clauding-ua/02.jpg"
   - "/talks/pragmatic-vibe-clauding-ua/03.jpg"
   - "/talks/pragmatic-vibe-clauding-ua/04.jpg"
-tags:
-  - ai-first
-  - workshop
-  - education
 ---

@@ -78,14 +78,6 @@ const stars = book.data.rating
     <div class="book-body prose-column">
       <Content />
     </div>
-
-    {book.data.tags.length > 0 && (
-      <footer class="book-footer prose-column">
-        <ul class="tag-list">
-          {book.data.tags.map((tag) => <li>#{tag}</li>)}
-        </ul>
-      </footer>
-    )}
   </article>
 </BaseLayout>
 
@@ -196,22 +188,6 @@ const stars = book.data.rating
   }
   .book-body :global(li:last-child) {
     margin-bottom: 0;
-  }
-  .book-footer {
-    margin-top: var(--space-5);
-    padding-top: var(--space-3);
-    border-top: 1px solid var(--rule);
-  }
-  .tag-list {
-    list-style: none;
-    padding: 0;
-    margin: var(--space-1) 0 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    color: var(--green-primary);
   }
   @media (max-width: 600px) {
     .book-head {

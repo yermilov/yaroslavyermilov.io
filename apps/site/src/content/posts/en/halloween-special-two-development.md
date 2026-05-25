@@ -4,7 +4,6 @@ canonicalSlug: "halloween-special-two-development"
 language: "en"
 publishedAt: 2023-10-31
 summary: "Two debugging detective stories — one suspicious log line, one mysterious slowdown — and the surprise villains they revealed."
-tags: []
 translations:
   en: "halloween-special-two-development"
 coverImage: "/blog/halloween-special-two-development/01.png"

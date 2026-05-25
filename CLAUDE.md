@@ -106,7 +106,6 @@ canonicalSlug: "stable-slug"   # same across translations
 language: "en"                  # or "ua"
 publishedAt: 2026-04-27
 summary: "One sentence."
-tags: []
 translations:
   en: "stable-slug"
   ua: "stable-slug-ua"          # only if a UA version exists

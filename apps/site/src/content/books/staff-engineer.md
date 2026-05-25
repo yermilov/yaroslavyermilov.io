@@ -6,10 +6,6 @@ rating: 4
 readAt: 2025-09-25
 language: "ua"
 summary: "Прагматичний підхід до ролі Staff Engineer — компіляція реальних інтерв'ю з інженерами, без води."
-tags:
-  - leadership
-  - career
-  - whats-in-the-books
 ---
 Дуже прагматичний підхід до Staff Engineer ролі — аж до того що треба в усьому погоджуватися зі своїм менеджером (не треба!)
 

@@ -4,7 +4,6 @@ canonicalSlug: "tiebreaker-regarding-java-hashmap-treenode-and-tiebreakorder"
 language: "en"
 publishedAt: 2017-02-24
 summary: "On the latest JUGUA meeting Igor Dmitriev has delivered a talk about minor, behind the scenes changes in JDK."
-tags: []
 translations:
   en: "tiebreaker-regarding-java-hashmap-treenode-and-tiebreakorder"
 coverImage: "/blog/tiebreaker-regarding-java-hashmap-treenode-and-tiebreakorder/01.png"

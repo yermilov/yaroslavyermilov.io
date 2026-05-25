@@ -4,7 +4,6 @@ canonicalSlug: "guiding-team-processes-with-chatops"
 language: "en"
 publishedAt: 2023-12-08
 summary: "Five on-call automations and the lessons each one taught us about scripting team behaviour without losing what made the kitchen-table culture work."
-tags: []
 translations:
   en: "guiding-team-processes-with-chatops"
 coverImage: "/blog/guiding-team-processes-with-chatops/01.png"

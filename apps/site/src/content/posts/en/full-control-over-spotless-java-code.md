@@ -4,7 +4,6 @@ canonicalSlug: "full-control-over-spotless-java-code"
 language: "en"
 publishedAt: 2023-08-25
 summary: "Spotless ships with two opinionated defaults — Google's and Palantir's Java style. Here's how to skip both and get full control over every formatter knob via Eclipse-exported configuration."
-tags: []
 translations:
   en: "full-control-over-spotless-java-code"
 coverImage: "/blog/full-control-over-spotless-java-code/01.png"

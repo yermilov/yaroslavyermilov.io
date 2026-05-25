@@ -8,8 +8,4 @@ slidesUrl: "https://www.slideshare.net/slideshow/what-mr-spock-would-possibly-sa
 repoUrl: "https://github.com/yermilov/spock-talk"
 photos:
   - "/talks/spock-javafest-2016/01.jpg"
-tags:
-  - testing
-  - groovy
-  - jvm
 ---

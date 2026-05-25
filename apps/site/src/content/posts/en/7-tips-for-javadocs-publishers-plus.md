@@ -4,7 +4,6 @@ canonicalSlug: "7-tips-for-javadocs-publishers-plus"
 language: "en"
 publishedAt: 2023-11-17
 summary: "I had to publish Javadocs as a web page for the first time in my 12-year career. Here are seven tricks I picked up along the way — plus a take on when it's actually worth doing."
-tags: []
 translations:
   en: "7-tips-for-javadocs-publishers-plus"
 coverImage: "/blog/7-tips-for-javadocs-publishers-plus/01.png"

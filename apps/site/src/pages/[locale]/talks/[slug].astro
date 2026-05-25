@@ -160,15 +160,6 @@ const paragraphs = talk.data.abstract.split(/\n\n+/);
         </section>
       )}
 
-      {talk.data.tags.length > 0 && (
-        <section class="block">
-          <p class="workbench section-label">▸ {strings.labels.tags}</p>
-          <ul class="tag-list" role="list">
-            {talk.data.tags.map((tag) => <li>{tag}</li>)}
-          </ul>
-        </section>
-      )}
-
       <hr />
 
       <ul class="footer-links" role="list">
@@ -294,29 +285,6 @@ const paragraphs = talk.data.abstract.split(/\n\n+/);
     .photo-strip img {
       height: 160px;
     }
-  }
-
-  .tag-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-  }
-  .tag-list li {
-    background: var(--orange-soft);
-    color: var(--green-deep);
-    padding: 2px 8px;
-    text-transform: lowercase;
-    letter-spacing: 0.01em;
-  }
-  .tag-list li::before {
-    content: '#';
-    color: var(--ink-muted);
-    margin-right: 1px;
   }
 
   hr {

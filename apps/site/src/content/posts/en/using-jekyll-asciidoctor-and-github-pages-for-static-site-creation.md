@@ -4,7 +4,6 @@ canonicalSlug: "using-jekyll-asciidoctor-and-github-pages-for-static-site-creati
 language: "en"
 publishedAt: 2017-02-20
 summary: "After I decided to start write things down, the first tool that I found for this task was Jekyll - a static site generator supported by GitHub Pages."
-tags: []
 translations:
   en: "using-jekyll-asciidoctor-and-github-pages-for-static-site-creation"
 coverImage: "/blog/using-jekyll-asciidoctor-and-github-pages-for-static-site-creation/01.png"

@@ -20,7 +20,6 @@ export const GET: APIRoute = async ({ params, site }) => {
       pubDate: post.data.publishedAt,
       description: post.data.summary,
       link: `/${locale}/blog/${postSlug(post)}/`,
-      categories: post.data.tags,
     })),
     customData: `<language>${bcp47Locale(locale)}</language>`,
     trailingSlash: true,

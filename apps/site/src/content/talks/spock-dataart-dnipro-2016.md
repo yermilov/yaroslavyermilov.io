@@ -15,8 +15,4 @@ photos:
   - "/talks/spock-dataart-dnipro-2016/06.jpg"
   - "/talks/spock-dataart-dnipro-2016/07.jpg"
   - "/talks/spock-dataart-dnipro-2016/08.jpg"
-tags:
-  - testing
-  - groovy
-  - jvm
 ---

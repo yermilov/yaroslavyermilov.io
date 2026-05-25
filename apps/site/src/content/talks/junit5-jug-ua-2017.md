@@ -10,8 +10,4 @@ abstract: |
   In this talk we will go through JUnit 5 changes and see how they will influence test code we write. Also we will discuss JUnit 5 architectural approach, how it can be extended and how it turns JUnit from test framework into test platform.
 slidesUrl: "https://github.com/yermilov/junit5-talk/blob/develop/slides/JUnit%205%20-%20The%20Rise%20of%20Jupiter.pdf"
 repoUrl: "https://github.com/yermilov/junit5-talk"
-tags:
-  - testing
-  - jvm
-  - java
 ---

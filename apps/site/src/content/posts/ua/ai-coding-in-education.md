@@ -4,9 +4,6 @@ canonicalSlug: "ai-coding-in-education"
 language: "ua"
 publishedAt: 2026-02-03
 summary: "Чотири АІ-позитивні афірмації для студентів і викладачів: чому ігнорувати клод код у навчанні так само ризиковано, як і покладатися виключно на нього."
-tags:
-  - ai-coding
-  - education
 translations:
   ua: "ai-coding-in-education"
 ---

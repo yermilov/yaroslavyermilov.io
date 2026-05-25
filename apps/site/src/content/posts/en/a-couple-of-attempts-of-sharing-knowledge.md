@@ -4,7 +4,6 @@ canonicalSlug: "a-couple-of-attempts-of-sharing-knowledge"
 language: "en"
 publishedAt: 2023-09-08
 summary: "How do you spread small, regular bits of team knowledge that don't deserve a wiki page each? Two experiments — a Slack bot and a Gradle build hook — and what worked."
-tags: []
 translations:
   en: "a-couple-of-attempts-of-sharing-knowledge"
 coverImage: "/blog/a-couple-of-attempts-of-sharing-knowledge/01.png"

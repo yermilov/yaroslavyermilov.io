@@ -31,7 +31,4 @@ photos:
   - "/talks/dou-day-2026/21.jpg"
   - "/talks/dou-day-2026/22.jpg"
   - "/talks/dou-day-2026/23.jpg"
-tags:
-  - ai-first
-  - engineering-leadership
 ---

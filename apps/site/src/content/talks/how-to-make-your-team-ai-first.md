@@ -12,7 +12,4 @@ photos:
   - "/talks/how-to-make-your-team-ai-first/02.jpg"
   - "/talks/how-to-make-your-team-ai-first/03.jpg"
   - "/talks/how-to-make-your-team-ai-first/04.jpg"
-tags:
-  - ai-first
-  - engineering-leadership
 ---

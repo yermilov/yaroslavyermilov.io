@@ -4,10 +4,6 @@ canonicalSlug: "spock-talk"
 language: "en"
 publishedAt: 2016-11-08
 summary: "A long-form companion to the JEEConf 2016 talk: a tour through Spock framework features compared to JUnit, JUnit 5, TestNG, Hamcrest, AssertJ and Mockito — with the pragmatic and emotional answer to whether you should use Spock in 2016."
-tags:
-  - testing
-  - groovy
-  - jvm
 translations:
   en: "spock-talk"
 ---

@@ -10,9 +10,4 @@ photos:
   - "/talks/ci-gates-grammarly-berlin-2023/01.jpg"
   - "/talks/ci-gates-grammarly-berlin-2023/02.jpg"
   - "/talks/ci-gates-grammarly-berlin-2023/03.jpg"
-tags:
-  - java
-  - jvm
-  - ci
-  - code-quality
 ---

@@ -6,10 +6,6 @@ rating: 4
 readAt: 2025-07-11
 language: "ua"
 summary: "Вичерпний мануал по кар'єрі в ІТ — корисно тим, хто на старті, для досвідчених інженерів швидше підтвердження ніж нові інсайти."
-tags:
-  - career
-  - software-engineering
-  - whats-in-the-books
 ---
 > you are the only one responsible for your own career
 

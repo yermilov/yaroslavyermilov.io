@@ -4,7 +4,6 @@ canonicalSlug: "gpars-eratosthenes-and-sieve-of-concurrency"
 language: "en"
 publishedAt: 2017-05-25
 summary: "When there is a need to make sequential code concurrent, there are two major options. First one is to take the original code as is, divide it between multiple executors, protect a mutable state from concurrent access, do…"
-tags: []
 translations:
   en: "gpars-eratosthenes-and-sieve-of-concurrency"
 coverImage: "/blog/gpars-eratosthenes-and-sieve-of-concurrency/01.gif"

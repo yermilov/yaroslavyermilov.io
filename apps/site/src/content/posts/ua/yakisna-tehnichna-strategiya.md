@@ -4,9 +4,6 @@ canonicalSlug: "yakisna-tehnichna-strategiya"
 language: "ua"
 publishedAt: 2025-09-19
 summary: "Три кроки підготовки технічної стратегії, відточені на документах, що задавали напрямок організації із 10 команд та 50 інженерів: оцінка стейкхолдерів, оформлення документу і застосування на практиці."
-tags:
-  - leadership
-  - strategy
 translations:
   ua: "yakisna-tehnichna-strategiya"
 ---

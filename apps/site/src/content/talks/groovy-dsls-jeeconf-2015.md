@@ -9,8 +9,4 @@ abstract: |
   Groovy is modern JVM language which features makes it first choice for simple and enjoyable DSLs implementing. In this talk, we will look at the instruments that Groovy provide for DSL builders and use it for creating our own DSL. We will cover features ranging from what Groovy can suggest for standard Java developer to transform his ugly Java DSL into something acceptable in 5 minutes to advanced features like Metaobject protocol and AST transformations.
 slidesUrl: "https://www.slideshare.net/slideshow/groovy-dsl-48630799/48630799"
 repoUrl: "https://github.com/yermilov/groovy-dsl"
-tags:
-  - groovy
-  - jvm
-  - dsl
 ---

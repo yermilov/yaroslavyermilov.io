@@ -4,7 +4,6 @@ canonicalSlug: "java-version-upgrade-is-not-as-simple"
 language: "en"
 publishedAt: 2023-10-20
 summary: "What \"Java version\" really means, when an upgrade actually pays off, and a concise decision framework with a worked example from my team's day-to-day."
-tags: []
 translations:
   en: "java-version-upgrade-is-not-as-simple"
 coverImage: "/blog/java-version-upgrade-is-not-as-simple/01.png"

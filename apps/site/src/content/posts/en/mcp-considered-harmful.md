@@ -4,9 +4,6 @@ canonicalSlug: "mcp-considered-harmful"
 language: "en"
 publishedAt: 2025-09-01
 summary: "MCP tool definitions get preloaded into the context window — they take valuable space, distract the model, and cost you money. Here is when they help and when they hurt."
-tags:
-  - ai-coding
-  - claude-code
 translations:
   en: "mcp-considered-harmful"
 ---

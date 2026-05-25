@@ -10,7 +10,6 @@ interface Props {
   description?: string | undefined;
   publishedAt: Date;
   updatedAt?: Date | undefined;
-  tags?: string[];
   coverImage?: string | undefined;
   alternatePath?: string | undefined;
   alternateMissing?: boolean;
@@ -26,7 +25,6 @@ const {
   description,
   publishedAt,
   updatedAt,
-  tags = [],
   coverImage,
   alternatePath,
   alternateMissing = false,
@@ -67,14 +65,6 @@ const fmt = new Intl.DateTimeFormat(bcp47Locale(locale), { dateStyle: 'long' });
     <div class="post-body prose-column">
       <slot />
     </div>
-    {tags.length > 0 && (
-      <footer class="post-footer prose-column">
-        <p class="workbench">{strings.labels.tags}</p>
-        <ul class="tag-list">
-          {tags.map((tag) => <li>#{tag}</li>)}
-        </ul>
-      </footer>
-    )}
   </article>
 </BaseLayout>
 
@@ -134,21 +124,5 @@ const fmt = new Intl.DateTimeFormat(bcp47Locale(locale), { dateStyle: 'long' });
   }
   .post-body :global(li > ul ul) {
     list-style-type: square;
-  }
-  .post-footer {
-    margin-top: var(--space-5);
-    padding-top: var(--space-3);
-    border-top: 1px solid var(--rule);
-  }
-  .tag-list {
-    list-style: none;
-    padding: 0;
-    margin: var(--space-1) 0 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    color: var(--green-primary);
   }
 </style>
