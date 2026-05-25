@@ -1,5 +1,5 @@
 ---
-import { LOCALES, t, localePath, bcp47Locale, type Locale } from '@lib/i18n';
+import { LOCALES, t, localePath, type Locale } from '@lib/i18n';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import { getBooks } from '@lib/content';
 
@@ -18,11 +18,6 @@ const locale = Astro.params.locale as Locale;
 const strings = t(locale);
 const { Content } = await book.render();
 
-const fmt = new Intl.DateTimeFormat(bcp47Locale(locale), {
-  year: 'numeric',
-  month: 'short',
-  day: 'numeric',
-});
 const rating = book.data.rating ?? 0;
 ---
 
@@ -46,20 +41,18 @@ const rating = book.data.rating ?? 0;
         <h1 class="title">{book.data.title}</h1>
         <p class="author"><span class="by">{strings.books.by}</span> {book.data.author}</p>
 
-        <p class="credit">
-          {rating > 0 && (
-            <span class="rating" aria-label={`${rating} out of 5`}>
-              <span class="stars-filled">{'★'.repeat(rating)}</span><span class="stars-empty">{'☆'.repeat(5 - rating)}</span>
-            </span>
-          )}
-          <span class="when">
-            <span class="when-label">{strings.books.read}</span>
-            <time datetime={book.data.readAt.toISOString()}>{fmt.format(book.data.readAt)}</time>
-          </span>
-          {(book.data.genre || book.data.series) && (
-            <span class="cat">{book.data.series || book.data.genre}</span>
-          )}
-        </p>
+        {(rating > 0 || book.data.genre || book.data.series) && (
+          <p class="credit">
+            {rating > 0 && (
+              <span class="rating" aria-label={`${rating} out of 5`}>
+                <span class="stars-filled">{'★'.repeat(rating)}</span><span class="stars-empty">{'☆'.repeat(5 - rating)}</span>
+              </span>
+            )}
+            {(book.data.genre || book.data.series) && (
+              <span class="cat">{book.data.series || book.data.genre}</span>
+            )}
+          </p>
+        )}
       </header>
 
       <blockquote class="lede">
@@ -191,17 +184,6 @@ const rating = book.data.rating ?? 0;
   .stars-empty {
     color: var(--ink-muted);
     opacity: 0.45;
-  }
-  .when {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 0.45rem;
-  }
-  .when-label {
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-size: 0.72rem;
-    color: var(--green-primary);
   }
   .cat {
     text-transform: uppercase;
