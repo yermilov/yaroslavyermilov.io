@@ -2,7 +2,6 @@
 import { LOCALES, t, bcp47Locale, type Locale } from '@lib/i18n';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import TalkCard from '@components/TalkCard.astro';
-import RelativeDays from '@components/RelativeDays.tsx';
 import { getTalks } from '@lib/content';
 
 export async function getStaticPaths() {
@@ -31,6 +30,19 @@ const rtf = new Intl.RelativeTimeFormat(bcp47Locale(locale), {
 });
 const daysFromToday = (date: Date): number =>
   Math.round((atMidnight(date).getTime() - today.getTime()) / 86_400_000);
+
+function bucketOf(days: number): 'today' | 'tomorrow' | 'yesterday' | 'other' {
+  if (days === 0) return 'today';
+  if (days === 1) return 'tomorrow';
+  if (days === -1) return 'yesterday';
+  return 'other';
+}
+
+const head = upcoming[0];
+const headDays = head ? daysFromToday(head.data.date) : 0;
+const headIso = head?.data.date.toISOString() ?? '';
+const headFallback = head ? rtf.format(headDays, 'day') : '';
+const headBucket = head ? bucketOf(headDays) : 'other';
 ---
 
 <BaseLayout locale={locale} title={strings.nav.talks} alternatePath="talks">
@@ -41,41 +53,77 @@ const daysFromToday = (date: Date): number =>
       </div>
     ) : (
       <>
-        {upcoming[0] && (
-          <div class="prose-column upcoming">
-            <p class="workbench upcoming-tag">
-              ▸ {strings.talks.nextUp} · <RelativeDays
-                client:idle
-                iso={upcoming[0].data.date.toISOString()}
-                bcp47={bcp47Locale(locale)}
-                fallback={rtf.format(daysFromToday(upcoming[0].data.date), 'day')}
-                serverDays={daysFromToday(upcoming[0].data.date)}
-              />
-            </p>
-            <ul class="talk-list" role="list">
-              {upcoming.map((talk) => (
-                <li><TalkCard talk={talk} locale={locale} /></li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <div
+          class="prose-column upcoming"
+          data-programme="upcoming"
+          data-bcp47={bcp47Locale(locale)}
+          hidden={upcoming.length === 0}
+        >
+          <p class="workbench upcoming-tag">
+            ▸ {strings.talks.nextUp} · <span
+              class={`rel-days rel-days--${headBucket}`}
+              data-rel-days-target
+              data-iso={headIso}
+            >{headFallback}</span>
+          </p>
+          <ul class="talk-list" role="list">
+            {upcoming.map((talk) => (
+              <li data-iso={talk.data.date.toISOString()}><TalkCard talk={talk} locale={locale} /></li>
+            ))}
+          </ul>
+        </div>
 
-        {past.length > 0 && (
-          <div class="prose-column past">
-            {upcoming.length > 0 && (
-              <p class="workbench past-tag">/ {strings.talks.past}</p>
-            )}
-            <ul class="talk-list" role="list">
-              {past.map((talk) => (
-                <li><TalkCard talk={talk} locale={locale} /></li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <div
+          class="prose-column past"
+          data-programme="past"
+          hidden={past.length === 0}
+        >
+          <p
+            class="workbench past-tag"
+            data-past-tag
+            hidden={upcoming.length === 0}
+          >/ {strings.talks.past}</p>
+          <ul class="talk-list" role="list">
+            {past.map((talk) => (
+              <li data-iso={talk.data.date.toISOString()}><TalkCard talk={talk} locale={locale} /></li>
+            ))}
+          </ul>
+        </div>
       </>
     )}
   </section>
 </BaseLayout>
+
+<script>
+  import { reconcileProgramme, updateRelDaysSpan } from '@lib/programme-reconcile';
+
+  const upcomingSection = document.querySelector<HTMLElement>('[data-programme="upcoming"]');
+  const pastSection = document.querySelector<HTMLElement>('[data-programme="past"]');
+  const upcomingList = upcomingSection?.querySelector<HTMLElement>('.talk-list');
+  const pastList = pastSection?.querySelector<HTMLElement>('.talk-list');
+
+  if (upcomingSection && pastSection && upcomingList && pastList) {
+    const bcp47 = upcomingSection.dataset.bcp47 || 'en-US';
+    const pastTag = pastSection.querySelector<HTMLElement>('[data-past-tag]');
+    const headSpan = upcomingSection.querySelector<HTMLElement>('[data-rel-days-target]');
+
+    reconcileProgramme({
+      upcomingSection,
+      recentSection: pastSection,
+      upcomingList,
+      recentList: pastList,
+      onUpcomingHeadChange: (newHead) => {
+        if (pastTag) pastTag.hidden = !newHead;
+        if (!newHead || !headSpan) return;
+        const iso = newHead.getAttribute('data-iso');
+        if (iso) {
+          headSpan.setAttribute('data-iso', iso);
+          updateRelDaysSpan(headSpan, iso, bcp47);
+        }
+      },
+    });
+  }
+</script>
 
 <style>
   .index {

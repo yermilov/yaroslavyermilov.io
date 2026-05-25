@@ -74,100 +74,132 @@ function calMonth(date: Date): string {
     </div>
   </section>
 
-  {upcoming.length > 0 && (
-    <section class="page-frame programme">
-      <p class="workbench programme-label">→ {strings.home.catchMeAt}</p>
-      <ul class="programme-list" role="list">
-        {upcoming.map((talk) => {
-          const detailHref = localePath(locale, `talks/${talk.slug}`);
-          return (
-            <li class="programme-item">
-              <div class="cal-tile" aria-hidden="true">
-                <span class="cal-mo">{calMonth(talk.data.date)}</span>
-                <span class="cal-day">{talk.data.date.getDate()}</span>
-                <span class="cal-yr">{talk.data.date.getFullYear()}</span>
-              </div>
-              <div class="programme-content">
-                <p class="workbench event">
-                  ▸ {talk.data.eventUrl ? (
-                    <a class="event-link" href={talk.data.eventUrl} rel="noopener">{talk.data.event}</a>
-                  ) : (
-                    <span>{talk.data.event}</span>
-                  )}
-                </p>
-                <h2 class="programme-title">
-                  <a href={detailHref}>{talk.data.title}</a>
-                </h2>
-                <p class="workbench meta">
-                  <RelativeDays
-                    client:idle
-                    iso={talk.data.date.toISOString()}
-                    bcp47={bcp47Locale(locale)}
-                    fallback={rtf.format(daysFromToday(talk.data.date), 'day')}
-                    serverDays={daysFromToday(talk.data.date)}
-                  />
-                  {talk.data.language && (
-                    <>
-                      <span aria-hidden="true">·</span>
-                      <span>{languageBadge(talk.data.language)}</span>
-                    </>
-                  )}
-                </p>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
-  )}
+  <section
+    class="page-frame programme"
+    data-programme="upcoming"
+    hidden={upcoming.length === 0}
+  >
+    <p class="workbench programme-label">→ {strings.home.catchMeAt}</p>
+    <ul class="programme-list" role="list">
+      {upcoming.map((talk) => {
+        const detailHref = localePath(locale, `talks/${talk.slug}`);
+        return (
+          <li class="programme-item" data-iso={talk.data.date.toISOString()}>
+            <div class="cal-tile" aria-hidden="true">
+              <span class="cal-mo">{calMonth(talk.data.date)}</span>
+              <span class="cal-day">{talk.data.date.getDate()}</span>
+              <span class="cal-yr">{talk.data.date.getFullYear()}</span>
+            </div>
+            <div class="programme-content">
+              <p class="workbench event">
+                ▸ {talk.data.eventUrl ? (
+                  <a class="event-link" href={talk.data.eventUrl} rel="noopener">{talk.data.event}</a>
+                ) : (
+                  <span>{talk.data.event}</span>
+                )}
+              </p>
+              <h2 class="programme-title">
+                <a href={detailHref}>{talk.data.title}</a>
+              </h2>
+              <p class="workbench meta">
+                <RelativeDays
+                  client:idle
+                  iso={talk.data.date.toISOString()}
+                  bcp47={bcp47Locale(locale)}
+                  fallback={rtf.format(daysFromToday(talk.data.date), 'day')}
+                  serverDays={daysFromToday(talk.data.date)}
+                />
+                {talk.data.language && (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span>{languageBadge(talk.data.language)}</span>
+                  </>
+                )}
+              </p>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  </section>
 
-  {recent.length > 0 && (
-    <section class="page-frame programme programme-recent">
-      <p class="workbench programme-label programme-label-recent">/ {strings.home.recent}</p>
-      <ul class="programme-list" role="list">
-        {recent.map((talk) => {
-          const detailHref = localePath(locale, `talks/${talk.slug}`);
-          return (
-            <li class="programme-item">
-              <div class="cal-tile cal-tile-past" aria-hidden="true">
-                <span class="cal-mo">{calMonth(talk.data.date)}</span>
-                <span class="cal-day">{talk.data.date.getDate()}</span>
-                <span class="cal-yr">{talk.data.date.getFullYear()}</span>
-              </div>
-              <div class="programme-content">
-                <p class="workbench event event-muted">
-                  ▸ {talk.data.eventUrl ? (
-                    <a class="event-link event-link-muted" href={talk.data.eventUrl} rel="noopener">{talk.data.event}</a>
-                  ) : (
-                    <span>{talk.data.event}</span>
-                  )}
-                </p>
-                <h2 class="programme-title">
-                  <a href={detailHref}>{talk.data.title}</a>
-                </h2>
-                <p class="workbench meta">
-                  <RelativeDays
-                    client:idle
-                    iso={talk.data.date.toISOString()}
-                    bcp47={bcp47Locale(locale)}
-                    fallback={rtf.format(daysFromToday(talk.data.date), 'day')}
-                    serverDays={daysFromToday(talk.data.date)}
-                  />
-                  {talk.data.language && (
-                    <>
-                      <span aria-hidden="true">·</span>
-                      <span>{languageBadge(talk.data.language)}</span>
-                    </>
-                  )}
-                </p>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
-  )}
+  <section
+    class="page-frame programme programme-recent"
+    data-programme="recent"
+    hidden={recent.length === 0}
+  >
+    <p class="workbench programme-label programme-label-recent">/ {strings.home.recent}</p>
+    <ul class="programme-list" role="list">
+      {recent.map((talk) => {
+        const detailHref = localePath(locale, `talks/${talk.slug}`);
+        return (
+          <li class="programme-item" data-iso={talk.data.date.toISOString()}>
+            <div class="cal-tile cal-tile-past" aria-hidden="true">
+              <span class="cal-mo">{calMonth(talk.data.date)}</span>
+              <span class="cal-day">{talk.data.date.getDate()}</span>
+              <span class="cal-yr">{talk.data.date.getFullYear()}</span>
+            </div>
+            <div class="programme-content">
+              <p class="workbench event event-muted">
+                ▸ {talk.data.eventUrl ? (
+                  <a class="event-link event-link-muted" href={talk.data.eventUrl} rel="noopener">{talk.data.event}</a>
+                ) : (
+                  <span>{talk.data.event}</span>
+                )}
+              </p>
+              <h2 class="programme-title">
+                <a href={detailHref}>{talk.data.title}</a>
+              </h2>
+              <p class="workbench meta">
+                <RelativeDays
+                  client:idle
+                  iso={talk.data.date.toISOString()}
+                  bcp47={bcp47Locale(locale)}
+                  fallback={rtf.format(daysFromToday(talk.data.date), 'day')}
+                  serverDays={daysFromToday(talk.data.date)}
+                />
+                {talk.data.language && (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span>{languageBadge(talk.data.language)}</span>
+                  </>
+                )}
+              </p>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  </section>
 </BaseLayout>
+
+<script>
+  import { reconcileProgramme } from '@lib/programme-reconcile';
+
+  const upcomingSection = document.querySelector<HTMLElement>('[data-programme="upcoming"]');
+  const recentSection = document.querySelector<HTMLElement>('[data-programme="recent"]');
+  const upcomingList = upcomingSection?.querySelector<HTMLElement>('.programme-list');
+  const recentList = recentSection?.querySelector<HTMLElement>('.programme-list');
+
+  if (upcomingSection && recentSection && upcomingList && recentList) {
+    reconcileProgramme({
+      upcomingSection,
+      recentSection,
+      upcomingList,
+      recentList,
+      applyPastStyle: (item) => {
+        item.querySelector('.cal-tile')?.classList.add('cal-tile-past');
+        item.querySelector('.event')?.classList.add('event-muted');
+        item.querySelector('.event-link')?.classList.add('event-link-muted');
+      },
+      applyFutureStyle: (item) => {
+        item.querySelector('.cal-tile')?.classList.remove('cal-tile-past');
+        item.querySelector('.event')?.classList.remove('event-muted');
+        item.querySelector('.event-link')?.classList.remove('event-link-muted');
+      },
+    });
+  }
+</script>
 
 <style>
   /* HERO — LinkedIn-inspired banner + avatar overlap, but with the site's
