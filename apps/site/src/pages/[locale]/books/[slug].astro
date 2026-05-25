@@ -18,10 +18,12 @@ const locale = Astro.params.locale as Locale;
 const strings = t(locale);
 const { Content } = await book.render();
 
-const fmt = new Intl.DateTimeFormat(bcp47Locale(locale), { dateStyle: 'long' });
-const stars = book.data.rating
-  ? '★'.repeat(book.data.rating) + '☆'.repeat(5 - book.data.rating)
-  : null;
+const fmt = new Intl.DateTimeFormat(bcp47Locale(locale), {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
+const rating = book.data.rating ?? 0;
 ---
 
 <BaseLayout
@@ -35,58 +37,58 @@ const stars = book.data.rating
       <a href={localePath(locale, 'books')}>{strings.books.backToBooks}</a>
     </p>
 
-    <div class="book-head">
-      <div class="cover-wrap">
-        <img src={book.data.cover} alt={`Cover of ${book.data.title}`} loading="eager" />
-      </div>
-      <div class="meta">
-        <h1 class="title">{book.data.title}</h1>
-        <p class="author">{strings.books.by} {book.data.author}</p>
-        {stars && (
-          <p class="rating" aria-label={`${book.data.rating} out of 5`}>
-            <span class="stars">{stars}</span>
-          </p>
-        )}
-        <dl class="facts">
-          <div>
-            <dt>{strings.books.read}</dt>
-            <dd>
-              <time datetime={book.data.readAt.toISOString()}>{fmt.format(book.data.readAt)}</time>
-            </dd>
-          </div>
-          {book.data.genre && (
-            <div>
-              <dt>Genre</dt>
-              <dd>{book.data.genre}</dd>
-            </div>
-          )}
-          {book.data.series && (
-            <div>
-              <dt>Series</dt>
-              <dd>{book.data.series}</dd>
-            </div>
-          )}
-        </dl>
-        {book.data.affiliateUrl && (
-          <p class="buy">
-            <a href={book.data.affiliateUrl} rel="noopener" target="_blank">{strings.books.buy} →</a>
-          </p>
-        )}
-      </div>
-    </div>
+    <div class="entry">
+      <aside class="cover-wrap" aria-hidden="true">
+        <img src={book.data.cover} alt="" loading="eager" />
+      </aside>
 
-    <div class="book-body prose-column">
-      <Content />
+      <header class="head">
+        <h1 class="title">{book.data.title}</h1>
+        <p class="author"><span class="by">{strings.books.by}</span> {book.data.author}</p>
+
+        <p class="credit">
+          {rating > 0 && (
+            <span class="rating" aria-label={`${rating} out of 5`}>
+              <span class="stars-filled">{'★'.repeat(rating)}</span><span class="stars-empty">{'☆'.repeat(5 - rating)}</span>
+            </span>
+          )}
+          <span class="when">
+            <span class="when-label">{strings.books.read}</span>
+            <time datetime={book.data.readAt.toISOString()}>{fmt.format(book.data.readAt)}</time>
+          </span>
+          {(book.data.genre || book.data.series) && (
+            <span class="cat">{book.data.series || book.data.genre}</span>
+          )}
+        </p>
+      </header>
+
+      <blockquote class="lede">
+        <p>{book.data.summary}</p>
+      </blockquote>
+
+      {book.data.affiliateUrl && (
+        <p class="buy">
+          <a href={book.data.affiliateUrl} rel="noopener" target="_blank">{strings.books.buy} <span class="arrow" aria-hidden="true">→</span></a>
+        </p>
+      )}
+
+      <div class="ornament" aria-hidden="true">✻ ✻ ✻</div>
+
+      <div class="review">
+        <Content />
+      </div>
     </div>
   </article>
 </BaseLayout>
 
 <style>
   .book {
-    padding: var(--space-4) var(--space-3) var(--space-6);
+    padding: var(--space-3) var(--space-3) var(--space-6);
   }
+
   .breadcrumb {
-    margin: 0 0 var(--space-3);
+    max-width: 720px;
+    margin: 0 auto var(--space-3);
   }
   .breadcrumb a {
     color: var(--ink-muted);
@@ -96,20 +98,33 @@ const stars = book.data.rating
     background: transparent;
     color: var(--orange-accent);
   }
-  .book-head {
-    display: grid;
-    grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
-    gap: var(--space-4);
-    align-items: start;
-    margin-bottom: var(--space-5);
+
+  /* ── Entry: an editorial spread where prose flows past the cover ── */
+  .entry {
+    max-width: 720px;
+    margin: 0 auto;
+    /* `display: flow-root` would also work; we just need a block formatting
+       context so the floated cover-wrap doesn't escape the entry boundary. */
+    overflow: hidden;
   }
+
+  /* ── Cover: floats into the prose like a glued-in plate. ─────────── */
   .cover-wrap {
+    float: left;
+    width: clamp(140px, 22vw, 175px);
+    margin: 0.4rem var(--space-3) var(--space-2) 0;
     aspect-ratio: 2 / 3;
     overflow: hidden;
     background: var(--bg-elevated);
     border: 1px solid var(--rule);
     border-radius: 3px;
+    /* letterpress-style solid shadow, matching the index card */
     box-shadow: 4px 6px 0 0 var(--rule);
+    transition: transform 180ms ease, box-shadow 180ms ease;
+  }
+  .cover-wrap:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 6px 8px 0 0 var(--rule);
   }
   .cover-wrap img {
     width: 100%;
@@ -117,84 +132,196 @@ const stars = book.data.rating
     object-fit: cover;
     display: block;
   }
-  .meta {
-    min-width: 0;
+
+  /* ── Head: title + author + credit row, wraps next to the cover. ── */
+  .head {
+    /* No display:block needed — implicit. */
   }
   .title {
-    font-size: clamp(1.6rem, 3vw, 2.4rem);
-    margin: 0 0 0.4rem;
-    line-height: 1.15;
+    font-family: var(--font-display);
+    font-size: clamp(1.55rem, 2.6vw + 0.6rem, 2.45rem);
+    font-weight: 700;
+    letter-spacing: -0.018em;
+    line-height: 1.12;
+    margin: 0 0 0.45rem;
+    text-wrap: balance;
   }
   .author {
+    font-family: var(--font-body);
     font-style: italic;
-    font-size: 1.1rem;
+    font-size: 1.08rem;
     color: var(--ink-muted);
     margin: 0 0 var(--space-2);
+    line-height: 1.4;
+  }
+  .author .by {
+    font-style: normal;
+    color: var(--ink-muted);
+    font-size: 0.88em;
+    letter-spacing: 0.01em;
+  }
+
+  /* Credit row: rating + read-date + (genre|series), all on one line.
+     Separators rendered via ::before pseudo so we don't have to track
+     conditional presence of any single field in the markup. */
+  .credit {
+    margin: 0 0 var(--space-3);
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--ink-muted);
+    line-height: 1.6;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.6rem;
+  }
+  .credit > *:not(:first-child)::before {
+    content: '·';
+    color: var(--rule);
+    margin-right: 0.6rem;
   }
   .rating {
-    margin: 0 0 var(--space-3);
-    font-family: var(--font-mono);
+    letter-spacing: 0.06em;
+    font-size: 0.95rem;
+    line-height: 1;
   }
-  .stars {
+  .stars-filled {
     color: var(--orange-accent);
-    font-size: 1.1rem;
-    letter-spacing: 0.05em;
   }
-  .facts {
-    margin: 0 0 var(--space-3);
-    display: grid;
-    gap: 0.4rem 1rem;
-    grid-template-columns: max-content auto;
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-  }
-  .facts > div {
-    display: contents;
-  }
-  .facts dt {
+  .stars-empty {
     color: var(--ink-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    opacity: 0.45;
   }
-  .facts dd {
-    margin: 0;
+  .when {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.45rem;
+  }
+  .when-label {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+    color: var(--green-primary);
+  }
+  .cat {
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.74rem;
+  }
+
+  .buy {
+    margin: 0 0 var(--space-3);
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+  }
+  .buy a {
+    border-bottom: 1.5px solid var(--orange-soft);
     color: var(--ink);
   }
-  .buy {
+  .buy a:hover {
+    background: var(--orange-soft);
+    border-bottom-color: var(--orange-accent);
+    color: var(--green-deep);
+  }
+  .buy .arrow {
+    display: inline-block;
+    transition: transform 160ms ease;
+  }
+  .buy a:hover .arrow {
+    transform: translateX(3px);
+  }
+
+  /* ── Lede: surfaces the summary as a pull-quote, full content width. ── */
+  .lede {
+    margin: var(--space-3) 0 var(--space-4);
+    padding: 0.6rem 0 0.6rem var(--space-3);
+    border-left: 3px solid var(--orange-accent);
+    /* `overflow: hidden` here forces the lede into its own BFC, so the
+       still-floating cover above can't bleed under it. Without this the
+       orange rule bumps awkwardly against the cover's right edge. */
+    overflow: hidden;
+  }
+  .lede p {
     margin: 0;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: clamp(1.06rem, 1vw + 0.85rem, 1.22rem);
+    font-weight: 450;
+    line-height: 1.5;
+    color: var(--ink);
+    text-wrap: pretty;
+  }
+
+  /* ── Ornament: editorial section break, in mono so it reads as type. ── */
+  .ornament {
+    text-align: center;
     font-family: var(--font-mono);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    color: var(--ink-muted);
+    letter-spacing: 0.6em;
+    margin: var(--space-3) 0 var(--space-4);
+    /* nudge left to compensate for the wide letter-spacing pushing the glyph
+       cluster right of optical center */
+    padding-left: 0.6em;
+    opacity: 0.6;
   }
-  .book-body {
-    margin-top: var(--space-3);
+
+  /* ── Review body: comfortable serif prose. ───────────────────────── */
+  .review {
+    line-height: var(--leading-body);
   }
-  .book-body :global(img),
-  .book-body :global(video) {
+  .review :global(p) {
+    margin: 0 0 var(--space-3);
+  }
+  .review :global(p:last-child) {
+    margin-bottom: 0;
+  }
+  .review :global(hr) {
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: var(--space-4) 0 var(--space-3);
+  }
+  .review :global(em) {
+    color: var(--ink-muted);
+  }
+  .review :global(img),
+  .review :global(video) {
     max-width: 100%;
     height: auto;
-    border-radius: 6px;
+    border-radius: 4px;
     border: 1px solid var(--rule);
   }
-  .book-body :global(ul) {
+  .review :global(ul) {
     list-style: disc outside;
     padding-inline-start: 1.4rem;
   }
-  .book-body :global(ol) {
+  .review :global(ol) {
     list-style: decimal outside;
     padding-inline-start: 1.6rem;
   }
-  .book-body :global(li) {
+  .review :global(li) {
     margin-bottom: 0.4rem;
   }
-  .book-body :global(li:last-child) {
+  .review :global(li:last-child) {
     margin-bottom: 0;
   }
-  @media (max-width: 600px) {
-    .book-head {
-      grid-template-columns: 1fr;
+
+  @media (max-width: 560px) {
+    /* On narrow screens, the float collapses into a stacked layout where
+       the cover sits centered above the title block. */
+    .entry {
+      overflow: visible;
     }
     .cover-wrap {
-      max-width: 220px;
+      float: none;
+      width: min(200px, 60vw);
+      margin: 0 auto var(--space-3);
+    }
+    .title {
+      text-align: left;
+    }
+    .credit {
+      font-size: 0.78rem;
     }
   }
 </style>
