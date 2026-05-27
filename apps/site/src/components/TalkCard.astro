@@ -30,6 +30,12 @@ const detailHref = localePath(locale, `talks/${talk.slug}`);
   </p>
   <h3><a class="title-link" href={detailHref}>{talk.data.title}</a></h3>
   {talk.data.abstract.split(/\n\n+/).map((para) => <p class="abstract">{para}</p>)}
+  <ul class="links" role="list">
+    {talk.data.videoUrl && <li><a href={talk.data.videoUrl} rel="noopener">{strings.labels.video}</a></li>}
+    {talk.data.slidesUrl && <li><a href={talk.data.slidesUrl} rel="noopener">{strings.labels.slides}</a></li>}
+    {talk.data.repoUrl && <li><a href={talk.data.repoUrl} rel="noopener">{strings.labels.repo}</a></li>}
+    <li><a class="more" href={detailHref}>→</a></li>
+  </ul>
   {talk.data.photos.length > 0 && (
     <ul class="photos" role="list">
       {talk.data.photos.map((src) => (
@@ -41,12 +47,6 @@ const detailHref = localePath(locale, `talks/${talk.slug}`);
       ))}
     </ul>
   )}
-  <ul class="links" role="list">
-    {talk.data.videoUrl && <li><a href={talk.data.videoUrl} rel="noopener">{strings.labels.video}</a></li>}
-    {talk.data.slidesUrl && <li><a href={talk.data.slidesUrl} rel="noopener">{strings.labels.slides}</a></li>}
-    {talk.data.repoUrl && <li><a href={talk.data.repoUrl} rel="noopener">{strings.labels.repo}</a></li>}
-    <li><a class="more" href={detailHref}>→</a></li>
-  </ul>
 </article>
 
 <style>
@@ -78,7 +78,7 @@ const detailHref = localePath(locale, `talks/${talk.slug}`);
   }
   .photos {
     list-style: none;
-    margin: 0 0 var(--space-2);
+    margin: var(--space-2) 0 0;
     padding: 0;
     display: flex;
     gap: 0.5rem;
