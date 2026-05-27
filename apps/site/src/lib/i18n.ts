@@ -56,7 +56,6 @@ export interface Strings {
     slides: string;
     photos: string;
     repo: string;
-    givenAt: string;
     backToTalks: string;
   };
   labels: {
@@ -118,7 +117,6 @@ const STRINGS: Record<Locale, Strings> = {
       slides: 'Slides',
       photos: 'Photos',
       repo: 'Repo',
-      givenAt: 'Given at',
       backToTalks: '← Back to talks',
     },
     labels: {
@@ -178,7 +176,6 @@ const STRINGS: Record<Locale, Strings> = {
       slides: 'Слайди',
       photos: 'Фото',
       repo: 'Репо',
-      givenAt: 'Виголошено на',
       backToTalks: '← До доповідей',
     },
     labels: {

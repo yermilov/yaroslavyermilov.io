@@ -233,11 +233,6 @@ const artifactLabel: Record<Artifact, string> = {
 
     <footer class="closing">
       <hr class="closing-rule" />
-      <p class="closing-title">{talk.data.title}</p>
-      <p class="closing-credit workbench">
-        <span aria-hidden="true">▸ </span>
-        {strings.talks.givenAt} <strong>{talk.data.event}</strong> · <time datetime={talk.data.date.toISOString()}>{dateFmt.format(talk.data.date)}</time>
-      </p>
       <p class="back-link workbench">
         <a href={localePath(locale, 'talks')}>{strings.talks.backToTalks}</a>
       </p>
@@ -554,33 +549,8 @@ const artifactLabel: Record<Artifact, string> = {
   }
   .closing-rule {
     border: none;
-    border-top: 3px solid var(--green-deep);
+    border-top: 1px solid var(--rule);
     margin: 0 0 var(--space-3);
-  }
-  .closing-title {
-    font-family: var(--font-display);
-    font-style: italic;
-    font-weight: 500;
-    font-size: clamp(1.2rem, 2vw + 0.4rem, 1.6rem);
-    line-height: 1.2;
-    margin: 0 0 var(--space-2);
-    color: var(--ink);
-    max-width: 38ch;
-  }
-  .closing-credit {
-    font-family: var(--font-mono);
-    font-size: 0.82rem;
-    letter-spacing: 0.04em;
-    color: var(--ink-muted);
-    margin: 0 0 var(--space-3);
-    line-height: 1.55;
-  }
-  .closing-credit strong {
-    color: var(--ink);
-    font-weight: 500;
-  }
-  .closing-credit time {
-    color: var(--ink);
   }
   .back-link {
     margin: 0;
