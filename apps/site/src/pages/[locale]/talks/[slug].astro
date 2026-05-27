@@ -16,13 +16,15 @@ export async function getStaticPaths() {
 const { talk } = Astro.props as { talk: CollectionEntry<'talks'> };
 const locale = Astro.params.locale as Locale;
 const strings = t(locale);
+const bcp47 = bcp47Locale(locale);
 
-const fmt = new Intl.DateTimeFormat(bcp47Locale(locale), {
+const dateFmt = new Intl.DateTimeFormat(bcp47, {
   year: 'numeric',
   month: 'long',
   day: 'numeric',
 });
 
+/** YouTube parsing — preserves `?t=` start offset across share-link variants. */
 function parseStart(t: string | null): number | undefined {
   if (!t) return undefined;
   const m = t.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s?)?$/);
@@ -32,7 +34,6 @@ function parseStart(t: string | null): number | undefined {
     parseInt(h || '0') * 3600 + parseInt(mn || '0') * 60 + parseInt(s || '0');
   return total > 0 ? total : undefined;
 }
-
 function parseYouTube(url: string | undefined): { id: string; start?: number } | null {
   if (!url) return null;
   try {
@@ -52,17 +53,16 @@ function parseYouTube(url: string | undefined): { id: string; start?: number } |
   }
   return null;
 }
-
 const yt = parseYouTube(talk.data.videoUrl);
 const embedUrl = yt
   ? `https://www.youtube-nocookie.com/embed/${yt.id}${yt.start ? `?start=${yt.start}` : ''}`
   : null;
 
 /**
- * Detect SlideShare canonical URLs and convert to an embed-able URL.
- * Canonical: https://www.slideshare.net/slideshow/<slug>/<numeric-id>
- * Embed:     https://www.slideshare.net/slideshow/embed_code/<numeric-id>
- *            (302s to /embed_code/key/<key>; the browser follows the redirect)
+ * SlideShare → embed URL. Canonical:
+ *   https://www.slideshare.net/slideshow/<slug>/<numeric-id>
+ * Embed:
+ *   https://www.slideshare.net/slideshow/embed_code/<numeric-id>
  */
 function parseSlideShare(url: string | undefined): string | null {
   if (!url) return null;
@@ -76,10 +76,44 @@ function parseSlideShare(url: string | undefined): string | null {
     return null;
   }
 }
-
 const slidesEmbedUrl = parseSlideShare(talk.data.slidesUrl);
 
 const paragraphs = talk.data.abstract.split(/\n\n+/);
+
+/**
+ * Server-rendered relative time. Only emitted for talks older than 30 days,
+ * so the build-vs-visit clock drift can't bend a day-precision number into
+ * something wrong. Unit auto-selects between months and years.
+ */
+function buildRelative(date: Date): string | null {
+  const days = Math.floor((Date.now() - date.getTime()) / 86_400_000);
+  if (days < 30) return null;
+  const rtf = new Intl.RelativeTimeFormat(bcp47, { numeric: 'auto' });
+  const years = Math.floor(days / 365.25);
+  if (years >= 1) return rtf.format(-years, 'year');
+  const months = Math.floor(days / 30.44);
+  return rtf.format(-months, 'month');
+}
+const relative = buildRelative(talk.data.date);
+
+/**
+ * Artifacts present on this talk. The order defines the numbered acts
+ * — talks with only slides + photos get them as 01 and 02, not 02 and 03.
+ */
+type Artifact = 'recording' | 'slides' | 'photos' | 'repo';
+const artifacts: Artifact[] = [];
+if (embedUrl || talk.data.videoUrl) artifacts.push('recording');
+if (slidesEmbedUrl || talk.data.slidesUrl) artifacts.push('slides');
+if (talk.data.photos.length > 0) artifacts.push('photos');
+if (talk.data.repoUrl) artifacts.push('repo');
+const ord = (kind: Artifact): string => String(artifacts.indexOf(kind) + 1).padStart(2, '0');
+
+const artifactLabel: Record<Artifact, string> = {
+  recording: strings.talks.recording,
+  slides: strings.talks.slides,
+  photos: strings.talks.photos,
+  repo: strings.talks.repo,
+};
 ---
 
 <BaseLayout
@@ -89,107 +123,138 @@ const paragraphs = talk.data.abstract.split(/\n\n+/);
   alternatePath={`talks/${talk.slug}`}
 >
   <article class="page-frame talk-detail">
-    <div class="prose-column">
-      <p class="workbench breadcrumb">
-        / <a href={localePath(locale, 'talks')}>{strings.nav.talks.toUpperCase()}</a> /
-      </p>
+    <p class="workbench breadcrumb">
+      / <a href={localePath(locale, 'talks')}>{strings.nav.talks.toUpperCase()}</a> /
+    </p>
 
-      <h1>{talk.data.title}</h1>
-
-      <p class="workbench meta">
-        <time datetime={talk.data.date.toISOString()}>{fmt.format(talk.data.date)}</time>
-        <span aria-hidden="true">·</span>
+    <header class="hero">
+      <p class="kicker">
+        <span aria-hidden="true">▸ </span>
         {talk.data.eventUrl ? (
-          <a href={talk.data.eventUrl} rel="noopener">{talk.data.event}</a>
+          <a class="event-link" href={talk.data.eventUrl} rel="noopener">{talk.data.event}</a>
         ) : (
           <span>{talk.data.event}</span>
         )}
-        {talk.data.language && (
-          <>
-            <span aria-hidden="true">·</span>
-            <span>{languageBadge(talk.data.language)}</span>
-          </>
-        )}
       </p>
 
-      <div class="abstract">
-        {paragraphs.map((p) => <p>{p}</p>)}
-      </div>
+      <h1 class="title">{talk.data.title}</h1>
 
-      {embedUrl && (
-        <section class="block">
-          <p class="workbench section-label">▸ {strings.talks.recording}</p>
-          <div class="video">
-            <iframe
-              src={embedUrl}
-              title={talk.data.title}
-              loading="lazy"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen
-            ></iframe>
-          </div>
-        </section>
+      <p class="credit">
+        <time datetime={talk.data.date.toISOString()}>{dateFmt.format(talk.data.date)}</time>
+        {talk.data.language && <span>{languageBadge(talk.data.language)}</span>}
+        {relative && <span>{relative}</span>}
+      </p>
+
+      {artifacts.length >= 2 && (
+        <nav class="jump" aria-label="jump-nav">
+          {artifacts.map((a) => (
+            <a href={`#${a}`}>{artifactLabel[a].toLowerCase()}</a>
+          ))}
+        </nav>
       )}
+    </header>
 
-      {slidesEmbedUrl && (
-        <section class="block">
-          <p class="workbench section-label">▸ {strings.talks.slides}</p>
-          <div class="slides">
-            <iframe
-              src={slidesEmbedUrl}
-              title={`${talk.data.title} — slides`}
-              loading="lazy"
-              allowfullscreen
-            ></iframe>
-          </div>
-        </section>
-      )}
+    <hr class="hero-rule" />
 
-      {talk.data.photos.length > 0 && (
-        <section class="block">
-          <p class="workbench section-label">▸ {strings.talks.photos}</p>
-          <ul class="photo-strip" role="list">
-            {talk.data.photos.map((src) => (
-              <li>
-                <a href={src} target="_blank" rel="noopener">
+    <section class="lede prose-narrow">
+      {paragraphs.map((p, i) => (
+        <p class={i === 0 ? 'lead' : 'body'}>{p}</p>
+      ))}
+    </section>
+
+    {embedUrl && (
+      <section class="act" id="recording">
+        <p class="act-label workbench"><span class="ord">▸ {ord('recording')}</span> · {strings.talks.recording}</p>
+        <div class="media-frame video-frame">
+          <iframe
+            src={embedUrl}
+            title={talk.data.title}
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </section>
+    )}
+
+    {slidesEmbedUrl && (
+      <section class="act" id="slides">
+        <p class="act-label workbench"><span class="ord">▸ {ord('slides')}</span> · {strings.talks.slides}</p>
+        <div class="media-frame slides-frame">
+          <iframe
+            src={slidesEmbedUrl}
+            title={`${talk.data.title} — slides`}
+            loading="lazy"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </section>
+    )}
+
+    {!slidesEmbedUrl && talk.data.slidesUrl && (
+      <section class="act" id="slides">
+        <p class="act-label workbench"><span class="ord">▸ {ord('slides')}</span> · {strings.talks.slides}</p>
+        <a class="external-card" href={talk.data.slidesUrl} rel="noopener" target="_blank">
+          <span class="external-label">{strings.talks.slides}</span>
+          <span class="external-host">{new URL(talk.data.slidesUrl).hostname.replace(/^www\./, '')}</span>
+          <span class="external-arrow" aria-hidden="true">↗</span>
+        </a>
+      </section>
+    )}
+
+    {talk.data.photos.length > 0 && (
+      <section class="act" id="photos">
+        <p class="act-label workbench"><span class="ord">▸ {ord('photos')}</span> · {strings.talks.photos} <span class="count">— {talk.data.photos.length}</span></p>
+        <ul class="contact-sheet" role="list">
+          {talk.data.photos.map((src, i) => (
+            <li>
+              <a href={src} target="_blank" rel="noopener" aria-label={`Photo ${i + 1}`}>
+                <span class="frame">
                   <img src={src} alt="" loading="lazy" />
-                </a>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+                </span>
+                <span class="caption">№{String(i + 1).padStart(2, '0')}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
 
-      <hr />
+    {talk.data.repoUrl && (
+      <section class="act" id="repo">
+        <p class="act-label workbench"><span class="ord">▸ {ord('repo')}</span> · {strings.talks.repo}</p>
+        <a class="external-card" href={talk.data.repoUrl} rel="noopener" target="_blank">
+          <span class="external-label">{strings.talks.repo}</span>
+          <span class="external-host">{new URL(talk.data.repoUrl).hostname.replace(/^www\./, '')}{new URL(talk.data.repoUrl).pathname}</span>
+          <span class="external-arrow" aria-hidden="true">↗</span>
+        </a>
+      </section>
+    )}
 
-      <ul class="footer-links" role="list">
-        {talk.data.videoUrl && (
-          <li><a href={talk.data.videoUrl} rel="noopener">{strings.labels.video}</a></li>
-        )}
-        {talk.data.slidesUrl && (
-          <li><a href={talk.data.slidesUrl} rel="noopener">{strings.labels.slides}</a></li>
-        )}
-        {talk.data.repoUrl && (
-          <li><a href={talk.data.repoUrl} rel="noopener">{strings.labels.repo}</a></li>
-        )}
-        {talk.data.eventUrl && (
-          <li><a href={talk.data.eventUrl} rel="noopener">{strings.labels.eventPage}</a></li>
-        )}
-      </ul>
-
-      <p class="workbench back-link">
+    <footer class="closing">
+      <hr class="closing-rule" />
+      <p class="closing-title">{talk.data.title}</p>
+      <p class="closing-credit workbench">
+        <span aria-hidden="true">▸ </span>
+        {strings.talks.givenAt} <strong>{talk.data.event}</strong> · <time datetime={talk.data.date.toISOString()}>{dateFmt.format(talk.data.date)}</time>
+      </p>
+      <p class="back-link workbench">
         <a href={localePath(locale, 'talks')}>{strings.talks.backToTalks}</a>
       </p>
-    </div>
+    </footer>
   </article>
 </BaseLayout>
 
 <style>
+  /* ── Page chrome ───────────────────────────────────────────────── */
   .talk-detail {
-    padding: var(--space-5) var(--space-3) var(--space-6);
+    padding: var(--space-3) var(--space-3) var(--space-6);
   }
   .breadcrumb {
     margin: 0 0 var(--space-3);
+    color: var(--ink-muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
   }
   .breadcrumb a {
     border-bottom: none;
@@ -200,117 +265,347 @@ const paragraphs = talk.data.abstract.split(/\n\n+/);
     color: var(--orange-accent);
   }
 
-  h1 {
-    margin: 0 0 var(--space-2);
+  /* ── Hero — playbill treatment ─────────────────────────────────── */
+  .hero {
+    /* Page-load reveal: kicker → title → credit → jump, each delayed. */
+    --reveal-distance: 8px;
   }
-
-  .meta {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin: 0 0 var(--space-4);
+  .hero > * {
+    opacity: 0;
+    transform: translateY(var(--reveal-distance));
+    animation: rise 480ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
   }
-
-  .abstract {
-    margin: 0 0 var(--space-4);
+  .kicker          { animation-delay:  60ms; }
+  .title           { animation-delay: 140ms; }
+  .credit          { animation-delay: 260ms; }
+  .jump            { animation-delay: 360ms; }
+  @keyframes rise {
+    to { opacity: 1; transform: none; }
   }
-  .abstract p {
-    margin: 0 0 var(--space-3);
-  }
-  .abstract p:last-child {
-    margin-bottom: 0;
-  }
-
-  .block {
-    margin: var(--space-5) 0;
-  }
-  .section-label {
-    color: var(--green-primary);
-    margin: 0 0 var(--space-2);
-  }
-
-  .video {
-    aspect-ratio: 16 / 9;
-    width: 100%;
-    border: 1px solid var(--rule);
-    background: #000;
-  }
-  .video iframe {
-    width: 100%;
-    height: 100%;
-    border: 0;
-    display: block;
-  }
-
-  .slides {
-    aspect-ratio: 4 / 3;
-    width: 100%;
-    border: 1px solid var(--rule);
-    background: var(--bg-elevated);
-  }
-  .slides iframe {
-    width: 100%;
-    height: 100%;
-    border: 0;
-    display: block;
-  }
-
-  .photo-strip {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-  }
-  .photo-strip a {
-    border: none;
-    display: block;
-  }
-  .photo-strip a:hover {
-    background: transparent;
-  }
-  .photo-strip img {
-    height: 240px;
-    width: auto;
-    object-fit: cover;
-    border: 1px solid var(--rule);
-    display: block;
-    transition: border-color 120ms ease;
-  }
-  .photo-strip a:hover img {
-    border-color: var(--orange-accent);
-  }
-  @media (max-width: 600px) {
-    .photo-strip img {
-      height: 160px;
+  @media (prefers-reduced-motion: reduce) {
+    .hero > * {
+      opacity: 1;
+      transform: none;
+      animation: none;
     }
   }
 
-  hr {
-    margin: var(--space-5) 0 var(--space-3);
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: 0.84rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--green-primary);
+    margin: 0 0 var(--space-2);
+    line-height: 1.3;
+  }
+  .kicker .event-link {
+    border-bottom: none;
+    color: var(--green-primary);
+  }
+  .kicker .event-link:hover {
+    background: transparent;
+    color: var(--orange-accent);
   }
 
-  .footer-links {
-    list-style: none;
-    margin: 0 0 var(--space-4);
-    padding: 0;
+  .title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    /* Poster-sized but with a hard ceiling so very long titles don't
+       crash through layout on 4K screens. */
+    font-size: clamp(2.1rem, 5.4vw + 0.4rem, 4.4rem);
+    line-height: 1.04;
+    letter-spacing: -0.022em;
+    margin: 0 0 var(--space-3);
+    text-wrap: balance;
+    color: var(--ink);
+    max-width: 22ch;
+  }
+
+  /* Credit: date · language · "9 years ago" with `·` rendered between
+     items via ::before so missing language or recent-talk-no-relative
+     can't leave a dangling separator. */
+  .credit {
+    font-family: var(--font-mono);
+    font-size: 0.84rem;
+    letter-spacing: 0.04em;
+    color: var(--ink-muted);
+    margin: 0 0 var(--space-3);
     display: flex;
-    gap: var(--space-3);
     flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.6rem;
+    line-height: 1.6;
+  }
+  .credit > *:not(:first-child)::before {
+    content: '·';
+    color: var(--rule);
+    margin-right: 0.6rem;
+  }
+  .credit time {
+    color: var(--ink);
+  }
+
+  .jump {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    text-transform: lowercase;
+    letter-spacing: 0.05em;
+    margin: 0;
+    color: var(--ink-muted);
+  }
+  .jump > a {
+    border-bottom: none;
+    color: var(--ink-muted);
+    padding: 0.1rem 0;
+    transition: color 120ms ease, transform 120ms ease;
+  }
+  .jump > a:hover {
+    background: transparent;
+    color: var(--orange-accent);
+    transform: translateX(2px);
+  }
+  .jump > a + a::before {
+    content: '·';
+    color: var(--rule);
+    margin-right: 0.6rem;
+  }
+
+  .hero-rule {
+    border: none;
+    border-top: 3px solid var(--green-deep);
+    margin: var(--space-3) 0 var(--space-4);
+  }
+
+  /* ── Lede / abstract ───────────────────────────────────────────── */
+  .prose-narrow {
+    max-width: 68ch;
+  }
+  .lede {
+    margin: 0 0 var(--space-5);
+  }
+  .lede .lead {
+    font-size: 1.18rem;
+    line-height: 1.55;
+    color: var(--ink);
+    margin: 0 0 var(--space-3);
+    text-wrap: pretty;
+  }
+  .lede .body {
+    font-size: 1.075rem;
+    line-height: var(--leading-body);
+    color: var(--ink);
+    margin: 0 0 var(--space-3);
+  }
+  .lede p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* ── Acts (recording / slides / photos / repo) ─────────────────── */
+  .act {
+    margin: 0 0 var(--space-5);
+    scroll-margin-top: var(--space-4);
+  }
+  .act-label {
     font-family: var(--font-mono);
     font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--green-primary);
+    margin: 0 0 var(--space-2);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.5em;
+  }
+  .act-label .ord {
+    color: var(--ink-muted);
+    font-weight: 500;
+  }
+  .act-label .count {
+    color: var(--ink-muted);
+    text-transform: lowercase;
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
   }
 
+  /* ── Media frame: shared envelope for video + slides iframes ──── */
+  .media-frame {
+    width: 100%;
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--green-deep);
+    background: var(--bg-elevated);
+    /* Letterpress shadow vocabulary borrowed from book covers & index cards. */
+    box-shadow: 5px 6px 0 0 var(--rule);
+  }
+  .media-frame iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+  .video-frame {
+    aspect-ratio: 16 / 9;
+    background: #000;
+  }
+  .slides-frame {
+    aspect-ratio: 4 / 3;
+  }
+
+  /* ── External card: when slides/repo aren't embeddable ─────────── */
+  .external-card {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: baseline;
+    gap: 0.6rem 1rem;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--green-deep);
+    background: var(--bg-elevated);
+    box-shadow: 5px 6px 0 0 var(--rule);
+    font-family: var(--font-mono);
+    color: var(--ink);
+    transition: transform 160ms ease, box-shadow 160ms ease, color 160ms ease;
+  }
+  .external-card:hover {
+    background: var(--bg-elevated);
+    transform: translate(-1px, -1px);
+    box-shadow: 7px 8px 0 0 var(--rule);
+    color: var(--ink);
+  }
+  .external-label {
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--green-primary);
+  }
+  .external-host {
+    font-size: 0.92rem;
+    color: var(--ink-muted);
+    word-break: break-all;
+  }
+  .external-arrow {
+    font-size: 1.2rem;
+    color: var(--orange-accent);
+    transition: transform 160ms ease;
+  }
+  .external-card:hover .external-arrow {
+    transform: translate(3px, -3px);
+  }
+
+  /* ── Contact sheet — photos as numbered frames ─────────────────── */
+  .contact-sheet {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-3) var(--space-2);
+  }
+  .contact-sheet a {
+    display: block;
+    border: none;
+    color: var(--ink-muted);
+    text-decoration: none;
+  }
+  .contact-sheet a:hover {
+    background: transparent;
+    color: var(--orange-accent);
+  }
+  .contact-sheet .frame {
+    display: block;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border: 1px solid var(--rule);
+    background: var(--bg-elevated);
+    box-shadow: 3px 4px 0 0 var(--rule);
+    transition: transform 160ms ease, box-shadow 160ms ease;
+  }
+  .contact-sheet a:hover .frame {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 6px 0 0 var(--rule);
+  }
+  .contact-sheet img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .contact-sheet .caption {
+    display: block;
+    margin-top: 0.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+  }
+  @media (max-width: 540px) {
+    .contact-sheet {
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
+  }
+
+  /* ── Closing tombstone ─────────────────────────────────────────── */
+  .closing {
+    margin-top: var(--space-5);
+  }
+  .closing-rule {
+    border: none;
+    border-top: 3px solid var(--green-deep);
+    margin: 0 0 var(--space-3);
+  }
+  .closing-title {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(1.2rem, 2vw + 0.4rem, 1.6rem);
+    line-height: 1.2;
+    margin: 0 0 var(--space-2);
+    color: var(--ink);
+    max-width: 38ch;
+  }
+  .closing-credit {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    color: var(--ink-muted);
+    margin: 0 0 var(--space-3);
+    line-height: 1.55;
+  }
+  .closing-credit strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .closing-credit time {
+    color: var(--ink);
+  }
   .back-link {
     margin: 0;
+    font-size: 0.85rem;
   }
   .back-link a {
     border-bottom: none;
     color: var(--ink-muted);
+    transition: color 120ms ease, transform 120ms ease;
+    display: inline-block;
   }
   .back-link a:hover {
     background: transparent;
     color: var(--orange-accent);
+    transform: translateX(-3px);
+  }
+
+  /* ── Narrow viewports ──────────────────────────────────────────── */
+  @media (max-width: 540px) {
+    .title {
+      max-width: none;
+    }
+    .media-frame,
+    .external-card {
+      box-shadow: 3px 4px 0 0 var(--rule);
+    }
   }
 </style>
