@@ -100,12 +100,12 @@ const relative = buildRelative(talk.data.date);
  * Artifacts present on this talk. The order defines the numbered acts
  * — talks with only slides + photos get them as 01 and 02, not 02 and 03.
  */
-type Artifact = 'recording' | 'slides' | 'photos' | 'repo';
+type Artifact = 'recording' | 'slides' | 'repo' | 'photos';
 const artifacts: Artifact[] = [];
 if (embedUrl || talk.data.videoUrl) artifacts.push('recording');
 if (slidesEmbedUrl || talk.data.slidesUrl) artifacts.push('slides');
-if (talk.data.photos.length > 0) artifacts.push('photos');
 if (talk.data.repoUrl) artifacts.push('repo');
+if (talk.data.photos.length > 0) artifacts.push('photos');
 const ord = (kind: Artifact): string => String(artifacts.indexOf(kind) + 1).padStart(2, '0');
 
 const artifactLabel: Record<Artifact, string> = {
@@ -202,6 +202,17 @@ const artifactLabel: Record<Artifact, string> = {
       </section>
     )}
 
+    {talk.data.repoUrl && (
+      <section class="act" id="repo">
+        <p class="act-label workbench"><span class="ord">▸ {ord('repo')}</span> · {strings.talks.repo}</p>
+        <a class="external-card" href={talk.data.repoUrl} rel="noopener" target="_blank">
+          <span class="external-label">{strings.talks.repo}</span>
+          <span class="external-host">{new URL(talk.data.repoUrl).hostname.replace(/^www\./, '')}{new URL(talk.data.repoUrl).pathname}</span>
+          <span class="external-arrow" aria-hidden="true">↗</span>
+        </a>
+      </section>
+    )}
+
     {talk.data.photos.length > 0 && (
       <section class="act" id="photos">
         <p class="act-label workbench"><span class="ord">▸ {ord('photos')}</span> · {strings.talks.photos} <span class="count">— {talk.data.photos.length}</span></p>
@@ -217,17 +228,6 @@ const artifactLabel: Record<Artifact, string> = {
             </li>
           ))}
         </ul>
-      </section>
-    )}
-
-    {talk.data.repoUrl && (
-      <section class="act" id="repo">
-        <p class="act-label workbench"><span class="ord">▸ {ord('repo')}</span> · {strings.talks.repo}</p>
-        <a class="external-card" href={talk.data.repoUrl} rel="noopener" target="_blank">
-          <span class="external-label">{strings.talks.repo}</span>
-          <span class="external-host">{new URL(talk.data.repoUrl).hostname.replace(/^www\./, '')}{new URL(talk.data.repoUrl).pathname}</span>
-          <span class="external-arrow" aria-hidden="true">↗</span>
-        </a>
       </section>
     )}
 
