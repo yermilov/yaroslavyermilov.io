@@ -5,7 +5,7 @@ import sitemap from '@astrojs/sitemap';
 import tailwind from '@tailwindcss/vite';
 
 export default defineConfig({
-  site: 'https://yermilov.github.io',
+  site: 'https://yaroslavyermilov.io',
   trailingSlash: 'always',
   build: {
     format: 'directory',

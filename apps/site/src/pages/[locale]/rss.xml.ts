@@ -14,7 +14,7 @@ export const GET: APIRoute = async ({ params, site }) => {
   return rss({
     title: `${strings.site.title} (${locale.toUpperCase()})`,
     description: strings.site.tagline,
-    site: site ?? 'https://yermilov.github.io',
+    site: site ?? 'https://yaroslavyermilov.io',
     items: posts.map((post) => ({
       title: post.data.title,
       pubDate: post.data.publishedAt,
