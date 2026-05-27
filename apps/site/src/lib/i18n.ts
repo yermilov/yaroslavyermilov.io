@@ -53,6 +53,7 @@ export interface Strings {
     nextUp: string;
     past: string;
     recording: string;
+    recordingOnRequest: string;
     slides: string;
     photos: string;
     repo: string;
@@ -114,6 +115,7 @@ const STRINGS: Record<Locale, Strings> = {
       nextUp: 'Next up',
       past: 'Past',
       recording: 'Recording',
+      recordingOnRequest: 'Private — message on LinkedIn for access',
       slides: 'Slides',
       photos: 'Photos',
       repo: 'Repo',
@@ -173,6 +175,7 @@ const STRINGS: Record<Locale, Strings> = {
       nextUp: 'Далі',
       past: 'Минулі',
       recording: 'Запис',
+      recordingOnRequest: 'Приватний — напишіть у LinkedIn для доступу',
       slides: 'Слайди',
       photos: 'Фото',
       repo: 'Репо',

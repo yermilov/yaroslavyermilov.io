@@ -33,6 +33,8 @@ const talks = defineCollection({
     language: localeEnum.optional(),
     abstract: z.string(),
     videoUrl: z.string().url().optional(),
+    /** Recording exists but is private; render an on-request CTA instead of a player. */
+    videoOnRequest: z.boolean().default(false),
     slidesUrl: z.string().url().optional(),
     repoUrl: z.string().url().optional(),
     eventUrl: z.string().url().optional(),

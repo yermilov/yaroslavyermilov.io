@@ -102,10 +102,13 @@ const relative = buildRelative(talk.data.date);
  */
 type Artifact = 'recording' | 'slides' | 'repo' | 'photos';
 const artifacts: Artifact[] = [];
-if (embedUrl || talk.data.videoUrl) artifacts.push('recording');
+if (embedUrl || talk.data.videoUrl || talk.data.videoOnRequest) artifacts.push('recording');
 if (slidesEmbedUrl || talk.data.slidesUrl) artifacts.push('slides');
 if (talk.data.repoUrl) artifacts.push('repo');
 if (talk.data.photos.length > 0) artifacts.push('photos');
+
+/** Primary contact channel surfaced for on-request recordings. */
+const linkedInUrl = 'https://www.linkedin.com/in/yarik-yermilov/';
 const ord = (kind: Artifact): string => String(artifacts.indexOf(kind) + 1).padStart(2, '0');
 
 const artifactLabel: Record<Artifact, string> = {
@@ -162,18 +165,32 @@ const artifactLabel: Record<Artifact, string> = {
       ))}
     </section>
 
-    {embedUrl && (
+    {(embedUrl || talk.data.videoUrl || talk.data.videoOnRequest) && (
       <section class="act" id="recording">
         <p class="act-label workbench"><span class="ord">▸ {ord('recording')}</span> · {strings.talks.recording}</p>
-        <div class="media-frame video-frame">
-          <iframe
-            src={embedUrl}
-            title={talk.data.title}
-            loading="lazy"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen
-          ></iframe>
-        </div>
+        {embedUrl ? (
+          <div class="media-frame video-frame">
+            <iframe
+              src={embedUrl}
+              title={talk.data.title}
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+            ></iframe>
+          </div>
+        ) : talk.data.videoUrl ? (
+          <a class="external-card" href={talk.data.videoUrl} rel="noopener" target="_blank">
+            <span class="external-label">{strings.talks.recording}</span>
+            <span class="external-host">{new URL(talk.data.videoUrl).hostname.replace(/^www\./, '')}{new URL(talk.data.videoUrl).pathname}</span>
+            <span class="external-arrow" aria-hidden="true">↗</span>
+          </a>
+        ) : (
+          <a class="external-card" href={linkedInUrl} rel="noopener" target="_blank">
+            <span class="external-label">{strings.talks.recording}</span>
+            <span class="external-host">{strings.talks.recordingOnRequest}</span>
+            <span class="external-arrow" aria-hidden="true">↗</span>
+          </a>
+        )}
       </section>
     )}
 
