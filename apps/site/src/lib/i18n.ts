@@ -81,7 +81,7 @@ export interface Strings {
 
 const STRINGS: Record<Locale, Strings> = {
   en: {
-    nav: { home: 'Home', blog: 'Blog', lab: 'Lab', games: 'Games', talks: 'Talks', gallery: 'Gallery', books: 'Books', about: 'About', kit: 'Kit' },
+    nav: { home: 'Home', blog: 'my blog', lab: 'Lab', games: 'Games', talks: 'my talks', gallery: 'my photos', books: "books I've read", about: 'About', kit: 'my kit' },
     site: {
       title: 'Yaroslav Yermilov',
       tagline: 'Notes, experiments, talks.',
@@ -141,7 +141,7 @@ const STRINGS: Record<Locale, Strings> = {
     },
   },
   ua: {
-    nav: { home: 'Головна', blog: 'Блог', lab: 'Лаб', games: 'Ігри', talks: 'Доповіді', gallery: 'Галерея', books: 'Книги', about: 'Про', kit: 'Kit' },
+    nav: { home: 'Головна', blog: 'мій блог', lab: 'Лаб', games: 'Ігри', talks: 'мої доповіді', gallery: 'мої фото', books: 'книги, які я читав', about: 'Про', kit: 'мій kit' },
     site: {
       title: 'Ярослав Єрмілов',
       tagline: 'Нотатки, експерименти, доповіді.',
