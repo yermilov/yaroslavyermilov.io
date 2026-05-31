@@ -159,6 +159,22 @@ pnpm --filter site typecheck        # astro check
 pnpm tsx scripts/build-games.ts          # build apps/game-* into public/games/
 ```
 
+## Analytics
+
+Privacy-friendly analytics via [Plausible](https://plausible.io) (cookieless,
+no consent banner needed). The tracking snippet lives in the `<head>` of
+`apps/site/src/layouts/BaseLayout.astro`, so it covers every page.
+
+- Gated behind `import.meta.env.PROD` — dev/preview traffic is never counted.
+- Uses the modern `pa-<id>.js` script with outbound links, file downloads,
+  and form submissions tracking bundled in.
+- Dashboard: https://plausible.io/yaroslavyermilov.io (account-gated).
+
+To track a **custom event**, call `plausible('EventName')` from any client
+script or island; the `window.plausible` queue is initialized by the snippet.
+To change which optional measurements are on, re-copy the snippet from the
+Plausible site settings — the `pa-<id>.js` URL bundles that config server-side.
+
 ## Gotchas
 
 - **Tailwind v4**: configuration is CSS, not JS. Tokens are in
