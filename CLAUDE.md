@@ -76,6 +76,26 @@ because "UK" reads as United Kingdom to Ukrainian readers. The
 hreflang, og:locale, and Intl APIs — see `apps/site/src/lib/i18n.ts`.)
 Slugs are forever — never derive them from titles or dates.
 
+## Site IA — the Field Journal sections
+
+Top navigation has four sections, each a "volume" of one shared
+timeline design (`@components/Timeline.astro` — spine, square nodes,
+mono date stamps, serif year milestones):
+
+- `/{locale}/writing-talking/` — posts + talks merged, with static
+  sub-routes `writing/`, `talking/`, and `kit/` (the about-me kit)
+- `/{locale}/inspiration/` — books now; schema-ready for podcasts/links
+  later (extend the `TimelineEntry` union in `@lib/content.ts`)
+- `/{locale}/personal/` — photo moments (standalone gallery entries +
+  talk photos, grouped by day+caption)
+- `/{locale}/workshop/` — workshop prospectus + LinkedIn DM CTA
+
+Detail URLs are unchanged and frozen: `/blog/<slug>/`, `/talks/<slug>/`,
+`/books/<slug>/`. Old landing pages (`/blog/`, `/talks/`, `/books/`,
+`/gallery/`, `/conference-kit/`) are meta-refresh redirects enumerated
+per locale in `astro.config.ts` — static builds can't expand `[locale]`
+params in redirect-only routes, so they're listed explicitly.
+
 ## Content schemas
 
 Defined in `apps/site/src/content/config.ts`. Every post carries:

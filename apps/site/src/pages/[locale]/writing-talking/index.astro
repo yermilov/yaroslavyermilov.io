@@ -1,0 +1,60 @@
+---
+import { LOCALES, t, localePath, pluralize, type Locale } from '@lib/i18n';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import SectionMasthead from '@components/SectionMasthead.astro';
+import SectionTabs from '@components/SectionTabs.astro';
+import Timeline from '@components/Timeline.astro';
+import { getWritingTalkingTimeline } from '@lib/content';
+
+export async function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+
+const locale = Astro.params.locale as Locale;
+const strings = t(locale);
+const entries = await getWritingTalkingTimeline();
+
+const postCount = entries.filter((e) => e.kind === 'post').length;
+const talkCount = entries.filter((e) => e.kind === 'talk').length;
+const minYear = entries.length > 0 ? Math.min(...entries.map((e) => e.date.getFullYear())) : null;
+
+const stats = [
+  `✎ ${pluralize(locale, postCount, strings.stats.posts)}`,
+  `▸ ${pluralize(locale, talkCount, strings.stats.talks)}`,
+  ...(minYear ? [`${strings.stats.since} ${minYear}`] : []),
+];
+
+const tabs = [
+  { href: localePath(locale, 'writing-talking'), label: strings.subnav.all, active: true },
+  { href: localePath(locale, 'writing-talking/writing'), label: strings.subnav.writing },
+  { href: localePath(locale, 'writing-talking/talking'), label: strings.subnav.talking },
+  { href: localePath(locale, 'writing-talking/kit'), label: strings.subnav.kit },
+];
+---
+
+<BaseLayout locale={locale} title={strings.sections.writingTalking.title} alternatePath="writing-talking">
+  <section class="page-frame index">
+    <SectionMasthead
+      eyebrow="vol. 01"
+      title={strings.sections.writingTalking.title}
+      lede={strings.sections.writingTalking.lede}
+      stats={stats}
+    />
+    <SectionTabs tabs={tabs} label={strings.sections.writingTalking.title} />
+    {entries.length === 0 ? (
+      <p class="empty">{strings.empty.timeline}</p>
+    ) : (
+      <Timeline locale={locale} entries={entries} />
+    )}
+  </section>
+</BaseLayout>
+
+<style>
+  .index {
+    padding: 0 var(--space-3) var(--space-6);
+  }
+  .empty {
+    color: var(--ink-muted);
+    font-style: italic;
+  }
+</style>

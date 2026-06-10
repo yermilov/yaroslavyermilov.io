@@ -1,0 +1,74 @@
+---
+/**
+ * Static sub-route rail for a section (e.g. all | writing | talking |
+ * about me kit). Plain links — no JS, shareable URLs.
+ */
+interface Tab {
+  href: string;
+  label: string;
+  active?: boolean;
+}
+
+interface Props {
+  tabs: Tab[];
+  label: string;
+}
+
+const { tabs, label } = Astro.props;
+---
+
+<nav class="tabs" aria-label={label}>
+  <ul role="list">
+    {tabs.map((tab) => (
+      <li>
+        <a
+          href={tab.href}
+          class:list={['tab', { 'tab-active': tab.active }]}
+          aria-current={tab.active ? 'page' : undefined}
+        >
+          {tab.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>
+
+<style>
+  .tabs {
+    margin: calc(-1 * var(--space-4) + var(--space-2)) 0 var(--space-4);
+  }
+  .tabs ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 0;
+    flex-wrap: wrap;
+  }
+  .tabs li + li::before {
+    content: '|';
+    font-family: var(--font-mono);
+    color: var(--rule);
+    padding: 0 var(--space-2);
+  }
+  .tab {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    text-transform: lowercase;
+    letter-spacing: 0.02em;
+    color: var(--ink-muted);
+    border: none;
+    border-bottom: 1.5px solid transparent;
+    padding: 2px 0;
+  }
+  .tab:hover {
+    background: transparent;
+    color: var(--orange-accent);
+    border-bottom-color: var(--orange-accent);
+  }
+  .tab-active {
+    color: var(--green-primary);
+    border-bottom-color: var(--green-primary);
+    font-weight: 700;
+  }
+</style>

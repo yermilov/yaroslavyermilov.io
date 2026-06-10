@@ -17,11 +17,10 @@ const strings = t(locale);
 const homeHref = localePath(locale);
 
 const navItems = [
-  { href: localePath(locale, 'blog'), label: strings.nav.blog },
-  { href: localePath(locale, 'talks'), label: strings.nav.talks },
-  { href: localePath(locale, 'books'), label: strings.nav.books },
-  { href: localePath(locale, 'gallery'), label: strings.nav.gallery },
-  { href: localePath(locale, 'conference-kit'), label: strings.nav.kit },
+  { href: localePath(locale, 'writing-talking'), label: strings.nav.writingTalking },
+  { href: localePath(locale, 'inspiration'), label: strings.nav.inspiration },
+  { href: localePath(locale, 'personal'), label: strings.nav.personal },
+  { href: localePath(locale, 'workshop'), label: strings.nav.workshop },
 ];
 
 const currentPath = Astro.url.pathname;

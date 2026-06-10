@@ -30,20 +30,73 @@ export function htmlLang(locale: Locale): string {
   return LANG_TAGS[locale].html;
 }
 
+/** Noun forms for counters. English uses one/many; Ukrainian one/few/many. */
+export interface PluralForms {
+  one: string;
+  few: string;
+  many: string;
+}
+
+export function pluralize(locale: Locale, n: number, forms: PluralForms): string {
+  const rule = new Intl.PluralRules(bcp47Locale(locale)).select(n);
+  const form = rule === 'one' ? forms.one : rule === 'few' ? forms.few : forms.many;
+  return `${n} ${form}`;
+}
+
 export interface Strings {
-  nav: { home: string; blog: string; lab: string; games: string; talks: string; gallery: string; books: string; about: string; kit: string };
+  nav: {
+    home: string;
+    writingTalking: string;
+    inspiration: string;
+    personal: string;
+    workshop: string;
+    lab: string;
+    games: string;
+    about: string;
+  };
+  subnav: { all: string; writing: string; talking: string; kit: string };
   site: { title: string; tagline: string; languageName: string; otherLanguageName: string };
-  empty: { blog: string; lab: string; games: string; talks: string; gallery: string; books: string };
+  empty: {
+    timeline: string;
+    writing: string;
+    talking: string;
+    inspiration: string;
+    personal: string;
+    lab: string;
+    games: string;
+  };
+  sections: {
+    writingTalking: { title: string; lede: string };
+    inspiration: { title: string; lede: string };
+    personal: { title: string; lede: string };
+  };
+  stats: {
+    posts: PluralForms;
+    talks: PluralForms;
+    books: PluralForms;
+    photos: PluralForms;
+    since: string;
+  };
+  timeline: {
+    post: string;
+    talk: string;
+    book: string;
+    photos: string;
+    upcoming: string;
+  };
   books: {
-    indexTitle: string;
-    backToBooks: string;
     by: string;
     rating: string;
     buy: string;
+    backToBooks: string;
   };
   home: {
     catchMeAt: string;
     recent: string;
+    everything: string;
+    fromTheShelf: string;
+    shelfNote: string;
+    moreInspiration: string;
     role: string;
     location: string;
     followLinkedIn: string;
@@ -58,6 +111,24 @@ export interface Strings {
     photos: string;
     repo: string;
     backToTalks: string;
+  };
+  kit: {
+    eyebrow: string;
+    title: string;
+    downloadPhoto: string;
+  };
+  workshop: {
+    eyebrow: string;
+    headline: string;
+    lede: string;
+    offerOneTitle: string;
+    offerOneDesc: string;
+    offerTwoTitle: string;
+    offerTwoDesc: string;
+    ctaEyebrow: string;
+    ctaHeadline: string;
+    ctaHandle: string;
+    note: string;
   };
   labels: {
     published: string;
@@ -81,7 +152,17 @@ export interface Strings {
 
 const STRINGS: Record<Locale, Strings> = {
   en: {
-    nav: { home: 'Home', blog: 'my blog', lab: 'Lab', games: 'Games', talks: 'my talks', gallery: 'my photos', books: "books I've read", about: 'About', kit: 'my kit' },
+    nav: {
+      home: 'Home',
+      writingTalking: 'writing & talking',
+      inspiration: 'inspiration',
+      personal: 'personal',
+      workshop: 'workshop',
+      lab: 'Lab',
+      games: 'Games',
+      about: 'About',
+    },
+    subnav: { all: 'all', writing: 'writing', talking: 'talking', kit: 'about me kit' },
     site: {
       title: 'Yaroslav Yermilov',
       tagline: 'Notes, experiments, talks.',
@@ -89,27 +170,59 @@ const STRINGS: Record<Locale, Strings> = {
       otherLanguageName: 'Ukrainian',
     },
     empty: {
-      blog: 'No posts yet.',
+      timeline: 'Nothing here yet.',
+      writing: 'No posts yet.',
+      talking: 'No talks yet.',
+      inspiration: 'Nothing on the shelf yet.',
+      personal: 'No photos yet.',
       lab: 'No lab entries yet.',
       games: 'No games yet.',
-      talks: 'No talks yet.',
-      gallery: 'No photos yet.',
-      books: 'No books yet.',
+    },
+    sections: {
+      writingTalking: {
+        title: 'writing & talking',
+        lede: 'Everything I have written and said out loud, on one timeline.',
+      },
+      inspiration: {
+        title: 'inspiration',
+        lede: 'Books that shaped how I think. Podcasts, links and people — coming later.',
+      },
+      personal: {
+        title: 'personal',
+        lede: 'Moments worth keeping, in order.',
+      },
+    },
+    stats: {
+      posts: { one: 'post', few: 'posts', many: 'posts' },
+      talks: { one: 'talk', few: 'talks', many: 'talks' },
+      books: { one: 'book', few: 'books', many: 'books' },
+      photos: { one: 'photo', few: 'photos', many: 'photos' },
+      since: 'since',
+    },
+    timeline: {
+      post: 'post',
+      talk: 'talk',
+      book: 'book',
+      photos: 'photos',
+      upcoming: 'upcoming',
+    },
+    books: {
+      by: 'by',
+      rating: 'Rating',
+      buy: 'Buy',
+      backToBooks: '← Back to inspiration',
     },
     home: {
       catchMeAt: 'Catch me at',
-      recent: 'Recent',
+      recent: 'Recently',
+      everything: 'everything →',
+      fromTheShelf: 'From the shelf',
+      shelfNote: 'one of my recent reads — refresh for another',
+      moreInspiration: 'more inspiration →',
       role: 'Principal Software Engineer @ Superhuman',
       location: 'Kyiv, Ukraine',
       followLinkedIn: 'Follow me on LinkedIn',
       elsewhere: 'Elsewhere',
-    },
-    books: {
-      indexTitle: 'Books',
-      backToBooks: '← Back to books',
-      by: 'by',
-      rating: 'Rating',
-      buy: 'Buy',
     },
     talks: {
       nextUp: 'Next up',
@@ -120,6 +233,26 @@ const STRINGS: Record<Locale, Strings> = {
       photos: 'Photos',
       repo: 'Repo',
       backToTalks: '← Back to talks',
+    },
+    kit: {
+      eyebrow: 'about me kit',
+      title: 'Yaroslav Yermilov',
+      downloadPhoto: 'Download photo →',
+    },
+    workshop: {
+      eyebrow: 'workshop',
+      headline: 'I teach teams to ship with AI.',
+      lede: 'Hands-on workshops, built from a year of running AI-first engineering in production — not slideware.',
+      offerOneTitle: 'AI agentic coding',
+      offerOneDesc:
+        'From autocomplete to agents: how to set up a coding harness, delegate real work to AI agents, review what they produce, and stay in control of quality.',
+      offerTwoTitle: 'AI-first team transformation',
+      offerTwoDesc:
+        'How an engineering team rewires its habits — planning, code review, on-call, knowledge sharing — when AI does the first draft of everything.',
+      ctaEyebrow: 'Interested?',
+      ctaHeadline: 'DM me on LinkedIn',
+      ctaHandle: 'in/yarik-yermilov',
+      note: 'Full programme is taking shape — reach out and we will tailor it to your team.',
     },
     labels: {
       published: 'Published',
@@ -141,7 +274,17 @@ const STRINGS: Record<Locale, Strings> = {
     },
   },
   ua: {
-    nav: { home: 'Головна', blog: 'мій блог', lab: 'Лаб', games: 'Ігри', talks: 'мої доповіді', gallery: 'мої фото', books: 'книги, які я читав', about: 'Про', kit: 'мій kit' },
+    nav: {
+      home: 'Головна',
+      writingTalking: 'пишу й виступаю',
+      inspiration: 'натхнення',
+      personal: 'особисте',
+      workshop: 'воркшоп',
+      lab: 'Лаб',
+      games: 'Ігри',
+      about: 'Про',
+    },
+    subnav: { all: 'усе', writing: 'тексти', talking: 'виступи', kit: 'про мене · kit' },
     site: {
       title: 'Ярослав Єрмілов',
       tagline: 'Нотатки, експерименти, доповіді.',
@@ -149,27 +292,59 @@ const STRINGS: Record<Locale, Strings> = {
       otherLanguageName: 'Англійська',
     },
     empty: {
-      blog: 'Поки нема дописів.',
+      timeline: 'Поки нічого нема.',
+      writing: 'Поки нема дописів.',
+      talking: 'Поки нема доповідей.',
+      inspiration: 'На полиці поки порожньо.',
+      personal: 'Поки нема фото.',
       lab: 'Поки нема записів у лабі.',
       games: 'Поки нема ігор.',
-      talks: 'Поки нема доповідей.',
-      gallery: 'Поки нема фото.',
-      books: 'Поки нема книг.',
+    },
+    sections: {
+      writingTalking: {
+        title: 'пишу й виступаю',
+        lede: 'Усе, що я написав і сказав уголос, — на одній стрічці часу.',
+      },
+      inspiration: {
+        title: 'натхнення',
+        lede: 'Книги, які вплинули на те, як я думаю. Подкасти, посилання й люди — згодом.',
+      },
+      personal: {
+        title: 'особисте',
+        lede: 'Моменти, які варто зберегти, — за порядком.',
+      },
+    },
+    stats: {
+      posts: { one: 'допис', few: 'дописи', many: 'дописів' },
+      talks: { one: 'доповідь', few: 'доповіді', many: 'доповідей' },
+      books: { one: 'книга', few: 'книги', many: 'книг' },
+      photos: { one: 'фото', few: 'фото', many: 'фото' },
+      since: 'із',
+    },
+    timeline: {
+      post: 'допис',
+      talk: 'доповідь',
+      book: 'книга',
+      photos: 'фото',
+      upcoming: 'скоро',
+    },
+    books: {
+      by: 'автор —',
+      rating: 'Оцінка',
+      buy: 'Купити',
+      backToBooks: '← До натхнення',
     },
     home: {
       catchMeAt: 'Побачимося',
       recent: 'Нещодавно',
+      everything: 'усе →',
+      fromTheShelf: 'З полиці',
+      shelfNote: 'одна з нещодавно прочитаних — оновіть сторінку для іншої',
+      moreInspiration: 'більше натхнення →',
       role: 'Principal Software Engineer @ Superhuman',
       location: 'Київ, Україна',
       followLinkedIn: 'Підписатися в LinkedIn',
       elsewhere: 'У мережі',
-    },
-    books: {
-      indexTitle: 'Книги',
-      backToBooks: '← До книг',
-      by: 'автор —',
-      rating: 'Оцінка',
-      buy: 'Купити',
     },
     talks: {
       nextUp: 'Далі',
@@ -180,6 +355,26 @@ const STRINGS: Record<Locale, Strings> = {
       photos: 'Фото',
       repo: 'Репо',
       backToTalks: '← До доповідей',
+    },
+    kit: {
+      eyebrow: 'про мене · kit',
+      title: 'Ярослав Єрмілов',
+      downloadPhoto: 'Завантажити фото →',
+    },
+    workshop: {
+      eyebrow: 'воркшоп',
+      headline: 'Я вчу команди розробляти з AI.',
+      lede: 'Практичні воркшопи, побудовані на році AI-first інженерії в продакшені — не слайди заради слайдів.',
+      offerOneTitle: 'AI agentic coding',
+      offerOneDesc:
+        'Від автодоповнення до агентів: як налаштувати coding harness, делегувати реальну роботу AI-агентам, ревʼювити їхній результат і тримати якість під контролем.',
+      offerTwoTitle: 'AI-first трансформація команди',
+      offerTwoDesc:
+        'Як інженерна команда перебудовує звички — планування, код-ревʼю, on-call, обмін знаннями, — коли перший чорновик усього робить AI.',
+      ctaEyebrow: 'Цікаво?',
+      ctaHeadline: 'Напишіть мені в LinkedIn',
+      ctaHandle: 'in/yarik-yermilov',
+      note: 'Повна програма ще формується — напишіть, і ми адаптуємо її під вашу команду.',
     },
     labels: {
       published: 'Опубліковано',

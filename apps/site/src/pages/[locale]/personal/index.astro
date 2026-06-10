@@ -1,0 +1,48 @@
+---
+import { LOCALES, t, pluralize, type Locale } from '@lib/i18n';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import SectionMasthead from '@components/SectionMasthead.astro';
+import Timeline from '@components/Timeline.astro';
+import { getPersonalTimeline } from '@lib/content';
+
+export async function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+
+const locale = Astro.params.locale as Locale;
+const strings = t(locale);
+const entries = await getPersonalTimeline();
+
+const photoCount = entries.reduce((n, e) => n + (e.kind === 'photos' ? e.photos.length : 0), 0);
+const minYear = entries.length > 0 ? Math.min(...entries.map((e) => e.date.getFullYear())) : null;
+const stats = [
+  `✧ ${pluralize(locale, photoCount, strings.stats.photos)}`,
+  ...(minYear ? [`${strings.stats.since} ${minYear}`] : []),
+];
+---
+
+<BaseLayout locale={locale} title={strings.sections.personal.title} alternatePath="personal">
+  <section class="page-frame index">
+    <SectionMasthead
+      eyebrow="vol. 03"
+      title={strings.sections.personal.title}
+      lede={strings.sections.personal.lede}
+      stats={stats}
+    />
+    {entries.length === 0 ? (
+      <p class="empty">{strings.empty.personal}</p>
+    ) : (
+      <Timeline locale={locale} entries={entries} />
+    )}
+  </section>
+</BaseLayout>
+
+<style>
+  .index {
+    padding: 0 var(--space-3) var(--space-6);
+  }
+  .empty {
+    color: var(--ink-muted);
+    font-style: italic;
+  }
+</style>

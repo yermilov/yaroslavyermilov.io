@@ -87,3 +87,64 @@ export async function getBookBySlug(slug: string): Promise<BookEntry | undefined
   const all = await getCollection('books', isPublished);
   return all.find((b) => b.slug === slug);
 }
+
+/* ── Unified timelines ─────────────────────────────────────────────
+ * The "writing & talking" section interleaves posts and talks into a
+ * single reverse-chronological stream; "inspiration" wraps books the
+ * same way so podcasts/links can join later without reshaping pages.
+ */
+
+export type TimelineEntry =
+  | { kind: 'post'; date: Date; post: PostEntry }
+  | { kind: 'talk'; date: Date; talk: TalkEntry }
+  | { kind: 'book'; date: Date; book: BookEntry }
+  | { kind: 'photos'; date: Date; caption?: string | undefined; location?: string | undefined; photos: string[] };
+
+function byDateDesc(a: TimelineEntry, b: TimelineEntry): number {
+  return b.date.getTime() - a.date.getTime();
+}
+
+export async function getWritingTalkingTimeline(): Promise<TimelineEntry[]> {
+  const [posts, talks] = await Promise.all([getPosts(), getTalks()]);
+  const entries: TimelineEntry[] = [
+    ...posts.map((post): TimelineEntry => ({ kind: 'post', date: post.data.publishedAt, post })),
+    ...talks.map((talk): TimelineEntry => ({ kind: 'talk', date: talk.data.date, talk })),
+  ];
+  return entries.sort(byDateDesc);
+}
+
+export async function getInspirationTimeline(): Promise<TimelineEntry[]> {
+  const books = await getBooks();
+  return books.map((book): TimelineEntry => ({ kind: 'book', date: book.data.readAt, book }));
+}
+
+/**
+ * "Personal" interleaves standalone gallery shots with talk-event photos.
+ * Photos taken the same day under the same caption collapse into one
+ * timeline moment.
+ */
+export async function getPersonalTimeline(): Promise<TimelineEntry[]> {
+  const [standalone, talks] = await Promise.all([getCollection('gallery'), getTalks()]);
+
+  const moments = new Map<string, Extract<TimelineEntry, { kind: 'photos' }>>();
+  function addPhotos(date: Date, photos: string[], caption?: string, location?: string): void {
+    const key = `${date.toISOString().slice(0, 10)}|${caption ?? ''}|${location ?? ''}`;
+    const existing = moments.get(key);
+    if (existing) {
+      existing.photos.push(...photos);
+    } else {
+      moments.set(key, { kind: 'photos', date, caption, location, photos: [...photos] });
+    }
+  }
+
+  for (const entry of standalone) {
+    addPhotos(entry.data.date, [entry.data.src], entry.data.caption, entry.data.location);
+  }
+  for (const talk of talks) {
+    if (talk.data.photos.length > 0) {
+      addPhotos(talk.data.date, talk.data.photos, talk.data.event);
+    }
+  }
+
+  return [...moments.values()].sort(byDateDesc);
+}

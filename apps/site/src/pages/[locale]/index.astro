@@ -1,8 +1,9 @@
 ---
 import { LOCALES, t, localePath, languageBadge, bcp47Locale, type Locale } from '@lib/i18n';
 import BaseLayout from '@layouts/BaseLayout.astro';
-import { getTalks } from '@lib/content';
+import Timeline from '@components/Timeline.astro';
 import RelativeDays from '@components/RelativeDays.tsx';
+import { getBooks, getTalks, getWritingTalkingTimeline } from '@lib/content';
 
 export async function getStaticPaths() {
   return LOCALES.map((locale) => ({ params: { locale } }));
@@ -24,12 +25,27 @@ const upcoming = allTalks
   .filter((talk) => atMidnight(talk.data.date) >= today)
   .reverse(); // soonest first
 
-const threeMonthsAgo = new Date(today);
-threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-const recent = allTalks.filter((talk) => {
-  const d = atMidnight(talk.data.date);
-  return d < today && d >= threeMonthsAgo;
-}); // already sorted desc by getTalks()
+/* Recent stream: the merged writing & talking timeline, minus the future
+ * talks already shown in "Catch me at". */
+const RECENT_COUNT = 6;
+const recent = (await getWritingTalkingTimeline())
+  .filter((e) => !(e.kind === 'talk' && atMidnight(e.date) >= today))
+  .slice(0, RECENT_COUNT);
+
+/* From the shelf: newest book server-rendered; the last ten serialized so a
+ * tiny script can deal a random one per visit. */
+const shelf = (await getBooks()).slice(0, 10).map((book) => ({
+  title: book.data.title,
+  author: book.data.author,
+  cover: book.data.cover,
+  rating: book.data.rating ?? null,
+  summary: book.data.summary,
+  href: localePath(locale, `books/${book.slug}`),
+}));
+const shelfFirst = shelf[0];
+function starsOf(rating: number | null): string | null {
+  return rating ? '★'.repeat(rating) + '☆'.repeat(5 - rating) : null;
+}
 
 const monthFmt = new Intl.DateTimeFormat(bcp47Locale(locale), { month: 'short' });
 const rtf = new Intl.RelativeTimeFormat(bcp47Locale(locale), { numeric: 'auto' });
@@ -123,81 +139,115 @@ function calMonth(date: Date): string {
     </ul>
   </section>
 
-  <section
-    class="page-frame programme programme-recent"
-    data-programme="recent"
-    hidden={recent.length === 0}
-  >
-    <p class="workbench programme-label programme-label-recent">/ {strings.home.recent}</p>
-    <ul class="programme-list" role="list">
-      {recent.map((talk) => {
-        const detailHref = localePath(locale, `talks/${talk.slug}`);
-        return (
-          <li class="programme-item" data-iso={talk.data.date.toISOString()}>
-            <div class="cal-tile cal-tile-past" aria-hidden="true">
-              <span class="cal-mo">{calMonth(talk.data.date)}</span>
-              <span class="cal-day">{talk.data.date.getDate()}</span>
-              <span class="cal-yr">{talk.data.date.getFullYear()}</span>
-            </div>
-            <div class="programme-content">
-              <p class="workbench event event-muted">
-                ▸ {talk.data.eventUrl ? (
-                  <a class="event-link event-link-muted" href={talk.data.eventUrl} rel="noopener">{talk.data.event}</a>
-                ) : (
-                  <span>{talk.data.event}</span>
-                )}
-              </p>
-              <h2 class="programme-title">
-                <a href={detailHref}>{talk.data.title}</a>
-              </h2>
-              <p class="workbench meta">
-                <RelativeDays
-                  client:idle
-                  iso={talk.data.date.toISOString()}
-                  bcp47={bcp47Locale(locale)}
-                  fallback={rtf.format(daysFromToday(talk.data.date), 'day')}
-                  serverDays={daysFromToday(talk.data.date)}
-                />
-                {talk.data.language && (
-                  <>
-                    <span aria-hidden="true">·</span>
-                    <span>{languageBadge(talk.data.language)}</span>
-                  </>
-                )}
-              </p>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+  <section class="page-frame recent" hidden={recent.length === 0}>
+    <div class="recent-head">
+      <p class="workbench recent-label">/ {strings.home.recent}</p>
+      <a class="workbench recent-all" href={localePath(locale, 'writing-talking')}>
+        {strings.home.everything}
+      </a>
+    </div>
+    <Timeline locale={locale} entries={recent} compact />
   </section>
+
+  {shelfFirst && (
+    <section class="page-frame shelf">
+      <div class="recent-head">
+        <p class="workbench recent-label shelf-label">→ {strings.home.fromTheShelf}</p>
+        <span class="workbench shelf-note">{strings.home.shelfNote}</span>
+      </div>
+      <div class="shelf-card" data-shelf-card>
+        <a class="shelf-cover" href={shelfFirst.href} data-shelf-cover aria-hidden="true" tabindex="-1">
+          <img src={shelfFirst.cover} alt="" data-shelf-img />
+        </a>
+        <div class="shelf-meta">
+          {starsOf(shelfFirst.rating) && (
+            <p class="workbench shelf-stars" data-shelf-stars>{starsOf(shelfFirst.rating)}</p>
+          )}
+          <h2 class="shelf-title">
+            <a href={shelfFirst.href} data-shelf-link>{shelfFirst.title}</a>
+          </h2>
+          <p class="shelf-author" data-shelf-author>{strings.books.by} {shelfFirst.author}</p>
+          <p class="shelf-summary" data-shelf-summary>{shelfFirst.summary}</p>
+          <a class="workbench shelf-more" href={localePath(locale, 'inspiration')}>
+            {strings.home.moreInspiration}
+          </a>
+        </div>
+      </div>
+      <script is:inline type="application/json" data-shelf-data set:html={JSON.stringify({ by: strings.books.by, books: shelf })} />
+    </section>
+  )}
 </BaseLayout>
 
 <script>
-  import { reconcileProgramme } from '@lib/programme-reconcile';
+  // "Catch me at" self-corrects on stale static builds: hide passed talks,
+  // hide the whole block when none remain.
+  {
+    const section = document.querySelector<HTMLElement>('[data-programme="upcoming"]');
+    if (section) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      let visible = 0;
+      section.querySelectorAll<HTMLElement>('.programme-item').forEach((item) => {
+        const iso = item.getAttribute('data-iso');
+        if (!iso) return;
+        const d = new Date(iso);
+        d.setHours(0, 0, 0, 0);
+        if (d < today) item.hidden = true;
+        else visible += 1;
+      });
+      if (visible === 0) section.hidden = true;
+    }
+  }
 
-  const upcomingSection = document.querySelector<HTMLElement>('[data-programme="upcoming"]');
-  const recentSection = document.querySelector<HTMLElement>('[data-programme="recent"]');
-  const upcomingList = upcomingSection?.querySelector<HTMLElement>('.programme-list');
-  const recentList = recentSection?.querySelector<HTMLElement>('.programme-list');
-
-  if (upcomingSection && recentSection && upcomingList && recentList) {
-    reconcileProgramme({
-      upcomingSection,
-      recentSection,
-      upcomingList,
-      recentList,
-      applyPastStyle: (item) => {
-        item.querySelector('.cal-tile')?.classList.add('cal-tile-past');
-        item.querySelector('.event')?.classList.add('event-muted');
-        item.querySelector('.event-link')?.classList.add('event-link-muted');
-      },
-      applyFutureStyle: (item) => {
-        item.querySelector('.cal-tile')?.classList.remove('cal-tile-past');
-        item.querySelector('.event')?.classList.remove('event-muted');
-        item.querySelector('.event-link')?.classList.remove('event-link-muted');
-      },
-    });
+  // From the shelf: deal a random recent read per visit. The newest book is
+  // server-rendered as the no-JS fallback.
+  {
+    const data = document.querySelector<HTMLScriptElement>('[data-shelf-data]');
+    const card = document.querySelector<HTMLElement>('[data-shelf-card]');
+    if (data && card) {
+      try {
+        const { by, books } = JSON.parse(data.textContent || '{}') as {
+          by: string;
+          books: Array<{
+            title: string;
+            author: string;
+            cover: string;
+            rating: number | null;
+            summary: string;
+            href: string;
+          }>;
+        };
+        if (Array.isArray(books) && books.length > 1) {
+          const pick = books[Math.floor(Math.random() * books.length)];
+          if (pick) {
+            const img = card.querySelector<HTMLImageElement>('[data-shelf-img]');
+            const coverLink = card.querySelector<HTMLAnchorElement>('[data-shelf-cover]');
+            const link = card.querySelector<HTMLAnchorElement>('[data-shelf-link]');
+            const author = card.querySelector<HTMLElement>('[data-shelf-author]');
+            const summary = card.querySelector<HTMLElement>('[data-shelf-summary]');
+            const stars = card.querySelector<HTMLElement>('[data-shelf-stars]');
+            if (img) img.src = pick.cover;
+            if (coverLink) coverLink.href = pick.href;
+            if (link) {
+              link.href = pick.href;
+              link.textContent = pick.title;
+            }
+            if (author) author.textContent = `${by} ${pick.author}`;
+            if (summary) summary.textContent = pick.summary;
+            if (stars) {
+              if (pick.rating) {
+                stars.textContent = '★'.repeat(pick.rating) + '☆'.repeat(5 - pick.rating);
+                stars.hidden = false;
+              } else {
+                stars.hidden = true;
+              }
+            }
+          }
+        }
+      } catch {
+        // malformed JSON → keep the server-rendered newest book
+      }
+    }
   }
 </script>
 
@@ -366,16 +416,9 @@ function calMonth(date: Date): string {
     padding: var(--space-4) var(--space-3) var(--space-5);
     margin-top: var(--space-3);
   }
-  .programme-recent {
-    border-top: 1px solid var(--rule);
-    padding-bottom: var(--space-6);
-  }
   .programme-label {
     color: var(--green-primary);
     margin: 0 0 var(--space-3);
-  }
-  .programme-label-recent {
-    color: var(--ink-muted);
   }
   .programme-list {
     list-style: none;
@@ -413,11 +456,6 @@ function calMonth(date: Date): string {
     line-height: 1.05;
     user-select: none;
   }
-  .cal-tile-past {
-    background: var(--bg-paper);
-    border-style: dashed;
-    color: var(--ink-muted);
-  }
   .cal-mo {
     font-size: 0.78rem;
     color: var(--ink-muted);
@@ -429,9 +467,6 @@ function calMonth(date: Date): string {
     letter-spacing: -0.02em;
     margin: 0.15rem 0;
     color: var(--ink);
-  }
-  .cal-tile-past .cal-day {
-    color: var(--ink-muted);
   }
   .cal-yr {
     font-size: 0.7rem;
@@ -450,15 +485,9 @@ function calMonth(date: Date): string {
     margin: 0 0 0.4rem;
     color: var(--green-primary);
   }
-  .event-muted {
-    color: var(--ink-muted);
-  }
   .event-link {
     border-bottom: none;
     color: var(--green-primary);
-  }
-  .event-link-muted {
-    color: var(--ink-muted);
   }
   .event-link:hover {
     background: transparent;
@@ -509,6 +538,125 @@ function calMonth(date: Date): string {
       padding: 0 0 0 0.6rem;
       margin: 0;
       width: auto;
+    }
+  }
+
+  /* RECENT — the merged writing & talking stream, compact spine variant. */
+  .recent {
+    border-top: 1px solid var(--rule);
+    padding: var(--space-4) var(--space-3) var(--space-4);
+  }
+  .recent-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-3);
+  }
+  .recent-label {
+    color: var(--ink-muted);
+    margin: 0;
+  }
+  .recent-all {
+    color: var(--green-primary);
+    border-bottom: 1.5px solid transparent;
+  }
+  .recent-all:hover {
+    background: transparent;
+    color: var(--orange-accent);
+    border-bottom-color: var(--orange-accent);
+  }
+
+  /* FROM THE SHELF — one dealt card from the inspiration shelf. */
+  .shelf {
+    border-top: 2px solid var(--green-primary);
+    padding: var(--space-4) var(--space-3) var(--space-5);
+  }
+  .shelf-label {
+    color: var(--green-primary);
+  }
+  .shelf-note {
+    color: var(--ink-muted);
+    text-transform: none;
+    letter-spacing: 0.01em;
+  }
+  .shelf-card {
+    display: flex;
+    gap: var(--space-4);
+    align-items: flex-start;
+  }
+  .shelf-cover {
+    flex: 0 0 auto;
+    border: none;
+    display: block;
+  }
+  .shelf-cover:hover {
+    background: transparent;
+  }
+  .shelf-cover img {
+    width: 128px;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    display: block;
+    border: 1px solid var(--rule);
+    background: var(--bg-elevated);
+    box-shadow: 4px 5px 0 0 var(--rule);
+    transition: transform 160ms ease, box-shadow 160ms ease;
+  }
+  .shelf-card:hover .shelf-cover img {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 7px 0 0 var(--rule);
+  }
+  .shelf-meta {
+    min-width: 0;
+    max-width: var(--measure);
+  }
+  .shelf-stars {
+    color: var(--orange-accent);
+    letter-spacing: 0.08em;
+    margin: 0 0 0.4rem;
+  }
+  .shelf-title {
+    font-size: clamp(1.5rem, 3.4vw, 2rem);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.12;
+    margin: 0 0 0.35rem;
+  }
+  .shelf-title a {
+    border-bottom: none;
+    color: inherit;
+  }
+  .shelf-title a:hover {
+    background: transparent;
+    color: var(--orange-accent);
+  }
+  .shelf-author {
+    font-style: italic;
+    color: var(--ink-muted);
+    margin: 0 0 var(--space-2);
+  }
+  .shelf-summary {
+    color: var(--ink-muted);
+    margin: 0 0 var(--space-2);
+  }
+  .shelf-more {
+    color: var(--green-primary);
+    border-bottom: 1.5px solid transparent;
+  }
+  .shelf-more:hover {
+    background: transparent;
+    color: var(--orange-accent);
+    border-bottom-color: var(--orange-accent);
+  }
+
+  @media (max-width: 540px) {
+    .shelf-card {
+      gap: var(--space-3);
+    }
+    .shelf-cover img {
+      width: 96px;
     }
   }
 </style>
