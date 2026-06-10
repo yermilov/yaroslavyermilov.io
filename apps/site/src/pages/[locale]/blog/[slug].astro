@@ -68,6 +68,7 @@ const { Content } = await post.render();
   alternateMissing={alternateMissing}
   translationPending={translationPending}
   sourceLocale={sourceLocale}
+  ogImage={`/og/post-${postSlug(post)}.png`}
 >
   <Content />
 </PostLayout>

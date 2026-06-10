@@ -17,6 +17,8 @@ interface Props {
   themeLab?: boolean;
   /** when true, robots noindex (drafts, error pages) */
   noindex?: boolean;
+  /** path to the page's social card under /og/, defaults to the home card */
+  ogImage?: string | undefined;
 }
 
 const {
@@ -27,12 +29,14 @@ const {
   alternateMissing = false,
   themeLab = false,
   noindex = false,
+  ogImage,
 } = Astro.props;
 
 const strings = t(locale);
 const fullTitle = title ? `${title} — ${strings.site.title}` : strings.site.title;
 const meta = description ?? strings.site.tagline;
 const canonical = new URL(Astro.url.pathname, Astro.site).toString();
+const ogImageUrl = new URL(ogImage ?? `/og/home-${locale}.png`, Astro.site).toString();
 ---
 
 <!doctype html>
@@ -44,13 +48,21 @@ const canonical = new URL(Astro.url.pathname, Astro.site).toString();
     <title>{fullTitle}</title>
     <meta name="description" content={meta} />
     <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     {noindex && <meta name="robots" content="noindex" />}
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={meta} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical} />
     <meta property="og:locale" content={ogLocale(locale)} />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={fullTitle} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={ogImageUrl} />
     <link rel="alternate" type="application/rss+xml" title={`${strings.site.title} (${locale.toUpperCase()})`} href={`/${locale}/rss.xml`} />
     {alternatePath !== undefined && !alternateMissing && (
       <link rel="alternate" hreflang={htmlLang(otherLocale(locale))} href={`/${otherLocale(locale)}/${alternatePath.replace(/^\/+/, '')}/`} />

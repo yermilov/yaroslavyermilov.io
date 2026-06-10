@@ -26,6 +26,7 @@ const rating = book.data.rating ?? 0;
   title={`${book.data.title} — ${book.data.author}`}
   description={book.data.summary}
   alternatePath={`books/${book.slug}`}
+  ogImage={`/og/book-${book.slug}.png`}
 >
   <article class="page-frame book" data-pagefind-body>
     <p class="workbench breadcrumb">

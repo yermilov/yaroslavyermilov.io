@@ -37,6 +37,11 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.8",
-    "@yermilov/shared-config": "workspace:*"
+    "@fontsource/jetbrains-mono": "^5.2.8",
+    "@fontsource/newsreader": "^5.2.10",
+    "@fontsource/pt-serif": "^5.2.8",
+    "@resvg/resvg-js": "^2.6.2",
+    "@yermilov/shared-config": "workspace:*",
+    "satori": "^0.26.0"
   }
 }
