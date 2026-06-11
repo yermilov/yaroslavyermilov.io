@@ -67,12 +67,11 @@ function calMonth(date: Date): string {
       </div>
       <div class="cover-body">
         <img class="avatar" src="/home/avatar.jpg" alt={strings.site.title} loading="eager" />
-        <h1 class="display">
-          {strings.site.title}
-          <span class="flag" aria-label="Ukraine">🇺🇦</span>
-        </h1>
+        <h1 class="display">{strings.site.title}</h1>
         <p class="role">{strings.home.role}</p>
-        <p class="workbench location">▸ {strings.home.location}</p>
+        <p class="workbench location">
+          ▸ {strings.home.location} <span class="flag" aria-hidden="true">🇺🇦</span>
+        </p>
       </div>
       <nav class="elsewhere" aria-label={strings.home.elsewhere}>
         <a
@@ -337,9 +336,9 @@ function calMonth(date: Date): string {
   }
   .flag {
     display: inline-block;
-    margin-left: 0.3rem;
-    font-size: 0.7em;
-    vertical-align: middle;
+    margin-left: 0.15rem;
+    font-size: 1.1em;
+    vertical-align: -0.08em;
   }
   .role {
     font-size: 1.1rem;
