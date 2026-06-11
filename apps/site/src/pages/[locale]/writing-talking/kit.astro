@@ -1,7 +1,6 @@
 ---
 import { LOCALES, t, localePath, type Locale } from '@lib/i18n';
 import BaseLayout from '@layouts/BaseLayout.astro';
-import SectionMasthead from '@components/SectionMasthead.astro';
 import SectionTabs from '@components/SectionTabs.astro';
 
 export async function getStaticPaths() {
@@ -21,13 +20,9 @@ const tabs = [
 
 <BaseLayout locale={locale} title={`${strings.sections.writingTalking.title} — ${strings.subnav.kit}`} alternatePath="writing-talking/kit" ogImage={`/og/writing-talking-${locale}.png`}>
   <section class="page-frame index">
-    <SectionMasthead
-      eyebrow={`vol. 01 / ${strings.subnav.kit}`}
-      title={strings.sections.writingTalking.title}
-    />
     <SectionTabs tabs={tabs} label={strings.sections.writingTalking.title} />
     <article class="prose-column kit">
-      <h2 class="kit-name">{strings.kit.title}</h2>
+      <h1 class="kit-name">{strings.kit.title}</h1>
 
       {locale === 'ua' ? (
         <>
@@ -83,13 +78,13 @@ const tabs = [
 
 <style>
   .index {
-    padding: 0 var(--space-3) var(--space-6);
+    padding: var(--space-4) var(--space-3) var(--space-6);
   }
   .kit {
     margin-inline: 0;
   }
   .kit-name {
-    margin-top: 0;
+    margin: 0 0 var(--space-2);
     font-size: 1.9rem;
   }
 </style>

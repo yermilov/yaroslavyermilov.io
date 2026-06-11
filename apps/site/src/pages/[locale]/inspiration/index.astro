@@ -1,7 +1,6 @@
 ---
-import { LOCALES, t, pluralize, type Locale } from '@lib/i18n';
+import { LOCALES, t, type Locale } from '@lib/i18n';
 import BaseLayout from '@layouts/BaseLayout.astro';
-import SectionMasthead from '@components/SectionMasthead.astro';
 import Timeline from '@components/Timeline.astro';
 import { getInspirationTimeline } from '@lib/content';
 
@@ -12,22 +11,11 @@ export async function getStaticPaths() {
 const locale = Astro.params.locale as Locale;
 const strings = t(locale);
 const entries = await getInspirationTimeline();
-
-const minYear = entries.length > 0 ? Math.min(...entries.map((e) => e.date.getFullYear())) : null;
-const stats = [
-  `❖ ${pluralize(locale, entries.length, strings.stats.books)}`,
-  ...(minYear ? [`${strings.stats.since} ${minYear}`] : []),
-];
 ---
 
 <BaseLayout locale={locale} title={strings.sections.inspiration.title} alternatePath="inspiration" ogImage={`/og/inspiration-${locale}.png`}>
   <section class="page-frame index">
-    <SectionMasthead
-      eyebrow="vol. 02"
-      title={strings.sections.inspiration.title}
-      lede={strings.sections.inspiration.lede}
-      stats={stats}
-    />
+    <h1 class="sr-only">{strings.sections.inspiration.title}</h1>
     {entries.length === 0 ? (
       <p class="empty">{strings.empty.inspiration}</p>
     ) : (
@@ -38,7 +26,7 @@ const stats = [
 
 <style>
   .index {
-    padding: 0 var(--space-3) var(--space-6);
+    padding: var(--space-4) var(--space-3) var(--space-6);
   }
   .empty {
     color: var(--ink-muted);
