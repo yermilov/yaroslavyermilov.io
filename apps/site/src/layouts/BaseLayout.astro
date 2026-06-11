@@ -15,6 +15,10 @@ interface Props {
   alternateMissing?: boolean;
   /** apply theme-lab inversion (used for /lab/ and /games/ pages) */
   themeLab?: boolean;
+  /** lock the page chrome to the viewport on desktop (used by the homepage) */
+  fullViewport?: boolean;
+  /** omit the shared footer (the homepage folds its links into the cover rail) */
+  hideFooter?: boolean;
   /** when true, robots noindex (drafts, error pages) */
   noindex?: boolean;
   /** path to the page's social card under /og/, defaults to the home card */
@@ -28,6 +32,8 @@ const {
   alternatePath,
   alternateMissing = false,
   themeLab = false,
+  fullViewport = false,
+  hideFooter = false,
   noindex = false,
   ogImage,
 } = Astro.props;
@@ -77,12 +83,12 @@ const ogImageUrl = new URL(ogImage ?? `/og/home-${locale}.png`, Astro.site).toSt
       </Fragment>
     )}
   </head>
-  <body class:list={[{ 'theme-lab': themeLab }]}>
+  <body class:list={[{ 'theme-lab': themeLab, 'full-viewport': fullViewport }]}>
     <Header locale={locale} alternatePath={alternatePath} alternateMissing={alternateMissing} />
     <main>
       <slot />
     </main>
-    <Footer locale={locale} />
+    {!hideFooter && <Footer locale={locale} />}
     <PhotoLightbox locale={locale} />
   </body>
 </html>
