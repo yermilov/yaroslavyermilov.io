@@ -159,8 +159,10 @@ function calMonth(date: Date): string {
         {shelfFirst && (
           <section class="shelf">
             <div class="recent-head">
-              <p class="workbench recent-label shelf-label">→ {strings.home.fromTheShelf}</p>
-              <span class="workbench shelf-note">{strings.home.shelfNote}</span>
+              <p class="workbench recent-label">/ {strings.home.fromTheShelf}</p>
+              <a class="workbench recent-all" href={localePath(locale, 'inspiration')}>
+                {strings.home.moreInspiration}
+              </a>
             </div>
             <div class="shelf-card" data-shelf-card>
               <a class="shelf-cover" href={shelfFirst.href} data-shelf-cover aria-hidden="true" tabindex="-1">
@@ -175,9 +177,6 @@ function calMonth(date: Date): string {
                 </h2>
                 <p class="shelf-author" data-shelf-author>{strings.books.by} {shelfFirst.author}</p>
                 <p class="shelf-summary" data-shelf-summary>{shelfFirst.summary}</p>
-                <a class="workbench shelf-more" href={localePath(locale, 'inspiration')}>
-                  {strings.home.moreInspiration}
-                </a>
               </div>
             </div>
             <script is:inline type="application/json" data-shelf-data set:html={JSON.stringify({ by: strings.books.by, books: shelf })} />
@@ -564,14 +563,6 @@ function calMonth(date: Date): string {
     margin-top: var(--space-4);
     padding-top: var(--space-3);
   }
-  .shelf-label {
-    color: var(--green-primary);
-  }
-  .shelf-note {
-    color: var(--ink-muted);
-    text-transform: none;
-    letter-spacing: 0.01em;
-  }
   .shelf-card {
     display: flex;
     gap: var(--space-3);
@@ -631,15 +622,6 @@ function calMonth(date: Date): string {
   .shelf-summary {
     color: var(--ink-muted);
     margin: 0 0 var(--space-2);
-  }
-  .shelf-more {
-    color: var(--green-primary);
-    border-bottom: 1.5px solid transparent;
-  }
-  .shelf-more:hover {
-    background: transparent;
-    color: var(--orange-accent);
-    border-bottom-color: var(--orange-accent);
   }
 
   @media (max-width: 600px) {

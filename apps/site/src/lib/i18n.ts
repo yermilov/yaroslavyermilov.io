@@ -95,7 +95,6 @@ export interface Strings {
     recent: string;
     everything: string;
     fromTheShelf: string;
-    shelfNote: string;
     moreInspiration: string;
     role: string;
     location: string;
@@ -217,7 +216,6 @@ const STRINGS: Record<Locale, Strings> = {
       recent: 'Recently',
       everything: 'everything →',
       fromTheShelf: 'From the shelf',
-      shelfNote: 'one of my recent reads — refresh for another',
       moreInspiration: 'more inspiration →',
       role: 'Principal Software Engineer @ Superhuman',
       location: 'Kyiv, Ukraine',
@@ -339,7 +337,6 @@ const STRINGS: Record<Locale, Strings> = {
       recent: 'Нещодавно',
       everything: 'усе →',
       fromTheShelf: 'З полиці',
-      shelfNote: 'одна з нещодавно прочитаних — оновіть сторінку для іншої',
       moreInspiration: 'більше натхнення →',
       role: 'Principal Software Engineer @ Superhuman',
       location: 'Київ, Україна',
