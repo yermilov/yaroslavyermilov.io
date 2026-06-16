@@ -522,6 +522,14 @@ function kindLabel(kind: 'post' | 'talk' | 'book' | 'photos'): string {
       grid-template-columns: minmax(0, 1fr);
       padding-left: var(--space-3);
     }
+    /* The compact (homepage) variant resets padding via the more-specific
+       shorthand `.timeline-compact .entry { padding: var(--space-2) 0 }`, which
+       wiped out the left gutter above — dropping the date stamp to x=0, right
+       under the spine node so the diamond overlapped the day digit. Restore the
+       gutter at matching specificity (this rule comes later, so it wins). */
+    .timeline-compact .entry {
+      padding-left: var(--space-3);
+    }
     .entry::before {
       top: calc(var(--space-3) + 0.35em);
     }
