@@ -4,6 +4,7 @@ import { t, htmlLang, ogLocale, otherLocale } from '@lib/i18n';
 import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
 import PhotoLightbox from '@components/PhotoLightbox.astro';
+import YandexBrowserBanner from '@components/YandexBrowserBanner.astro';
 import '@styles/tokens.css';
 
 interface Props {
@@ -84,6 +85,7 @@ const ogImageUrl = new URL(ogImage ?? `/og/home-${locale}.png`, Astro.site).toSt
     )}
   </head>
   <body class:list={[{ 'theme-lab': themeLab, 'full-viewport': fullViewport }]}>
+    <YandexBrowserBanner />
     <Header locale={locale} alternatePath={alternatePath} alternateMissing={alternateMissing} />
     <main>
       <slot />

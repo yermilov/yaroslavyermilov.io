@@ -1,0 +1,75 @@
+---
+// A deliberate statement banner shown ONLY to visitors using Yandex Browser
+// (a Russian browser). GitHub Pages is static — there's no server to read the
+// User-Agent — so detection is client-side: Yandex Browser injects the token
+// "YaBrowser" into navigator.userAgent. The banner ships hidden and an inline
+// script reveals it for those visitors, so everyone else never sees or pays for
+// it. Bilingual (EN + UA) on purpose: the message should be unmistakable to a
+// Russian-browser visitor regardless of which locale page they land on.
+---
+
+<aside id="yandex-banner" class="yandex-banner" role="alert" hidden>
+  <div class="yb-inner">
+    <span class="yb-flag" aria-hidden="true">🇺🇦</span>
+    <p class="yb-text">
+      <span class="yb-line"
+        >Yandex&nbsp;Browser — and any cooperation with russia — is not supported here.</span
+      >
+      <span class="yb-line yb-ua"
+        >Яндекс&nbsp;Браузер — і будь-яка співпраця з росією — тут не підтримується.</span
+      >
+      <strong class="yb-slava">Slava Ukraini! 🇺🇦</strong>
+    </p>
+  </div>
+</aside>
+
+<script is:inline>
+  // Yandex Browser puts "YaBrowser" in the UA string (alongside "Yowser").
+  // Match it and reveal the banner. Inline so it runs on first parse, before
+  // paint of the rest of the body — the banner is the first child of <body>.
+  if (/YaBrowser/i.test(navigator.userAgent)) {
+    var b = document.getElementById('yandex-banner');
+    if (b) b.hidden = false;
+  }
+</script>
+
+<style>
+  /* Stays out of the layout entirely until the script un-hides it. */
+  .yandex-banner[hidden] {
+    display: none;
+  }
+  .yandex-banner {
+    background: #0057b7; /* Ukrainian flag — blue */
+    border-bottom: 4px solid #ffd700; /* Ukrainian flag — yellow */
+    color: #fff;
+  }
+  .yb-inner {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+  .yb-flag {
+    font-size: 1.5rem;
+    line-height: 1;
+    flex: 0 0 auto;
+  }
+  .yb-text {
+    margin: 0;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.9rem;
+    line-height: 1.4;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .yb-ua {
+    color: #ffd700;
+  }
+  .yb-slava {
+    margin-top: 0.1rem;
+    letter-spacing: 0.02em;
+  }
+</style>
