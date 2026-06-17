@@ -210,6 +210,18 @@ function kindLabel(kind: KindLabelKey): string {
               </a>
             </h3>
             {!compact && link.data.summary && <p class="summary">{link.data.summary}</p>}
+            {!compact && link.data.thumbnail && (
+              <a
+                class="link-media"
+                href={link.data.url}
+                rel="noopener"
+                target="_blank"
+                aria-label={link.data.hasVideo ? `${kindLabel(link.data.kind)} — ${link.data.source}` : undefined}
+              >
+                <img src={link.data.thumbnail} alt="" loading="lazy" />
+                {link.data.hasVideo && <span class="link-play" aria-hidden="true"></span>}
+              </a>
+            )}
           </article>
         </li>
       );
@@ -450,6 +462,54 @@ function kindLabel(kind: KindLabelKey): string {
   }
   .title a:hover .ext {
     transform: translate(2px, -2px);
+  }
+  /* Link media: a poster plate that opens the source (play affordance for video). */
+  .link-media {
+    display: block;
+    position: relative;
+    margin-top: var(--space-3);
+    max-width: 420px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: 4px 6px 0 0 var(--rule);
+    transition: transform 180ms ease, box-shadow 180ms ease;
+  }
+  .link-media:hover {
+    background: transparent;
+    transform: translate(-1px, -1px);
+    box-shadow: 6px 8px 0 0 var(--rule);
+  }
+  .link-media img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .link-play {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: color-mix(in oklab, var(--bg-paper) 82%, transparent);
+    border: 2px solid var(--bg-paper);
+    box-shadow: 0 2px 12px color-mix(in oklab, black 28%, transparent);
+    display: grid;
+    place-items: center;
+    transition: background 160ms ease;
+  }
+  .link-play::before {
+    content: '';
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 9px 0 9px 15px;
+    border-color: transparent transparent transparent var(--orange-accent);
+    margin-left: 3px;
+  }
+  .link-media:hover .link-play {
+    background: var(--bg-paper);
   }
   .summary {
     color: var(--ink-muted);

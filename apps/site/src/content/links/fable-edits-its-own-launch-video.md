@@ -6,4 +6,6 @@ kind: "tweet"
 status: "backlog"
 addedAt: 2026-06-17
 summary: "Agentic video editing: transcription, ffmpeg, colour grading, the Figma MCP and Remotion — driven entirely from code, no manual editor."
+thumbnail: "/links/fable-edits-its-own-launch-video/poster.jpg"
+hasVideo: true
 ---
