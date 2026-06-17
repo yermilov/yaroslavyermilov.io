@@ -91,7 +91,10 @@ const books = defineCollection({
     cover: z.string(),
     /** 1–5 stars; omit when unrated */
     rating: z.number().min(1).max(5).optional(),
-    readAt: z.coerce.date(),
+    /** "stamped" = read/tried (the journal archive); "backlog" = planned. */
+    status: z.enum(['stamped', 'backlog']).default('stamped'),
+    /** when it was read — required for stamped books, absent for backlog. */
+    readAt: z.coerce.date().optional(),
     /** the read date is a rough guess — render "long time ago" and bucket
         these together instead of an exact stamp. readAt still orders them. */
     readApprox: z.boolean().default(false),

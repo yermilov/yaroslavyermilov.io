@@ -7,6 +7,9 @@ type LabEntry = CollectionEntry<'labs'>;
 type GameEntry = CollectionEntry<'games'>;
 type BookEntry = CollectionEntry<'books'>;
 
+/** Placeholder date for undated (backlog) entries; never displayed. */
+const EPOCH = new Date(0);
+
 const isProd = import.meta.env.PROD;
 function isPublished<T extends { data: { draft?: boolean } }>(entry: T): boolean {
   return !(isProd && entry.data.draft);
@@ -72,15 +75,36 @@ export async function getGameBySlug(slug: string, locale: Locale): Promise<GameE
   return all.find((g) => g.data.slug === slug && g.data.language === locale);
 }
 
+/** readAt is optional (backlog books have none); treat missing as epoch. */
+function readAtTime(b: BookEntry): number {
+  return b.data.readAt ? b.data.readAt.getTime() : 0;
+}
+
 /**
- * All published books, newest first by readAt. Locale-agnostic — books
- * appear in the index under both /en/books/ and /ua/books/. The detail
- * page shows the entry in its own language regardless of which locale
- * shell wraps it.
+ * All published books, stamped (read) ones newest-first, backlog after.
+ * Locale-agnostic — books appear under both /en/books/ and /ua/books/.
+ * The detail page shows the entry in its own language regardless of which
+ * locale shell wraps it.
  */
 export async function getBooks(): Promise<BookEntry[]> {
   const all = await getCollection('books', isPublished);
-  return all.sort((a, b) => b.data.readAt.getTime() - a.data.readAt.getTime());
+  return all.sort((a, b) => readAtTime(b) - readAtTime(a));
+}
+
+/** Books I've read/tried — the journal archive, newest first. */
+export async function getStampedBooks(): Promise<BookEntry[]> {
+  const all = await getCollection('books', isPublished);
+  return all
+    .filter((b) => b.data.status !== 'backlog')
+    .sort((a, b) => readAtTime(b) - readAtTime(a));
+}
+
+/** Books I plan to read/try — undated, ordered by title. */
+export async function getBacklogBooks(): Promise<BookEntry[]> {
+  const all = await getCollection('books', isPublished);
+  return all
+    .filter((b) => b.data.status === 'backlog')
+    .sort((a, b) => a.data.title.localeCompare(b.data.title));
 }
 
 export async function getBookBySlug(slug: string): Promise<BookEntry | undefined> {
@@ -113,14 +137,21 @@ export async function getWritingTalkingTimeline(): Promise<TimelineEntry[]> {
   return entries.sort(byDateDesc);
 }
 
+/** The "stamped" archive: books read/tried, dated, newest first. */
 export async function getInspirationTimeline(): Promise<TimelineEntry[]> {
-  const books = await getBooks();
+  const books = await getStampedBooks();
   return books.map((book): TimelineEntry => ({
     kind: 'book',
-    date: book.data.readAt,
+    date: book.data.readAt ?? EPOCH,
     book,
     approx: book.data.readApprox,
   }));
+}
+
+/** The backlog: planned books, undated (rendered without date stamps). */
+export async function getBacklogTimeline(): Promise<TimelineEntry[]> {
+  const books = await getBacklogBooks();
+  return books.map((book): TimelineEntry => ({ kind: 'book', date: EPOCH, book }));
 }
 
 /**

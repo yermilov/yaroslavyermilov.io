@@ -18,9 +18,12 @@ interface Props {
   entries: TimelineEntry[];
   /** Homepage variant: no year milestones, tighter rows, no abstracts/photos. */
   compact?: boolean;
+  /** Backlog variant: full anatomy, but undated — no milestones, no date
+   *  stamps, hollow "pending" nodes. */
+  undated?: boolean;
 }
 
-const { locale, entries, compact = false } = Astro.props;
+const { locale, entries, compact = false, undated = false } = Astro.props;
 const strings = t(locale);
 
 const monthFmt = new Intl.DateTimeFormat(bcp47Locale(locale), { month: 'short' });
@@ -48,7 +51,7 @@ type Row =
   | { row: 'entry'; entry: TimelineEntry };
 
 const rows: Row[] = [];
-if (compact) {
+if (compact || undated) {
   for (const entry of entries) rows.push({ row: 'entry', entry });
 } else {
   let current: GroupKey | null = null;
@@ -69,7 +72,7 @@ function kindLabel(kind: 'post' | 'talk' | 'book' | 'photos'): string {
 }
 ---
 
-<ol class:list={['timeline', { 'timeline-compact': compact }]} role="list">
+<ol class:list={['timeline', { 'timeline-compact': compact, 'timeline-undated': undated }]} role="list">
   {rows.map((r) => {
     if (r.row === 'milestone') {
       const ago = r.key === 'approx';
@@ -83,9 +86,9 @@ function kindLabel(kind: 'post' | 'talk' | 'book' | 'photos'): string {
     const entry = r.entry;
     const upcoming = entry.kind === 'talk' && isUpcoming(entry.date);
     // Approximate-date books carry no exact stamp — the "long time ago"
-    // milestone above them is their dateline. Keep an empty cell so the
-    // spine node still aligns.
-    const approx = entry.kind === 'book' && entry.approx;
+    // milestone above them is their dateline. Backlog (undated) entries
+    // carry none either. Keep an empty cell so the spine node still aligns.
+    const approx = undated || (entry.kind === 'book' && entry.approx);
     const stamp = approx ? (
       <p class="stamp" aria-hidden="true"></p>
     ) : (
@@ -315,6 +318,11 @@ function kindLabel(kind: 'post' | 'talk' | 'book' | 'photos'): string {
   .entry.is-upcoming::before {
     background: var(--bg-paper);
     border: 2px solid var(--orange-accent);
+  }
+  /* Backlog: hollow node reads as "open / not yet done". */
+  .timeline-undated .entry::before {
+    background: var(--bg-paper);
+    border: 2px solid var(--green-primary);
   }
 
   /* ── Margin stamp ───────────────────────────────────────────────── */

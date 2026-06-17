@@ -3,7 +3,7 @@ import { LOCALES, t, localePath, languageBadge, bcp47Locale, type Locale } from 
 import BaseLayout from '@layouts/BaseLayout.astro';
 import Timeline from '@components/Timeline.astro';
 import RelativeDays from '@components/RelativeDays.tsx';
-import { getBooks, getTalks, getWritingTalkingTimeline } from '@lib/content';
+import { getStampedBooks, getTalks, getWritingTalkingTimeline } from '@lib/content';
 
 export async function getStaticPaths() {
   return LOCALES.map((locale) => ({ params: { locale } }));
@@ -35,7 +35,7 @@ const recent = (await getWritingTalkingTimeline())
 
 /* From the shelf: newest book server-rendered; the last ten serialized so a
  * tiny script can deal a random one per visit. */
-const shelf = (await getBooks()).slice(0, 10).map((book) => ({
+const shelf = (await getStampedBooks()).slice(0, 10).map((book) => ({
   title: book.data.title,
   author: book.data.author,
   cover: book.data.cover,
