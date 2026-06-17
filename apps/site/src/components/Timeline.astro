@@ -44,7 +44,7 @@ function isUpcoming(d: Date): boolean {
  *  ago", exact date unknown) which collapse into one undated bucket. */
 type GroupKey = number | 'approx';
 const groupKey = (e: TimelineEntry): GroupKey =>
-  e.kind === 'book' && e.approx ? 'approx' : e.date.getFullYear();
+  (e.kind === 'book' || e.kind === 'link') && e.approx ? 'approx' : e.date.getFullYear();
 
 type Row =
   | { row: 'milestone'; key: GroupKey }
@@ -65,9 +65,10 @@ if (compact || undated) {
   }
 }
 
-const KIND_GLYPHS = { post: '✎', talk: '▸', book: '❖', photos: '✧' } as const;
+const KIND_GLYPHS = { post: '✎', talk: '▸', book: '❖', photos: '✧', link: '✦' } as const;
 
-function kindLabel(kind: 'post' | 'talk' | 'book' | 'photos'): string {
+type KindLabelKey = 'post' | 'talk' | 'book' | 'photos' | 'tweet' | 'article' | 'video' | 'podcast' | 'link';
+function kindLabel(kind: KindLabelKey): string {
   return strings.timeline[kind];
 }
 ---
@@ -88,7 +89,7 @@ function kindLabel(kind: 'post' | 'talk' | 'book' | 'photos'): string {
     // Approximate-date books carry no exact stamp — the "long time ago"
     // milestone above them is their dateline. Backlog (undated) entries
     // carry none either. Keep an empty cell so the spine node still aligns.
-    const approx = undated || (entry.kind === 'book' && entry.approx);
+    const approx = undated || ((entry.kind === 'book' || entry.kind === 'link') && entry.approx);
     const stamp = approx ? (
       <p class="stamp" aria-hidden="true"></p>
     ) : (
@@ -188,6 +189,27 @@ function kindLabel(kind: 'post' | 'talk' | 'book' | 'photos'): string {
                 </li>
               ))}
             </ul>
+          </article>
+        </li>
+      );
+    }
+
+    if (entry.kind === 'link') {
+      const link = entry.link;
+      return (
+        <li class="entry entry-link" data-iso={entry.date.toISOString()}>
+          {stamp}
+          <article class="body">
+            <p class="workbench kindline">
+              <span class="kind">{KIND_GLYPHS.link} {kindLabel(link.data.kind)}</span>
+              <span class="kind-event">{link.data.source}</span>
+            </p>
+            <h3 class="title">
+              <a href={link.data.url} rel="noopener" target="_blank">
+                {link.data.title}<span class="ext" aria-hidden="true">↗</span>
+              </a>
+            </h3>
+            {!compact && link.data.summary && <p class="summary">{link.data.summary}</p>}
           </article>
         </li>
       );
@@ -417,6 +439,17 @@ function kindLabel(kind: 'post' | 'talk' | 'book' | 'photos'): string {
   .title a:hover {
     background: transparent;
     color: var(--orange-accent);
+  }
+  /* External-link marker on link entries. */
+  .title .ext {
+    display: inline-block;
+    margin-left: 0.25em;
+    font-size: 0.7em;
+    color: var(--orange-accent);
+    transition: transform 160ms ease;
+  }
+  .title a:hover .ext {
+    transform: translate(2px, -2px);
   }
   .summary {
     color: var(--ink-muted);

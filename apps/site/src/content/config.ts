@@ -93,6 +93,8 @@ const books = defineCollection({
     rating: z.number().min(1).max(5).optional(),
     /** "stamped" = read/tried (the journal archive); "backlog" = planned. */
     status: z.enum(['stamped', 'backlog']).default('stamped'),
+    /** when it landed on the backlog — orders the (undated) backlog, newest first. */
+    addedAt: z.coerce.date().optional(),
     /** when it was read — required for stamped books, absent for backlog. */
     readAt: z.coerce.date().optional(),
     /** the read date is a rough guess — render "long time ago" and bucket
@@ -109,4 +111,26 @@ const books = defineCollection({
   }),
 });
 
-export const collections = { posts, talks, labs, games, gallery, books };
+/**
+ * Inspiration links — tweets, articles, videos, podcasts. Unlike books they
+ * have no internal detail page; their title links straight out. They share
+ * the books' backlog/stamped split so both kinds interleave on /inspiration/.
+ */
+const links = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string(),
+    url: z.string().url(),
+    /** attribution shown in the kindline, e.g. "Thariq · X". */
+    source: z.string(),
+    kind: z.enum(['tweet', 'article', 'video', 'podcast', 'link']).default('link'),
+    status: z.enum(['stamped', 'backlog']).default('stamped'),
+    addedAt: z.coerce.date().optional(),
+    readAt: z.coerce.date().optional(),
+    readApprox: z.boolean().default(false),
+    summary: z.string().optional(),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { posts, talks, labs, games, gallery, books, links };

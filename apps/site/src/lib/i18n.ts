@@ -84,6 +84,11 @@ export interface Strings {
     photos: string;
     upcoming: string;
     longAgo: string;
+    tweet: string;
+    article: string;
+    video: string;
+    podcast: string;
+    link: string;
   };
   books: {
     by: string;
@@ -220,6 +225,11 @@ const STRINGS: Record<Locale, Strings> = {
       photos: 'photos',
       upcoming: 'upcoming',
       longAgo: 'Long time ago',
+      tweet: 'tweet',
+      article: 'article',
+      video: 'video',
+      podcast: 'podcast',
+      link: 'link',
     },
     books: {
       by: 'by',
@@ -356,6 +366,11 @@ const STRINGS: Record<Locale, Strings> = {
       photos: 'фото',
       upcoming: 'скоро',
       longAgo: 'Колись давно',
+      tweet: 'твіт',
+      article: 'стаття',
+      video: 'відео',
+      podcast: 'подкаст',
+      link: 'посилання',
     },
     books: {
       by: 'автор —',

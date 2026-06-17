@@ -6,6 +6,7 @@ type TalkEntry = CollectionEntry<'talks'>;
 type LabEntry = CollectionEntry<'labs'>;
 type GameEntry = CollectionEntry<'games'>;
 type BookEntry = CollectionEntry<'books'>;
+type LinkEntry = CollectionEntry<'links'>;
 
 /** Placeholder date for undated (backlog) entries; never displayed. */
 const EPOCH = new Date(0);
@@ -75,10 +76,9 @@ export async function getGameBySlug(slug: string, locale: Locale): Promise<GameE
   return all.find((g) => g.data.slug === slug && g.data.language === locale);
 }
 
-/** readAt is optional (backlog books have none); treat missing as epoch. */
-function readAtTime(b: BookEntry): number {
-  return b.data.readAt ? b.data.readAt.getTime() : 0;
-}
+/** readAt / addedAt are optional; treat missing as epoch for ordering. */
+const readAtTime = (e: { data: { readAt?: Date } }): number => e.data.readAt?.getTime() ?? 0;
+const addedAtTime = (e: { data: { addedAt?: Date } }): number => e.data.addedAt?.getTime() ?? 0;
 
 /**
  * All published books, stamped (read) ones newest-first, backlog after.
@@ -99,12 +99,14 @@ export async function getStampedBooks(): Promise<BookEntry[]> {
     .sort((a, b) => readAtTime(b) - readAtTime(a));
 }
 
-/** Books I plan to read/try — undated, ordered by title. */
-export async function getBacklogBooks(): Promise<BookEntry[]> {
+async function getBacklogBooksRaw(): Promise<BookEntry[]> {
   const all = await getCollection('books', isPublished);
-  return all
-    .filter((b) => b.data.status === 'backlog')
-    .sort((a, b) => a.data.title.localeCompare(b.data.title));
+  return all.filter((b) => b.data.status === 'backlog');
+}
+
+async function getLinksByStatus(status: 'stamped' | 'backlog'): Promise<LinkEntry[]> {
+  const all = await getCollection('links', isPublished);
+  return all.filter((l) => (l.data.status ?? 'stamped') === status);
 }
 
 export async function getBookBySlug(slug: string): Promise<BookEntry | undefined> {
@@ -122,6 +124,7 @@ export type TimelineEntry =
   | { kind: 'post'; date: Date; post: PostEntry }
   | { kind: 'talk'; date: Date; talk: TalkEntry }
   | { kind: 'book'; date: Date; book: BookEntry; approx?: boolean }
+  | { kind: 'link'; date: Date; link: LinkEntry; approx?: boolean }
   | { kind: 'photos'; date: Date; caption?: string | undefined; location?: string | undefined; photos: string[] };
 
 function byDateDesc(a: TimelineEntry, b: TimelineEntry): number {
@@ -137,21 +140,42 @@ export async function getWritingTalkingTimeline(): Promise<TimelineEntry[]> {
   return entries.sort(byDateDesc);
 }
 
-/** The "stamped" archive: books read/tried, dated, newest first. */
+/** The "stamped" archive: books + links read/tried, dated, newest first. */
 export async function getInspirationTimeline(): Promise<TimelineEntry[]> {
-  const books = await getStampedBooks();
-  return books.map((book): TimelineEntry => ({
-    kind: 'book',
-    date: book.data.readAt ?? EPOCH,
-    book,
-    approx: book.data.readApprox,
-  }));
+  const [books, links] = await Promise.all([getStampedBooks(), getLinksByStatus('stamped')]);
+  const entries: TimelineEntry[] = [
+    ...books.map((book): TimelineEntry => ({
+      kind: 'book',
+      date: book.data.readAt ?? EPOCH,
+      book,
+      approx: book.data.readApprox,
+    })),
+    ...links.map((link): TimelineEntry => ({
+      kind: 'link',
+      date: link.data.readAt ?? EPOCH,
+      link,
+      approx: link.data.readApprox,
+    })),
+  ];
+  return entries.sort(byDateDesc);
 }
 
-/** The backlog: planned books, undated (rendered without date stamps). */
+/**
+ * The backlog: planned books + links, undated. Rendered in addedAt order
+ * (most recently added first), with title as the tiebreaker.
+ */
 export async function getBacklogTimeline(): Promise<TimelineEntry[]> {
-  const books = await getBacklogBooks();
-  return books.map((book): TimelineEntry => ({ kind: 'book', date: EPOCH, book }));
+  const [books, links] = await Promise.all([getBacklogBooksRaw(), getLinksByStatus('backlog')]);
+  const items = [
+    ...books.map((book) => ({ entry: { kind: 'book', date: EPOCH, book } as TimelineEntry, item: book })),
+    ...links.map((link) => ({ entry: { kind: 'link', date: EPOCH, link } as TimelineEntry, item: link })),
+  ];
+  items.sort(
+    (a, b) =>
+      addedAtTime(b.item) - addedAtTime(a.item) ||
+      a.item.data.title.localeCompare(b.item.data.title),
+  );
+  return items.map((i) => i.entry);
 }
 
 /**
