@@ -10,27 +10,71 @@ const locale = Astro.params.locale as Locale;
 const strings = t(locale);
 const ws = strings.workshop;
 
+const steps = [
+  { index: '01', title: ws.formatOneTitle, desc: ws.formatOneDesc },
+  { index: '02', title: ws.formatTwoTitle, desc: ws.formatTwoDesc },
+  { index: '03', title: ws.formatThreeTitle, desc: ws.formatThreeDesc },
+];
+
+// Both decks are live regardless of reading locale; link straight to them.
 const offers = [
-  { index: '01', title: ws.offerOneTitle, desc: ws.offerOneDesc },
-  { index: '02', title: ws.offerTwoTitle, desc: ws.offerTwoDesc },
+  {
+    index: '01',
+    kicker: ws.offerOneKicker,
+    title: ws.offerOneTitle,
+    desc: ws.offerOneDesc,
+    href: 'https://yaroslavyermilov.io/pragmatic-vibe-clauding-en',
+  },
+  {
+    index: '02',
+    kicker: ws.offerTwoKicker,
+    title: ws.offerTwoTitle,
+    desc: ws.offerTwoDesc,
+    href: 'https://yaroslavyermilov.io/revenge-of-the-skill-en',
+  },
 ];
 ---
 
 <BaseLayout locale={locale} title={strings.nav.workshop} alternatePath="workshop" ogImage={`/og/workshop-${locale}.png`}>
   <section class="page-frame workshop">
-    <h1 class="sr-only">{ws.headline}</h1>
+    <header class="lead">
+      <p class="workbench lead-eyebrow">{ws.eyebrow}</p>
+      <h1 class="lead-headline">{ws.headline}</h1>
+      <p class="lead-lede">{ws.lede}</p>
+    </header>
 
-    <ul class="offers" role="list">
-      {offers.map((offer) => (
-        <li class="offer">
-          <p class="workbench offer-index">{offer.index}</p>
-          <h2 class="offer-title">{offer.title}</h2>
-          <p class="offer-desc">{offer.desc}</p>
-        </li>
-      ))}
-    </ul>
+    <section class="block" aria-label={ws.formatLabel}>
+      <p class="workbench block-label">/ {ws.formatLabel}</p>
+      <ol class="steps" role="list">
+        {steps.map((step) => (
+          <li class="step">
+            <p class="workbench step-index">{step.index}</p>
+            <div class="step-body">
+              <h2 class="step-title">{step.title}</h2>
+              <p class="step-desc">{step.desc}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
 
-    <p class="workbench note">▸ {ws.note}</p>
+    <section class="block" aria-label={ws.formatsLabel}>
+      <p class="workbench block-label">/ {ws.formatsLabel}</p>
+      <ul class="offers" role="list">
+        {offers.map((offer) => (
+          <li class="offer">
+            <p class="workbench offer-index">{offer.index}</p>
+            <p class="workbench offer-kicker">{offer.kicker}</p>
+            <h2 class="offer-title">{offer.title}</h2>
+            <p class="offer-desc">{offer.desc}</p>
+            <a class="workbench offer-deck" href={offer.href} rel="noopener" target="_blank">
+              {ws.viewDeck}<span class="offer-deck-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <p class="workbench note">▸ {ws.note}</p>
+    </section>
 
     <a
       class="cta"
@@ -52,8 +96,74 @@ const offers = [
     padding: var(--space-4) var(--space-3) var(--space-6);
   }
 
-  /* Two offer cards with the site's hard offset shadow — printed flyers
-     pinned to the workbench. */
+  /* ── Lead: a visible value proposition in the reading voice ──────── */
+  .lead {
+    max-width: var(--measure);
+    margin-bottom: var(--space-5);
+  }
+  .lead-eyebrow {
+    color: var(--green-primary);
+    margin: 0 0 var(--space-2);
+  }
+  .lead-headline {
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1.08;
+    margin: 0 0 var(--space-3);
+  }
+  .lead-lede {
+    font-size: 1.2rem;
+    color: var(--ink-muted);
+    margin: 0;
+  }
+
+  .block {
+    margin-bottom: var(--space-5);
+  }
+  /* Mono ledger label, matching the homepage section headers. */
+  .block-label {
+    color: var(--ink-muted);
+    margin: 0 0 var(--space-3);
+  }
+
+  /* ── Format: a three-step ledger of how an engagement runs ───────── */
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-3);
+  }
+  .step {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: var(--space-2);
+    align-items: baseline;
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--rule);
+  }
+  .step:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .step-index {
+    color: var(--orange-accent);
+    font-weight: 700;
+    margin: 0;
+  }
+  .step-body {
+    min-width: 0;
+    max-width: var(--measure);
+  }
+  .step-title {
+    font-size: 1.3rem;
+    margin: 0 0 0.2rem;
+  }
+  .step-desc {
+    color: var(--ink-muted);
+    margin: 0;
+  }
+
+  /* ── Two offer cards — printed flyers pinned to the workbench ────── */
   .offers {
     list-style: none;
     margin: 0 0 var(--space-4);
@@ -63,6 +173,8 @@ const offers = [
     gap: var(--space-3);
   }
   .offer {
+    display: flex;
+    flex-direction: column;
     border: 1px solid var(--rule);
     background: var(--bg-elevated);
     box-shadow: 4px 5px 0 0 var(--rule);
@@ -78,23 +190,48 @@ const offers = [
     font-weight: 700;
     margin: 0 0 var(--space-2);
   }
+  .offer-kicker {
+    color: var(--green-primary);
+    text-transform: none;
+    letter-spacing: 0.01em;
+    margin: 0 0 0.3rem;
+  }
   .offer-title {
     font-size: 1.5rem;
     margin: 0 0 var(--space-2);
   }
   .offer-desc {
     color: var(--ink-muted);
-    margin: 0;
+    margin: 0 0 var(--space-3);
+  }
+  .offer-deck {
+    color: var(--green-primary);
+    border-bottom: 1.5px solid transparent;
+    align-self: flex-start;
+    margin-top: auto;
+  }
+  .offer-deck:hover {
+    background: transparent;
+    color: var(--orange-accent);
+    border-bottom-color: var(--orange-accent);
+  }
+  .offer-deck-arrow {
+    display: inline-block;
+    margin-left: 0.3em;
+    color: var(--orange-accent);
+    transition: transform 160ms ease;
+  }
+  .offer-deck:hover .offer-deck-arrow {
+    transform: translate(2px, -2px);
   }
 
   .note {
     color: var(--green-primary);
-    margin: 0 0 var(--space-5);
+    margin: 0;
     max-width: var(--measure);
   }
 
-  /* CTA — the "elsewhere" typographic vocabulary from the homepage hero,
-     scaled up into the page's closing statement. */
+  /* ── CTA — the "elsewhere" typographic vocabulary, scaled up ─────── */
   .cta {
     display: inline-flex;
     flex-direction: column;

@@ -120,14 +120,25 @@ export interface Strings {
     eyebrow: string;
     headline: string;
     lede: string;
+    formatLabel: string;
+    formatOneTitle: string;
+    formatOneDesc: string;
+    formatTwoTitle: string;
+    formatTwoDesc: string;
+    formatThreeTitle: string;
+    formatThreeDesc: string;
+    formatsLabel: string;
+    offerOneKicker: string;
     offerOneTitle: string;
     offerOneDesc: string;
+    offerTwoKicker: string;
     offerTwoTitle: string;
     offerTwoDesc: string;
+    viewDeck: string;
+    note: string;
     ctaEyebrow: string;
     ctaHeadline: string;
     ctaHandle: string;
-    note: string;
   };
   labels: {
     published: string;
@@ -238,19 +249,30 @@ const STRINGS: Record<Locale, Strings> = {
       downloadPhoto: 'Download photo →',
     },
     workshop: {
-      eyebrow: 'workshop',
-      headline: 'I teach teams to ship with AI.',
-      lede: 'Hands-on workshops, built from a year of running AI-first engineering in production — not slideware.',
-      offerOneTitle: 'AI agentic coding',
+      eyebrow: 'Workshops',
+      headline: 'I help engineering teams go AI-first.',
+      lede: 'Hands-on workshops built from a year of running AI-first engineering in production — not slideware. We start with a conversation about where your team is today, and I tailor the session to your level of adoption.',
+      formatLabel: 'How an engagement runs',
+      formatOneTitle: 'One hour, live',
+      formatOneDesc: 'A focused, hands-on session — no slideware.',
+      formatTwoTitle: 'Q&A, for as long as it takes',
+      formatTwoDesc: 'I stay after to answer every question in the room.',
+      formatThreeTitle: 'Async follow-up',
+      formatThreeDesc: 'I keep answering as your team puts it into practice.',
+      formatsLabel: 'Two proven formats',
+      offerOneKicker: 'Intro · AI agentic engineering',
+      offerOneTitle: 'Pragmatic Vibe Clauding',
       offerOneDesc:
-        'From autocomplete to agents: how to set up a coding harness, delegate real work to AI agents, review what they produce, and stay in control of quality.',
-      offerTwoTitle: 'AI-first team transformation',
+        'From autocomplete to agents. Treat Claude Code as a talented teammate, build the right context for it, and move real work — not just coding — into agentic feedback loops.',
+      offerTwoKicker: 'Advanced · Skills as team infrastructure',
+      offerTwoTitle: 'Revenge of the Skill',
       offerTwoDesc:
-        'How an engineering team rewires its habits — planning, code review, on-call, knowledge sharing — when AI does the first draft of everything.',
-      ctaEyebrow: 'Interested?',
+        'Turn repeated work into skills, then organize them into a foundation — skills, hooks, plugins, marketplaces — the infrastructure that makes a whole team AI-first.',
+      viewDeck: 'View the deck',
+      note: 'Two proven starting points — and if your team needs something else, we will shape a new format together.',
+      ctaEyebrow: 'Want this for your team?',
       ctaHeadline: 'DM me on LinkedIn',
       ctaHandle: 'in/yarik-yermilov',
-      note: 'Full programme is taking shape — reach out and we will tailor it to your team.',
     },
     labels: {
       published: 'Published',
@@ -359,19 +381,30 @@ const STRINGS: Record<Locale, Strings> = {
       downloadPhoto: 'Завантажити фото →',
     },
     workshop: {
-      eyebrow: 'воркшоп',
-      headline: 'Я вчу команди розробляти з AI.',
-      lede: 'Практичні воркшопи, побудовані на році AI-first інженерії в продакшені — не слайди заради слайдів.',
-      offerOneTitle: 'AI agentic coding',
+      eyebrow: 'Воркшопи',
+      headline: 'Я допомагаю інженерним командам стати AI-first.',
+      lede: 'Практичні воркшопи, побудовані на році AI-first інженерії в продакшені — не слайди заради слайдів. Ми починаємо з розмови про те, де ваша команда зараз, і я адаптую сесію під ваш рівень впровадження.',
+      formatLabel: 'Як проходить співпраця',
+      formatOneTitle: 'Одна година, наживо',
+      formatOneDesc: 'Сфокусована практична сесія — без слайдів заради слайдів.',
+      formatTwoTitle: 'Q&A, скільки знадобиться',
+      formatTwoDesc: 'Я лишаюся після, щоб відповісти на кожне питання із зали.',
+      formatThreeTitle: 'Async-підтримка',
+      formatThreeDesc: 'Я продовжую відповідати, поки команда впроваджує це на практиці.',
+      formatsLabel: 'Два перевірені формати',
+      offerOneKicker: 'Вступ · AI agentic engineering',
+      offerOneTitle: 'Pragmatic Vibe Clauding',
       offerOneDesc:
-        'Від автодоповнення до агентів: як налаштувати coding harness, делегувати реальну роботу AI-агентам, ревʼювити їхній результат і тримати якість під контролем.',
-      offerTwoTitle: 'AI-first трансформація команди',
+        'Від автодоповнення до агентів. Ставтеся до Claude Code як до талановитого колеги, будуйте для нього правильний контекст і переносьте реальну роботу — не лише код — в агентні цикли зворотного звʼязку.',
+      offerTwoKicker: 'Просунутий · Скіли як інфраструктура команди',
+      offerTwoTitle: 'Revenge of the Skill',
       offerTwoDesc:
-        'Як інженерна команда перебудовує звички — планування, код-ревʼю, on-call, обмін знаннями, — коли перший чорновик усього робить AI.',
-      ctaEyebrow: 'Цікаво?',
+        'Перетворюйте повторювану роботу на скіли, а потім збирайте їх у фундамент — скіли, хуки, плагіни, маркетплейси — інфраструктуру, що робить усю команду AI-first.',
+      viewDeck: 'Переглянути презентацію',
+      note: 'Дві перевірені відправні точки — а якщо вашій команді потрібно щось інше, ми разом сформуємо новий формат.',
+      ctaEyebrow: 'Хочете це для своєї команди?',
       ctaHeadline: 'Напишіть мені в LinkedIn',
       ctaHandle: 'in/yarik-yermilov',
-      note: 'Повна програма ще формується — напишіть, і ми адаптуємо її під вашу команду.',
     },
     labels: {
       published: 'Опубліковано',
