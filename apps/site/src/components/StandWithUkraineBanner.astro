@@ -1,0 +1,169 @@
+---
+// A "Stand With Ukraine" statement banner shown to visitors associated with the
+// russian war: (1) Yandex Browser users — Yandex injects "YaBrowser" into the UA
+// — and (2) visitors connecting from russia, belarus, iran, or north korea.
+//
+// GitHub Pages is static (served via Fastly), so there's no server/edge to read
+// geo or UA — detection is client-side. UA is free and synchronous; country is
+// a one-call lookup to country.is (returns ONLY a country code, no key, no
+// cookies), cached per session to minimise the third-party request. The banner
+// ships `hidden` and is revealed only on a match, so everyone else never sees
+// it and pays nothing. Design takes after grammarly.com/stand-with-ukraine:
+// dignified, flag colours, a "what you can do" link (United24).
+---
+
+<aside id="ua-banner" class="ua-banner" role="alert" hidden>
+  <div class="uab-inner">
+    <span class="uab-flag" aria-hidden="true">🇺🇦</span>
+    <div class="uab-body">
+      <p class="uab-title">This site stands with Ukraine.</p>
+      <p class="uab-text">
+        russia’s war on Ukraine — and any cooperation with it — is not welcome here.
+        <span id="ua-banner-reason" class="uab-reason"></span>
+        <span class="uab-slava">Слава Україні! 🇺🇦</span>
+      </p>
+    </div>
+    <a class="uab-cta" href="https://u24.gov.ua" target="_blank" rel="noopener noreferrer"
+      >How you can help →</a
+    >
+  </div>
+</aside>
+
+<script is:inline>
+  (function () {
+    var banner = document.getElementById('ua-banner');
+    if (!banner) return;
+    var reasonEl = document.getElementById('ua-banner-reason');
+    var shown = false;
+    function show(reason) {
+      if (shown) return;
+      shown = true;
+      if (reasonEl && reason) reasonEl.textContent = reason;
+      banner.hidden = false;
+    }
+
+    // (1) Yandex Browser — synchronous, instant, no network.
+    if (/YaBrowser/i.test(navigator.userAgent)) {
+      show('You’re visiting with Yandex Browser — a russian browser.');
+      return; // already shown; skip the geo lookup
+    }
+
+    // (2) Location — russia / belarus / iran / north korea. Static hosting has
+    // no edge geo, so resolve the country client-side via country.is. Cached in
+    // sessionStorage so it's at most one third-party request per session, and
+    // fail-open (a lookup error never blocks the page).
+    var BLOCKED = { RU: 'russia', BY: 'belarus', IR: 'iran', KP: 'north korea' };
+    function handle(code) {
+      if (code && BLOCKED[code]) show('You appear to be connecting from ' + BLOCKED[code] + '.');
+    }
+    var cached = null;
+    try {
+      cached = sessionStorage.getItem('uaGeoCountry');
+    } catch (e) {}
+    if (cached !== null) {
+      handle(cached);
+      return;
+    }
+    try {
+      fetch('https://country.is/', { cache: 'no-store' })
+        .then(function (r) {
+          return r.ok ? r.json() : null;
+        })
+        .then(function (d) {
+          var code = d && d.country ? d.country : '';
+          try {
+            sessionStorage.setItem('uaGeoCountry', code);
+          } catch (e) {}
+          handle(code);
+        })
+        .catch(function () {
+          /* fail open — never block the site on a geo lookup error */
+        });
+    } catch (e) {}
+  })();
+</script>
+
+<style>
+  /* Out of the layout entirely until the script un-hides it. */
+  .ua-banner[hidden] {
+    display: none;
+  }
+  .ua-banner {
+    background: #0057b7; /* Ukrainian flag — blue */
+    border-bottom: 4px solid #ffd700; /* Ukrainian flag — yellow */
+    color: #fff;
+  }
+  .uab-inner {
+    max-width: 64rem;
+    margin: 0 auto;
+    padding: var(--space-3, 1.25rem);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3, 1.25rem);
+  }
+  .uab-flag {
+    font-size: 1.75rem;
+    line-height: 1;
+    flex: 0 0 auto;
+  }
+  .uab-body {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .uab-title {
+    margin: 0;
+    font-family: var(--font-display, ui-serif, Georgia, serif);
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .uab-text {
+    margin: 0.35rem 0 0;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.92);
+  }
+  .uab-reason {
+    display: block;
+    margin-top: 0.15rem;
+    color: #ffd700;
+  }
+  .uab-reason:empty {
+    display: none;
+  }
+  .uab-slava {
+    display: block;
+    margin-top: 0.35rem;
+    font-weight: 700;
+    color: #ffd700;
+    letter-spacing: 0.02em;
+  }
+  .uab-cta {
+    flex: 0 0 auto;
+    align-self: center;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #001a3a;
+    background: #ffd700;
+    padding: 0.5rem 0.9rem;
+    border-radius: 4px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .uab-cta:hover {
+    background: #ffe34d;
+  }
+  @media (max-width: 640px) {
+    .uab-inner {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-2, 0.75rem);
+    }
+    .uab-cta {
+      align-self: stretch;
+      text-align: center;
+    }
+  }
+</style>
