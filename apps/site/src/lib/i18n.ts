@@ -251,7 +251,7 @@ const STRINGS: Record<Locale, Strings> = {
     workshop: {
       eyebrow: 'Workshops',
       headline: 'I help engineering teams go AI-first.',
-      lede: 'Hands-on workshops built from a year of running AI-first engineering in production — not slideware. We start with a conversation about where your team is today, and I tailor the session to your level of adoption.',
+      lede: 'Hands-on workshops built from a year of running AI-first engineering in production. We start with a conversation about where your team is today, and I tailor the session to your level of adoption.',
       formatLabel: 'How an engagement runs',
       formatOneTitle: 'One hour, live',
       formatOneDesc: 'A focused, hands-on session — no slideware.',
@@ -269,7 +269,7 @@ const STRINGS: Record<Locale, Strings> = {
       offerTwoDesc:
         'Turn repeated work into skills, then organize them into a foundation — skills, hooks, plugins, marketplaces — the infrastructure that makes a whole team AI-first.',
       viewDeck: 'View the deck',
-      note: 'Two proven starting points — and if your team needs something else, we will shape a new format together.',
+      note: 'Every engagement is tailored to your team — if you need something beyond the proven formats, we will shape a new one together.',
       ctaEyebrow: 'Want this for your team?',
       ctaHeadline: 'DM me on LinkedIn',
       ctaHandle: 'in/yarik-yermilov',
@@ -383,7 +383,7 @@ const STRINGS: Record<Locale, Strings> = {
     workshop: {
       eyebrow: 'Воркшопи',
       headline: 'Я допомагаю інженерним командам стати AI-first.',
-      lede: 'Практичні воркшопи, побудовані на році AI-first інженерії в продакшені — не слайди заради слайдів. Ми починаємо з розмови про те, де ваша команда зараз, і я адаптую сесію під ваш рівень впровадження.',
+      lede: 'Практичні воркшопи, побудовані на році AI-first інженерії в продакшені. Ми починаємо з розмови про те, де ваша команда зараз, і я адаптую сесію під ваш рівень впровадження.',
       formatLabel: 'Як проходить співпраця',
       formatOneTitle: 'Одна година, наживо',
       formatOneDesc: 'Сфокусована практична сесія — без слайдів заради слайдів.',
@@ -401,7 +401,7 @@ const STRINGS: Record<Locale, Strings> = {
       offerTwoDesc:
         'Перетворюйте повторювану роботу на скіли, а потім збирайте їх у фундамент — скіли, хуки, плагіни, маркетплейси — інфраструктуру, що робить усю команду AI-first.',
       viewDeck: 'Переглянути презентацію',
-      note: 'Дві перевірені відправні точки — а якщо вашій команді потрібно щось інше, ми разом сформуємо новий формат.',
+      note: 'Кожна співпраця адаптована під вашу команду — якщо вам потрібно щось поза перевіреними форматами, ми сформуємо новий формат разом.',
       ctaEyebrow: 'Хочете це для своєї команди?',
       ctaHeadline: 'Напишіть мені в LinkedIn',
       ctaHandle: 'in/yarik-yermilov',
