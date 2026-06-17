@@ -89,6 +89,8 @@ export interface Strings {
     rating: string;
     buy: string;
     backToBooks: string;
+    read: string;
+    notes: string;
   };
   home: {
     catchMeAt: string;
@@ -221,6 +223,8 @@ const STRINGS: Record<Locale, Strings> = {
       rating: 'Rating',
       buy: 'Buy',
       backToBooks: '← Back to inspiration',
+      read: 'Read',
+      notes: 'From my notes',
     },
     home: {
       catchMeAt: 'Catch me at',
@@ -353,6 +357,8 @@ const STRINGS: Record<Locale, Strings> = {
       rating: 'Оцінка',
       buy: 'Купити',
       backToBooks: '← До натхнення',
+      read: 'Прочитано',
+      notes: 'Мої нотатки',
     },
     home: {
       catchMeAt: 'Побачимося',
