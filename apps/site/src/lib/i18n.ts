@@ -87,7 +87,6 @@ export interface Strings {
   books: {
     by: string;
     rating: string;
-    buy: string;
     backToBooks: string;
     read: string;
     notes: string;
@@ -221,7 +220,6 @@ const STRINGS: Record<Locale, Strings> = {
     books: {
       by: 'by',
       rating: 'Rating',
-      buy: 'Buy',
       backToBooks: '← Back to inspiration',
       read: 'Read',
       notes: 'From my notes',
@@ -355,7 +353,6 @@ const STRINGS: Record<Locale, Strings> = {
     books: {
       by: 'автор —',
       rating: 'Оцінка',
-      buy: 'Купити',
       backToBooks: '← До натхнення',
       read: 'Прочитано',
       notes: 'Мої нотатки',

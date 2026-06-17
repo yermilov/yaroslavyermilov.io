@@ -67,12 +67,6 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
         <p class="author"><span class="by">{strings.books.by}</span> <span class="name">{book.data.author}</span></p>
 
         <p class="summary">{book.data.summary}</p>
-
-        {book.data.affiliateUrl && (
-          <a class="buy" href={book.data.affiliateUrl} rel="noopener" target="_blank">
-            {strings.books.buy}<span class="buy-arrow" aria-hidden="true">↗</span>
-          </a>
-        )}
       </div>
     </div>
 
@@ -203,36 +197,6 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
     margin: var(--space-3) 0 0;
     max-width: 42ch;
     text-wrap: pretty;
-  }
-
-  /* Buy as a stamped ticket — bordered, fills on hover. */
-  .buy {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin-top: var(--space-4);
-    padding: 0.5rem 0.95rem;
-    border: 1px solid var(--rule);
-    border-radius: 2px;
-    font-family: var(--font-mono);
-    font-size: 0.82rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--ink);
-    background: transparent;
-    transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
-  }
-  .buy:hover {
-    background: var(--green-primary);
-    border-color: var(--green-primary);
-    color: var(--bg-paper);
-  }
-  .buy-arrow {
-    display: inline-block;
-    transition: transform 160ms ease;
-  }
-  .buy:hover .buy-arrow {
-    transform: translate(2px, -2px);
   }
 
   /* ── Notes: only present when there's a real annotation. ─────────── */
