@@ -424,6 +424,12 @@ function calMonth(date: Date): string {
   /* ── Contents sections (stacked defaults) ───────────────────────── */
 
   .contents {
+    /* `display: block` is load-bearing: the class name collides with Tailwind's
+       `.contents` utility (display: contents), which would erase this box and
+       drop its horizontal padding — leaving every section flush against the
+       screen edge on mobile. The desktop @media below sets display: flex, so
+       only mobile needs this; the Astro-scoped selector outranks the utility. */
+    display: block;
     padding: 0 var(--space-3) var(--space-4);
   }
 
