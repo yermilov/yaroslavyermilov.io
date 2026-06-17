@@ -30,7 +30,7 @@ const readStamp = new Intl.DateTimeFormat(bcp47Locale(locale), {
 // Some entries carry a personal note in the body; others just repeat the
 // summary verbatim (or are empty). Only open a notes section when the body
 // genuinely adds something beyond the standfirst — no more duplication.
-const bodyText = book.body.trim();
+const bodyText = (book.body ?? '').trim();
 const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
 ---
 
