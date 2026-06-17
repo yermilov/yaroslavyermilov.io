@@ -2,6 +2,7 @@
 title: "How Not to Be Wrong: The Power of Mathematical Thinking"
 author: "Jordan Ellenberg"
 cover: "/books/how-not-to-be-wrong/cover.jpg"
+rating: 5
 readAt: 2023-12-22
 readApprox: true
 language: "en"
