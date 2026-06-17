@@ -44,7 +44,7 @@ const groupKey = (e: TimelineEntry): GroupKey =>
   e.kind === 'book' && e.approx ? 'approx' : e.date.getFullYear();
 
 type Row =
-  | { row: 'milestone'; key: GroupKey; count: number }
+  | { row: 'milestone'; key: GroupKey }
   | { row: 'entry'; entry: TimelineEntry };
 
 const rows: Row[] = [];
@@ -56,8 +56,7 @@ if (compact) {
     const key = groupKey(entry);
     if (key !== current) {
       current = key;
-      const count = entries.filter((e) => groupKey(e) === key).length;
-      rows.push({ row: 'milestone', key, count });
+      rows.push({ row: 'milestone', key });
     }
     rows.push({ row: 'entry', entry });
   }
@@ -78,7 +77,6 @@ function kindLabel(kind: 'post' | 'talk' | 'book' | 'photos'): string {
       return (
         <li class="milestone" aria-label={label}>
           <span class:list={['milestone-year', { 'milestone-ago': ago }]}>{label}</span>
-          <span class="milestone-count">{r.count}</span>
         </li>
       );
     }
@@ -285,16 +283,6 @@ function kindLabel(kind: 'post' | 'talk' | 'book' | 'photos'): string {
   .milestone-ago {
     font-size: clamp(1.5rem, 2.6vw, 2rem);
     letter-spacing: -0.02em;
-  }
-  .milestone-count {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    color: var(--ink-muted);
-    border: 1px solid var(--rule);
-    padding: 0.1rem 0.45rem;
-    background: var(--bg-elevated);
-    position: relative;
-    z-index: 1;
   }
   .milestone::after {
     content: '';
