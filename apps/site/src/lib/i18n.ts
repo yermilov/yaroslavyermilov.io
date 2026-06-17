@@ -83,6 +83,7 @@ export interface Strings {
     book: string;
     photos: string;
     upcoming: string;
+    longAgo: string;
   };
   books: {
     by: string;
@@ -216,6 +217,7 @@ const STRINGS: Record<Locale, Strings> = {
       book: 'book',
       photos: 'photos',
       upcoming: 'upcoming',
+      longAgo: 'Long time ago',
     },
     books: {
       by: 'by',
@@ -349,6 +351,7 @@ const STRINGS: Record<Locale, Strings> = {
       book: 'книга',
       photos: 'фото',
       upcoming: 'скоро',
+      longAgo: 'Колись давно',
     },
     books: {
       by: 'автор —',

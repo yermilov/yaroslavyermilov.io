@@ -97,7 +97,7 @@ export async function getBookBySlug(slug: string): Promise<BookEntry | undefined
 export type TimelineEntry =
   | { kind: 'post'; date: Date; post: PostEntry }
   | { kind: 'talk'; date: Date; talk: TalkEntry }
-  | { kind: 'book'; date: Date; book: BookEntry }
+  | { kind: 'book'; date: Date; book: BookEntry; approx?: boolean }
   | { kind: 'photos'; date: Date; caption?: string | undefined; location?: string | undefined; photos: string[] };
 
 function byDateDesc(a: TimelineEntry, b: TimelineEntry): number {
@@ -115,7 +115,12 @@ export async function getWritingTalkingTimeline(): Promise<TimelineEntry[]> {
 
 export async function getInspirationTimeline(): Promise<TimelineEntry[]> {
   const books = await getBooks();
-  return books.map((book): TimelineEntry => ({ kind: 'book', date: book.data.readAt, book }));
+  return books.map((book): TimelineEntry => ({
+    kind: 'book',
+    date: book.data.readAt,
+    book,
+    approx: book.data.readApprox,
+  }));
 }
 
 /**

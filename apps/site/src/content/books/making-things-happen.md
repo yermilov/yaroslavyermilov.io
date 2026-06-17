@@ -3,6 +3,7 @@ title: "Making Things Happen: Mastering Project Management"
 author: "Scott Berkun"
 cover: "/books/making-things-happen/cover.jpg"
 readAt: 2023-12-22
+readApprox: true
 language: "en"
 summary: "A comprehensive guide to delivering results when you work on something longer than a task and not alone."
 affiliateUrl: "https://www.amazon.com/gp/product/0596517718"

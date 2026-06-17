@@ -3,6 +3,7 @@ title: "Radical Focus: Achieving Your Most Important Goals with Objectives and K
 author: "Christina Wodtke"
 cover: "/books/radical-focus/cover.jpg"
 readAt: 2023-12-22
+readApprox: true
 language: "en"
 summary: "Very short and light yet very helpful book on setting goals using the OKR framework."
 affiliateUrl: "https://www.amazon.com/gp/product/0996006028"

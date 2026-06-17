@@ -21,11 +21,14 @@ const { Content } = await book.render();
 const rating = book.data.rating ?? 0;
 const category = book.data.series || book.data.genre || null;
 
-// The read date is real data the old page never surfaced — stamp it.
-const readStamp = new Intl.DateTimeFormat(bcp47Locale(locale), {
-  month: 'short',
-  year: 'numeric',
-}).format(book.data.readAt);
+// The read date is real data the old page never surfaced — stamp it. When
+// the date is only a rough guess, say so instead of inventing precision.
+const readStamp = book.data.readApprox
+  ? strings.timeline.longAgo
+  : new Intl.DateTimeFormat(bcp47Locale(locale), {
+      month: 'short',
+      year: 'numeric',
+    }).format(book.data.readAt);
 
 // Some entries carry a personal note in the body; others just repeat the
 // summary verbatim (or are empty). Only open a notes section when the body

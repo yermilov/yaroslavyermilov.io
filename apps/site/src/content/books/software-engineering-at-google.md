@@ -3,6 +3,7 @@ title: "Software Engineering at Google: Lessons Learned from Programming Over Ti
 author: "Titus Winters, Tom Manshreck, Hyrum Wright"
 cover: "/books/software-engineering-at-google/cover.jpg"
 readAt: 2023-12-22
+readApprox: true
 language: "en"
 summary: "A guide to programming, process organization, and tooling at scale — perfect for exploring the problem space outside of coding itself."
 affiliateUrl: "https://www.amazon.com/gp/product/1492082791"

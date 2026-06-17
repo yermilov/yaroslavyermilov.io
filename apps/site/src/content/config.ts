@@ -92,6 +92,9 @@ const books = defineCollection({
     /** 1–5 stars; omit when unrated */
     rating: z.number().min(1).max(5).optional(),
     readAt: z.coerce.date(),
+    /** the read date is a rough guess — render "long time ago" and bucket
+        these together instead of an exact stamp. readAt still orders them. */
+    readApprox: z.boolean().default(false),
     /** language of the review/notes, not the book itself */
     language: localeEnum,
     summary: z.string(),

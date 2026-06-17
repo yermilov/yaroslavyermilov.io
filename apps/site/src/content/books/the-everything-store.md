@@ -3,6 +3,7 @@ title: "The Everything Store: Jeff Bezos and the Age of Amazon"
 author: "Brad Stone"
 cover: "/books/the-everything-store/cover.jpg"
 readAt: 2023-12-22
+readApprox: true
 language: "en"
 summary: "Jeff Bezos and Amazon's story — most interesting because the early Amazon team had to invent things we now consider common best practices."
 affiliateUrl: "https://www.amazon.com/The-Everything-Store-Brad-Stone-audiobook/dp/B00FJFJOLC"

@@ -3,6 +3,7 @@ title: "That Will Never Work: The Birth of Netflix and the Amazing Life of an Id
 author: "Marc Randolph"
 cover: "/books/that-will-never-work/cover.jpg"
 readAt: 2023-12-22
+readApprox: true
 language: "en"
 summary: "The story of Netflix as its co-founder remembers it — most interesting for its thoughts on personal life and happiness."
 affiliateUrl: "https://www.amazon.com/That-Will-Never-Work-audiobook/dp/B07X7JH5ZH"

@@ -3,6 +3,7 @@ title: "xUnit Test Patterns: Refactoring Test Code"
 author: "Gerard Meszaros"
 cover: "/books/xunit-test-patterns/cover.jpg"
 readAt: 2023-12-22
+readApprox: true
 language: "en"
 summary: "The most comprehensive guide on how to write good tests — production-grade rules apply to test code too."
 affiliateUrl: "https://www.amazon.com/xUnit-Test-Patterns-Refactoring-Code/dp/0131495054"

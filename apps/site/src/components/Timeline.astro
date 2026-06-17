@@ -36,22 +36,28 @@ function isUpcoming(d: Date): boolean {
   return x >= today;
 }
 
-/** Rows interleave year milestones with entries (skipped in compact mode). */
+/** Rows interleave milestones with entries (skipped in compact mode). A
+ *  milestone is a year, except approximate-date entries (books read "long
+ *  ago", exact date unknown) which collapse into one undated bucket. */
+type GroupKey = number | 'approx';
+const groupKey = (e: TimelineEntry): GroupKey =>
+  e.kind === 'book' && e.approx ? 'approx' : e.date.getFullYear();
+
 type Row =
-  | { row: 'milestone'; year: number; count: number }
+  | { row: 'milestone'; key: GroupKey; count: number }
   | { row: 'entry'; entry: TimelineEntry };
 
 const rows: Row[] = [];
 if (compact) {
   for (const entry of entries) rows.push({ row: 'entry', entry });
 } else {
-  let currentYear: number | null = null;
+  let current: GroupKey | null = null;
   for (const entry of entries) {
-    const year = entry.date.getFullYear();
-    if (year !== currentYear) {
-      currentYear = year;
-      const count = entries.filter((e) => e.date.getFullYear() === year).length;
-      rows.push({ row: 'milestone', year, count });
+    const key = groupKey(entry);
+    if (key !== current) {
+      current = key;
+      const count = entries.filter((e) => groupKey(e) === key).length;
+      rows.push({ row: 'milestone', key, count });
     }
     rows.push({ row: 'entry', entry });
   }
@@ -67,16 +73,24 @@ function kindLabel(kind: 'post' | 'talk' | 'book' | 'photos'): string {
 <ol class:list={['timeline', { 'timeline-compact': compact }]} role="list">
   {rows.map((r) => {
     if (r.row === 'milestone') {
+      const ago = r.key === 'approx';
+      const label = ago ? strings.timeline.longAgo : String(r.key);
       return (
-        <li class="milestone" aria-label={String(r.year)}>
-          <span class="milestone-year">{r.year}</span>
+        <li class="milestone" aria-label={label}>
+          <span class:list={['milestone-year', { 'milestone-ago': ago }]}>{label}</span>
           <span class="milestone-count">{r.count}</span>
         </li>
       );
     }
     const entry = r.entry;
     const upcoming = entry.kind === 'talk' && isUpcoming(entry.date);
-    const stamp = (
+    // Approximate-date books carry no exact stamp — the "long time ago"
+    // milestone above them is their dateline. Keep an empty cell so the
+    // spine node still aligns.
+    const approx = entry.kind === 'book' && entry.approx;
+    const stamp = approx ? (
+      <p class="stamp" aria-hidden="true"></p>
+    ) : (
       <p class="stamp">
         <time datetime={entry.date.toISOString()}>
           <span class="stamp-day">{entry.date.getDate()}</span>
@@ -265,6 +279,12 @@ function kindLabel(kind: 'post' | 'talk' | 'book' | 'photos'): string {
     padding-right: 0.35rem;
     position: relative;
     z-index: 1;
+  }
+  /* The undated bucket is a phrase, not a numeral — size it down so it
+     reads as a quiet section header rather than a giant year. */
+  .milestone-ago {
+    font-size: clamp(1.5rem, 2.6vw, 2rem);
+    letter-spacing: -0.02em;
   }
   .milestone-count {
     font-family: var(--font-mono);
