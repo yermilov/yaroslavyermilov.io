@@ -35,46 +35,56 @@ const offers = [
 ];
 ---
 
-<BaseLayout locale={locale} title={strings.nav.workshop} alternatePath="workshop" ogImage={`/og/workshop-${locale}.png`}>
-  <section class="page-frame workshop">
+<BaseLayout
+  locale={locale}
+  title={strings.nav.workshop}
+  alternatePath="workshop"
+  ogImage={`/og/workshop-${locale}.png`}
+  fullViewport
+  hideFooter
+>
+  <div class="workshop">
+    {/* ── Pitch rail: value proposition on top, CTA pinned below ───── */}
     <header class="lead">
       <p class="workbench lead-eyebrow">{ws.eyebrow}</p>
       <h1 class="lead-headline">{ws.headline}</h1>
       <p class="lead-lede">{ws.lede}</p>
     </header>
 
-    <section class="block" aria-label={ws.formatLabel}>
-      <p class="workbench block-label">/ {ws.formatLabel}</p>
-      <ol class="steps" role="list">
-        {steps.map((step) => (
-          <li class="step">
-            <p class="workbench step-index">{step.index}</p>
-            <div class="step-body">
-              <h2 class="step-title">{step.title}</h2>
-              <p class="step-desc">{step.desc}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
-    </section>
+    {/* ── Body: how it runs, then the two proven formats ───────────── */}
+    <div class="ws-body">
+      <section class="block" aria-label={ws.formatLabel}>
+        <p class="workbench block-label">/ {ws.formatLabel}</p>
+        <ol class="steps" role="list">
+          {steps.map((step) => (
+            <li class="step">
+              <p class="workbench step-index">{step.index}</p>
+              <div class="step-body">
+                <h2 class="step-title">{step.title}</h2>
+                <p class="step-desc">{step.desc}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
 
-    <section class="block" aria-label={ws.formatsLabel}>
-      <p class="workbench block-label">/ {ws.formatsLabel}</p>
-      <ul class="offers" role="list">
-        {offers.map((offer) => (
-          <li class="offer">
-            <p class="workbench offer-index">{offer.index}</p>
-            <p class="workbench offer-kicker">{offer.kicker}</p>
-            <h2 class="offer-title">{offer.title}</h2>
-            <p class="offer-desc">{offer.desc}</p>
-            <a class="workbench offer-deck" href={offer.href} rel="noopener" target="_blank">
-              {ws.viewDeck}<span class="offer-deck-arrow" aria-hidden="true">↗</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-      <p class="workbench note">▸ {ws.note}</p>
-    </section>
+      <section class="block formats" aria-label={ws.formatsLabel}>
+        <p class="workbench block-label">/ {ws.formatsLabel}</p>
+        <ul class="offers" role="list">
+          {offers.map((offer) => (
+            <li class="offer">
+              <p class="workbench offer-kicker">{offer.kicker}</p>
+              <h2 class="offer-title">{offer.title}</h2>
+              <p class="offer-desc">{offer.desc}</p>
+              <a class="workbench offer-deck" href={offer.href} rel="noopener" target="_blank">
+                {ws.viewDeck}<span class="offer-deck-arrow" aria-hidden="true">↗</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+        <p class="workbench note">▸ {ws.note}</p>
+      </section>
+    </div>
 
     <a
       class="cta"
@@ -88,18 +98,20 @@ const offers = [
       </span>
       <span class="workbench cta-handle">{ws.ctaHandle}</span>
     </a>
-  </section>
+  </div>
 </BaseLayout>
 
 <style>
+  /* ── Mobile / narrow: a simple stacked flow ──────────────────────── */
   .workshop {
+    max-width: 64rem;
+    margin-inline: auto;
     padding: var(--space-4) var(--space-3) var(--space-6);
   }
 
-  /* ── Lead: a visible value proposition in the reading voice ──────── */
   .lead {
     max-width: var(--measure);
-    margin-bottom: var(--space-5);
+    margin-bottom: var(--space-4);
   }
   .lead-eyebrow {
     color: var(--green-primary);
@@ -111,34 +123,36 @@ const offers = [
     margin: 0 0 var(--space-3);
   }
   .lead-lede {
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     color: var(--ink-muted);
     margin: 0;
   }
 
   .block {
-    margin-bottom: var(--space-5);
+    margin-bottom: var(--space-4);
   }
-  /* Mono ledger label, matching the homepage section headers. */
+  .formats {
+    margin-bottom: 0;
+  }
   .block-label {
     color: var(--ink-muted);
-    margin: 0 0 var(--space-3);
+    margin: 0 0 var(--space-2);
   }
 
-  /* ── Format: a three-step ledger of how an engagement runs ───────── */
+  /* Three-step ledger of how an engagement runs. */
   .steps {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    gap: var(--space-3);
+    gap: var(--space-2);
   }
   .step {
     display: grid;
-    grid-template-columns: 2.5rem 1fr;
+    grid-template-columns: 2.4rem 1fr;
     gap: var(--space-2);
     align-items: baseline;
-    padding-bottom: var(--space-3);
+    padding-bottom: var(--space-2);
     border-bottom: 1px solid var(--rule);
   }
   .step:last-child {
@@ -152,24 +166,23 @@ const offers = [
   }
   .step-body {
     min-width: 0;
-    max-width: var(--measure);
   }
   .step-title {
-    font-size: 1.3rem;
-    margin: 0 0 0.2rem;
+    font-size: 1.25rem;
+    margin: 0 0 0.15rem;
   }
   .step-desc {
     color: var(--ink-muted);
     margin: 0;
   }
 
-  /* ── Two offer cards — printed flyers pinned to the workbench ────── */
+  /* Two offer cards — printed flyers pinned to the workbench. */
   .offers {
     list-style: none;
-    margin: 0 0 var(--space-4);
+    margin: 0 0 var(--space-3);
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: var(--space-3);
   }
   .offer {
@@ -178,17 +191,12 @@ const offers = [
     border: 1px solid var(--rule);
     background: var(--bg-elevated);
     box-shadow: 4px 5px 0 0 var(--rule);
-    padding: var(--space-3) var(--space-3) var(--space-4);
+    padding: var(--space-3) var(--space-3) var(--space-3);
     transition: transform 160ms ease, box-shadow 160ms ease;
   }
   .offer:hover {
     transform: translate(-2px, -2px);
     box-shadow: 7px 8px 0 0 var(--rule);
-  }
-  .offer-index {
-    color: var(--orange-accent);
-    font-weight: 700;
-    margin: 0 0 var(--space-2);
   }
   .offer-kicker {
     color: var(--green-primary);
@@ -197,7 +205,7 @@ const offers = [
     margin: 0 0 0.3rem;
   }
   .offer-title {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     margin: 0 0 var(--space-2);
   }
   .offer-desc {
@@ -239,6 +247,7 @@ const offers = [
     border: none;
     line-height: 1.1;
     color: var(--ink);
+    margin-top: var(--space-5);
   }
   .cta:hover {
     background: transparent;
@@ -249,7 +258,7 @@ const offers = [
   }
   .cta-headline {
     font-family: var(--font-display);
-    font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+    font-size: clamp(1.9rem, 4.5vw, 2.6rem);
     font-weight: 700;
     letter-spacing: -0.015em;
     transition: color 140ms ease;
@@ -276,5 +285,130 @@ const offers = [
   }
   .cta:hover .cta-handle {
     color: var(--ink);
+  }
+
+  /* ════════════════════════════════════════════════════════════════
+     Split screen (desktop). Left rail = pitch + CTA; right column =
+     the substance. Spends width, not height — same ledger grammar as
+     the homepage spread.
+     ════════════════════════════════════════════════════════════════ */
+  @media (min-width: 960px) {
+    .workshop {
+      max-width: none;
+      margin: 0;
+      padding: var(--space-4);
+      display: grid;
+      grid-template-columns: clamp(320px, 34vw, 440px) minmax(0, 1fr);
+      grid-template-rows: auto 1fr;
+      grid-template-areas:
+        'lead body'
+        'cta  body';
+      column-gap: var(--space-4);
+      row-gap: var(--space-3);
+    }
+
+    .lead {
+      grid-area: lead;
+      margin-bottom: 0;
+      max-width: none;
+    }
+    .lead-headline {
+      font-size: clamp(1.7rem, 2.7vw, 2.5rem);
+    }
+    .lead-lede {
+      font-size: clamp(1rem, 1.1vw, 1.12rem);
+    }
+
+    .ws-body {
+      grid-area: body;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      border-left: 1px solid var(--rule);
+      padding-left: var(--space-4);
+    }
+    /* Compress the ledger so the spread fits a laptop screen. */
+    .steps {
+      gap: var(--space-1);
+    }
+    .step {
+      padding-bottom: var(--space-1);
+    }
+    .step-title {
+      font-size: 1.15rem;
+    }
+    /* The cards fill the remaining height so the column reads as one block. */
+    .formats {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      flex: 1 1 auto;
+    }
+    .offers {
+      margin-bottom: var(--space-2);
+    }
+    .offer {
+      padding: var(--space-2) var(--space-3);
+    }
+    .offer-kicker {
+      margin-bottom: 0.2rem;
+    }
+    .offer-title {
+      font-size: 1.25rem;
+      margin-bottom: var(--space-1);
+    }
+    /* Cap descriptions so a longer translation can't push the card taller. */
+    .offer-desc {
+      line-height: 1.5;
+      margin-bottom: var(--space-2);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .step-desc {
+      line-height: 1.45;
+    }
+
+    .cta {
+      grid-area: cta;
+      align-self: end;
+      margin-top: 0;
+    }
+  }
+
+  /* ── Viewport lock: chrome + spread = exactly one screen. Threshold
+     sits just above the content's natural height (longest locale ≈ 640px)
+     so shorter windows scroll gracefully instead of clipping. ───────── */
+  @media (min-width: 960px) and (min-height: 660px) {
+    :global(body.full-viewport) {
+      height: 100dvh;
+      overflow: hidden;
+    }
+    :global(body.full-viewport main) {
+      display: flex;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+    .workshop {
+      height: 100%;
+    }
+  }
+
+  /* ── Page-load reveal: one staggered rise, then stillness ────────── */
+  @media (prefers-reduced-motion: no-preference) and (min-width: 960px) {
+    .lead,
+    .ws-body,
+    .cta {
+      animation: ws-rise 480ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+    }
+    .lead { animation-delay: 40ms; }
+    .ws-body { animation-delay: 160ms; }
+    .cta { animation-delay: 280ms; }
+  }
+  @keyframes ws-rise {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 </style>

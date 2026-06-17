@@ -395,7 +395,7 @@ const STRINGS: Record<Locale, Strings> = {
       offerOneKicker: 'Вступ · AI agentic engineering',
       offerOneTitle: 'Pragmatic Vibe Clauding',
       offerOneDesc:
-        'Від автодоповнення до агентів. Ставтеся до Claude Code як до талановитого колеги, будуйте для нього правильний контекст і переносьте реальну роботу — не лише код — в агентні цикли зворотного звʼязку.',
+        'Від автодоповнення до агентів. Ставтеся до Claude Code як до талановитого колеги, давайте йому правильний контекст і переносьте в агентні цикли реальну роботу — не лише код.',
       offerTwoKicker: 'Просунутий · Скіли як інфраструктура команди',
       offerTwoTitle: 'Revenge of the Skill',
       offerTwoDesc:
