@@ -75,14 +75,16 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
         <h1 class="title">{book.data.title}</h1>
         <p class="author"><span class="by">{strings.books.by}</span> <span class="name">{book.data.author}</span></p>
 
-        <p class="summary">{book.data.summary}</p>
-
-        {hasNotes && (
+        {/* The summary is the at-a-glance blurb; when full notes exist they
+            carry it, so show it only as the standfirst for note-less books. */}
+        {hasNotes ? (
           <section class="notes">
             <div class="notes-body">
               <Content />
             </div>
           </section>
+        ) : (
+          <p class="summary">{book.data.summary}</p>
         )}
       </div>
     </div>
