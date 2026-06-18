@@ -2,6 +2,7 @@
 title: "xUnit Test Patterns: Refactoring Test Code"
 author: "Gerard Meszaros"
 cover: "/books/xunit-test-patterns/cover.jpg"
+rating: 4
 readAt: 2023-12-22
 readApprox: true
 language: "en"

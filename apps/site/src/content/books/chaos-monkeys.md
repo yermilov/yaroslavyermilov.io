@@ -2,6 +2,7 @@
 title: "Chaos Monkeys: Obscene Fortune and Random Failure in Silicon Valley"
 author: "Antonio García Martínez"
 cover: "/books/chaos-monkeys/cover.jpg"
+rating: 5
 readAt: 2023-12-22
 readApprox: true
 language: "en"

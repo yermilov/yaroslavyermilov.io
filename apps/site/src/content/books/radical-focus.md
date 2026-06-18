@@ -2,6 +2,7 @@
 title: "Radical Focus: Achieving Your Most Important Goals with Objectives and Key Results"
 author: "Christina Wodtke"
 cover: "/books/radical-focus/cover.jpg"
+rating: 4
 readAt: 2023-12-22
 readApprox: true
 language: "en"

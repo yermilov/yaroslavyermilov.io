@@ -2,6 +2,7 @@
 title: "Release It!: Design and Deploy Production-Ready Software"
 author: "Michael T. Nygard"
 cover: "/books/release-it/cover.jpg"
+rating: 5
 readAt: 2023-12-22
 readApprox: true
 language: "en"

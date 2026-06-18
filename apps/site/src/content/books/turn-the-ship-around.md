@@ -2,6 +2,7 @@
 title: "Turn the Ship Around!: A True Story of Turning Followers into Leaders"
 author: "L. David Marquet"
 cover: "/books/turn-the-ship-around/cover.jpg"
+rating: 4
 readAt: 2023-12-22
 readApprox: true
 language: "en"

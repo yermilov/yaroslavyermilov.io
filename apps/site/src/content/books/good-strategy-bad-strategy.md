@@ -2,6 +2,7 @@
 title: "Good Strategy/Bad Strategy: The Difference and Why It Matters"
 author: "Richard Rumelt"
 cover: "/books/good-strategy-bad-strategy/cover.jpg"
+rating: 5
 readAt: 2023-12-22
 readApprox: true
 language: "en"

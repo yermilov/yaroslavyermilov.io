@@ -2,6 +2,7 @@
 title: "Creativity, Inc.: Overcoming the Unseen Forces That Stand in the Way of True Inspiration"
 author: "Ed Catmull"
 cover: "/books/creativity-inc/cover.jpg"
+rating: 3
 readAt: 2023-12-22
 readApprox: true
 language: "en"

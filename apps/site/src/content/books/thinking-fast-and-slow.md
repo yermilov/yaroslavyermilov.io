@@ -2,6 +2,7 @@
 title: "Thinking, Fast and Slow"
 author: "Daniel Kahneman"
 cover: "/books/thinking-fast-and-slow/cover.jpg"
+rating: 5
 readAt: 2023-12-22
 readApprox: true
 language: "en"

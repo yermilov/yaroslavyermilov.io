@@ -2,6 +2,7 @@
 title: "No Filter: The Inside Story of Instagram"
 author: "Sarah Frier"
 cover: "/books/no-filter/cover.jpg"
+rating: 4
 readAt: 2023-12-22
 readApprox: true
 language: "en"

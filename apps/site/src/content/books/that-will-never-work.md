@@ -2,6 +2,7 @@
 title: "That Will Never Work: The Birth of Netflix and the Amazing Life of an Idea"
 author: "Marc Randolph"
 cover: "/books/that-will-never-work/cover.jpg"
+rating: 5
 readAt: 2023-12-22
 readApprox: true
 language: "en"

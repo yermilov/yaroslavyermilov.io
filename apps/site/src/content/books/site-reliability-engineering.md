@@ -2,6 +2,7 @@
 title: "Site Reliability Engineering: How Google Runs Production Systems"
 author: "Betsy Beyer, Chris Jones, Jennifer Petoff, Niall Richard Murphy"
 cover: "/books/site-reliability-engineering/cover.jpg"
+rating: 5
 readAt: 2023-12-22
 readApprox: true
 language: "en"

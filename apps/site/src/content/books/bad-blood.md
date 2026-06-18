@@ -2,6 +2,7 @@
 title: "Bad Blood: Secrets and Lies in a Silicon Valley Startup"
 author: "John Carreyrou"
 cover: "/books/bad-blood/cover.jpg"
+rating: 4
 readAt: 2023-12-22
 readApprox: true
 language: "en"

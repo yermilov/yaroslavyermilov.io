@@ -2,6 +2,7 @@
 title: "The Everything Store: Jeff Bezos and the Age of Amazon"
 author: "Brad Stone"
 cover: "/books/the-everything-store/cover.jpg"
+rating: 4
 readAt: 2023-12-22
 readApprox: true
 language: "en"

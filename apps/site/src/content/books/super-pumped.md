@@ -2,6 +2,7 @@
 title: "Super Pumped: The Battle for Uber"
 author: "Mike Isaac"
 cover: "/books/super-pumped/cover.jpg"
+rating: 4
 readAt: 2023-12-22
 readApprox: true
 language: "en"
