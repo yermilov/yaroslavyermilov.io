@@ -109,6 +109,12 @@ async function getLinksByStatus(status: 'stamped' | 'backlog'): Promise<LinkEntr
   return all.filter((l) => (l.data.status ?? 'stamped') === status);
 }
 
+/** Links I've read/tried — newest first. */
+export async function getStampedLinks(): Promise<LinkEntry[]> {
+  const links = await getLinksByStatus('stamped');
+  return links.sort((a, b) => readAtTime(b) - readAtTime(a));
+}
+
 export async function getBookBySlug(slug: string): Promise<BookEntry | undefined> {
   const all = await getCollection('books', isPublished);
   return all.find((b) => b.slug === slug);

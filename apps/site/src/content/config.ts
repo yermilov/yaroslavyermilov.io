@@ -124,6 +124,8 @@ const links = defineCollection({
     /** attribution shown in the kindline, e.g. "Thariq · X". */
     source: z.string(),
     kind: z.enum(['tweet', 'article', 'video', 'podcast', 'link']).default('link'),
+    /** 0–5 stars; omit when unrated. Gates promotion to the home shelf. */
+    rating: z.number().min(0).max(5).optional(),
     status: z.enum(['stamped', 'backlog']).default('stamped'),
     addedAt: z.coerce.date().optional(),
     readAt: z.coerce.date().optional(),

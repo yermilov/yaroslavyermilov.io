@@ -3,7 +3,7 @@ import { LOCALES, t, localePath, languageBadge, bcp47Locale, type Locale } from 
 import BaseLayout from '@layouts/BaseLayout.astro';
 import Timeline from '@components/Timeline.astro';
 import RelativeDays from '@components/RelativeDays.tsx';
-import { getStampedBooks, getTalks, getWritingTalkingTimeline } from '@lib/content';
+import { getStampedBooks, getStampedLinks, getTalks, getWritingTalkingTimeline } from '@lib/content';
 
 export async function getStaticPaths() {
   return LOCALES.map((locale) => ({ params: { locale } }));
@@ -33,16 +33,47 @@ const recent = (await getWritingTalkingTimeline())
   .filter((e) => !(e.kind === 'talk' && atMidnight(e.date) >= today))
   .slice(0, RECENT_COUNT);
 
-/* From the shelf: newest book server-rendered; the last ten serialized so a
- * tiny script can deal a random one per visit. */
-const shelf = (await getStampedBooks()).slice(0, 10).map((book) => ({
-  title: book.data.title,
-  author: book.data.author,
-  cover: book.data.cover,
-  rating: book.data.rating ?? null,
-  summary: book.data.summary,
-  href: localePath(locale, `books/${book.slug}`),
-}));
+/* From the shelf: promote any inspiration entry worth recommending — books
+ * and links alike, gated at 4–5 stars. Newest server-rendered; up to ten
+ * serialized so a tiny script can deal a random one per visit. */
+interface ShelfItem {
+  title: string;
+  byline: string;
+  cover: string | null;
+  rating: number | null;
+  summary: string;
+  href: string;
+  external: boolean;
+  date: number;
+}
+const [stampedBooks, stampedLinks] = await Promise.all([getStampedBooks(), getStampedLinks()]);
+const shelfPool: ShelfItem[] = [
+  ...stampedBooks.map((book): ShelfItem => ({
+    title: book.data.title,
+    byline: `${strings.books.by} ${book.data.author}`,
+    cover: book.data.cover,
+    rating: book.data.rating ?? null,
+    summary: book.data.summary,
+    href: localePath(locale, `books/${book.slug}`),
+    external: false,
+    date: book.data.readAt?.getTime() ?? 0,
+  })),
+  ...stampedLinks.map((link): ShelfItem => ({
+    title: link.data.title,
+    byline: link.data.source,
+    cover: link.data.thumbnail ?? null,
+    rating: link.data.rating ?? null,
+    summary: link.data.summary ?? '',
+    href: link.data.url,
+    external: true,
+    date: link.data.readAt?.getTime() ?? 0,
+  })),
+];
+const shelf = shelfPool
+  .filter((it) => (it.rating ?? 0) >= 4)
+  .sort((a, b) => b.date - a.date)
+  .slice(0, 10)
+  .map(({ date: _date, ...rest }) => rest);
 const shelfFirst = shelf[0];
 function starsOf(rating: number | null): string | null {
   return rating ? '★'.repeat(rating) + '☆'.repeat(5 - rating) : null;
@@ -165,21 +196,29 @@ function calMonth(date: Date): string {
               </a>
             </div>
             <div class="shelf-card" data-shelf-card>
-              <a class="shelf-cover" href={shelfFirst.href} data-shelf-cover aria-hidden="true" tabindex="-1">
-                <img src={shelfFirst.cover} alt="" data-shelf-img />
+              <a
+                class="shelf-cover"
+                href={shelfFirst.href}
+                data-shelf-cover
+                aria-hidden="true"
+                tabindex="-1"
+                {...(shelfFirst.external ? { target: '_blank', rel: 'noopener' } : {})}
+              >
+                <img src={shelfFirst.cover ?? ''} alt="" data-shelf-img hidden={!shelfFirst.cover} />
+                <span class="shelf-glyph" data-shelf-glyph aria-hidden="true" hidden={!!shelfFirst.cover}>✦</span>
               </a>
               <div class="shelf-meta">
                 {starsOf(shelfFirst.rating) && (
                   <p class="workbench shelf-stars" data-shelf-stars>{starsOf(shelfFirst.rating)}</p>
                 )}
                 <h2 class="shelf-title">
-                  <a href={shelfFirst.href} data-shelf-link>{shelfFirst.title}</a>
+                  <a href={shelfFirst.href} data-shelf-link {...(shelfFirst.external ? { target: '_blank', rel: 'noopener' } : {})}>{shelfFirst.title}</a>
                 </h2>
-                <p class="shelf-author" data-shelf-author>{strings.books.by} {shelfFirst.author}</p>
+                <p class="shelf-author" data-shelf-author>{shelfFirst.byline}</p>
                 <p class="shelf-summary" data-shelf-summary>{shelfFirst.summary}</p>
               </div>
             </div>
-            <script is:inline type="application/json" data-shelf-data set:html={JSON.stringify({ by: strings.books.by, books: shelf })} />
+            <script is:inline type="application/json" data-shelf-data set:html={JSON.stringify({ items: shelf })} />
           </section>
         )}
       </div>
@@ -234,40 +273,59 @@ function calMonth(date: Date): string {
     }
   }
 
-  // From the shelf: deal a random recent read per visit. The newest book is
-  // server-rendered as the no-JS fallback.
+  // From the shelf: deal a random recommended inspiration entry (book or
+  // link) per visit. The newest is server-rendered as the no-JS fallback.
   {
     const data = document.querySelector<HTMLScriptElement>('[data-shelf-data]');
     const card = document.querySelector<HTMLElement>('[data-shelf-card]');
     if (data && card) {
       try {
-        const { by, books } = JSON.parse(data.textContent || '{}') as {
-          by: string;
-          books: Array<{
+        const { items } = JSON.parse(data.textContent || '{}') as {
+          items: Array<{
             title: string;
-            author: string;
-            cover: string;
+            byline: string;
+            cover: string | null;
             rating: number | null;
             summary: string;
             href: string;
+            external: boolean;
           }>;
         };
-        if (Array.isArray(books) && books.length > 1) {
-          const pick = books[Math.floor(Math.random() * books.length)];
+        if (Array.isArray(items) && items.length > 1) {
+          const pick = items[Math.floor(Math.random() * items.length)];
           if (pick) {
             const img = card.querySelector<HTMLImageElement>('[data-shelf-img]');
+            const glyph = card.querySelector<HTMLElement>('[data-shelf-glyph]');
             const coverLink = card.querySelector<HTMLAnchorElement>('[data-shelf-cover]');
             const link = card.querySelector<HTMLAnchorElement>('[data-shelf-link]');
             const author = card.querySelector<HTMLElement>('[data-shelf-author]');
             const summary = card.querySelector<HTMLElement>('[data-shelf-summary]');
             const stars = card.querySelector<HTMLElement>('[data-shelf-stars]');
-            if (img) img.src = pick.cover;
-            if (coverLink) coverLink.href = pick.href;
-            if (link) {
-              link.href = pick.href;
-              link.textContent = pick.title;
+            const setTarget = (a: HTMLAnchorElement | null) => {
+              if (!a) return;
+              a.href = pick.href;
+              if (pick.external) {
+                a.target = '_blank';
+                a.rel = 'noopener';
+              } else {
+                a.removeAttribute('target');
+                a.removeAttribute('rel');
+              }
+            };
+            if (img && glyph) {
+              if (pick.cover) {
+                img.src = pick.cover;
+                img.hidden = false;
+                glyph.hidden = true;
+              } else {
+                img.hidden = true;
+                glyph.hidden = false;
+              }
             }
-            if (author) author.textContent = `${by} ${pick.author}`;
+            setTarget(coverLink);
+            setTarget(link);
+            if (link) link.textContent = pick.title;
+            if (author) author.textContent = pick.byline;
             if (summary) summary.textContent = pick.summary;
             if (stars) {
               if (pick.rating) {
@@ -280,7 +338,7 @@ function calMonth(date: Date): string {
           }
         }
       } catch {
-        // malformed JSON → keep the server-rendered newest book
+        // malformed JSON → keep the server-rendered fallback
       }
     }
   }
@@ -582,7 +640,8 @@ function calMonth(date: Date): string {
   .shelf-cover:hover {
     background: transparent;
   }
-  .shelf-cover img {
+  .shelf-cover img,
+  .shelf-glyph {
     width: 110px;
     aspect-ratio: 2 / 3;
     object-fit: cover;
@@ -592,7 +651,15 @@ function calMonth(date: Date): string {
     box-shadow: 4px 5px 0 0 var(--rule);
     transition: transform 160ms ease, box-shadow 160ms ease;
   }
-  .shelf-card:hover .shelf-cover img {
+  /* Placeholder plate for links without a thumbnail. */
+  .shelf-glyph {
+    display: grid;
+    place-items: center;
+    font-size: 2rem;
+    color: var(--green-primary);
+  }
+  .shelf-card:hover .shelf-cover img,
+  .shelf-card:hover .shelf-glyph {
     transform: translate(-2px, -2px);
     box-shadow: 6px 7px 0 0 var(--rule);
   }
@@ -640,7 +707,8 @@ function calMonth(date: Date): string {
       margin-top: -52px;
       border-width: 4px;
     }
-    .shelf-cover img {
+    .shelf-cover img,
+    .shelf-glyph {
       width: 96px;
     }
   }
@@ -771,7 +839,8 @@ function calMonth(date: Date): string {
       border-left: 1px solid var(--rule);
       padding-left: var(--space-4);
     }
-    .shelf-cover img {
+    .shelf-cover img,
+    .shelf-glyph {
       width: clamp(90px, 8vw, 124px);
     }
     .shelf-summary {
