@@ -34,8 +34,8 @@ const recent = (await getWritingTalkingTimeline())
   .slice(0, RECENT_COUNT);
 
 /* From the shelf: promote any inspiration entry worth recommending — books
- * and links alike, gated at 4–5 stars. Newest server-rendered; up to ten
- * serialized so a tiny script can deal a random one per visit. */
+ * and links alike, gated at 4–5 stars. Newest server-rendered; the whole
+ * pool serialized so a tiny script can deal a random one per visit. */
 interface ShelfItem {
   title: string;
   byline: string;
@@ -72,7 +72,6 @@ const shelfPool: ShelfItem[] = [
 const shelf = shelfPool
   .filter((it) => (it.rating ?? 0) >= 4)
   .sort((a, b) => b.date - a.date)
-  .slice(0, 10)
   .map(({ date: _date, ...rest }) => rest);
 const shelfFirst = shelf[0];
 function starsOf(rating: number | null): string | null {
