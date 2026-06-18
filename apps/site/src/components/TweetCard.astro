@@ -1,0 +1,144 @@
+---
+/**
+ * A native embed of a tweet — rendered in the site's own design, with no
+ * third-party script (keeps the site cookieless and on-aesthetic). Pass the
+ * tweet's data; the body is the default slot. Reusable wherever a tweet is
+ * quoted on the site.
+ */
+interface Props {
+  /** Permalink to the tweet. */
+  url: string;
+  /** Display name, e.g. "Yarik Yermilov". */
+  author: string;
+  /** Handle without the @, e.g. "yermilov17". */
+  handle: string;
+  /** Human date string, e.g. "Jun 6, 2026". */
+  date: string;
+  /** Optional avatar image (path under public/). */
+  avatar?: string | undefined;
+  /** Optional "Replying to @…" handle (without the @). */
+  replyTo?: string | undefined;
+}
+const { url, author, handle, date, avatar, replyTo } = Astro.props;
+---
+
+<figure class="tweet">
+  <div class="tweet-head">
+    {avatar && <img class="tweet-avatar" src={avatar} alt="" loading="lazy" />}
+    <span class="tweet-id">
+      <span class="tweet-name">{author}</span>
+      <span class="tweet-handle">@{handle}</span>
+    </span>
+    <span class="tweet-mark" aria-hidden="true">𝕏</span>
+  </div>
+
+  {replyTo && (
+    <p class="tweet-reply">Replying to <span class="tweet-at">@{replyTo}</span></p>
+  )}
+
+  <p class="tweet-body"><slot /></p>
+
+  <a class="tweet-link" href={url} rel="noopener" target="_blank">
+    <span class="tweet-date">{date}</span>
+    <span class="tweet-cta">View on X<span class="tweet-arrow" aria-hidden="true">↗</span></span>
+  </a>
+</figure>
+
+<style>
+  .tweet {
+    margin: 0;
+    max-width: 38rem;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    background: var(--bg-elevated);
+    padding: var(--space-3);
+    box-shadow: 4px 6px 0 0 var(--rule);
+  }
+
+  .tweet-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .tweet-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--rule);
+    flex: 0 0 auto;
+  }
+  .tweet-id {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+    min-width: 0;
+  }
+  .tweet-name {
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .tweet-handle {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+  }
+  .tweet-mark {
+    margin-left: auto;
+    font-size: 1.15rem;
+    color: var(--ink-muted);
+  }
+
+  .tweet-reply {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+    margin: var(--space-2) 0 0;
+  }
+  .tweet-at {
+    color: var(--green-primary);
+  }
+
+  /* Plain body text — deliberately not the global blockquote treatment. */
+  .tweet-body {
+    margin: var(--space-2) 0 var(--space-3);
+    font-size: 1.15rem;
+    line-height: 1.45;
+    color: var(--ink);
+  }
+
+  .tweet-link {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+    border: none;
+    border-top: 1px solid var(--rule);
+    padding-top: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+  }
+  .tweet-link:hover {
+    background: transparent;
+  }
+  .tweet-date {
+    color: var(--ink-muted);
+  }
+  .tweet-cta {
+    color: var(--green-primary);
+    border-bottom: 1.5px solid transparent;
+  }
+  .tweet-link:hover .tweet-cta {
+    color: var(--orange-accent);
+    border-bottom-color: var(--orange-accent);
+  }
+  .tweet-arrow {
+    display: inline-block;
+    margin-left: 0.25em;
+    color: var(--orange-accent);
+    transition: transform 160ms ease;
+  }
+  .tweet-link:hover .tweet-arrow {
+    transform: translate(2px, -2px);
+  }
+</style>

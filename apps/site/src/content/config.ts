@@ -89,8 +89,8 @@ const books = defineCollection({
     author: z.string(),
     /** path under apps/site/public/, e.g. "/books/<slug>/cover.jpg" */
     cover: z.string(),
-    /** 1–5 stars; omit when unrated */
-    rating: z.number().min(1).max(5).optional(),
+    /** 0–5 stars; omit when unrated (0 is an explicit zero, shown as ☆☆☆☆☆) */
+    rating: z.number().min(0).max(5).optional(),
     /** "stamped" = read/tried (the journal archive); "backlog" = planned. */
     status: z.enum(['stamped', 'backlog']).default('stamped'),
     /** when it landed on the backlog — orders the (undated) backlog, newest first. */
