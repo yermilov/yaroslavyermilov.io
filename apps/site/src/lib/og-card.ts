@@ -84,7 +84,7 @@ function titleFontSize(title: string): number {
   return 84;
 }
 
-export async function renderOgCard(card: OgCard): Promise<Uint8Array> {
+export async function renderOgCard(card: OgCard): Promise<Uint8Array<ArrayBuffer>> {
   const serif = card.language === 'ua' ? 'PT Serif' : 'Newsreader';
 
   const tree = el(
