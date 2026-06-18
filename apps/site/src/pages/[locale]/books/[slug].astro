@@ -45,19 +45,23 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
   description={book.data.summary}
   alternatePath={`books/${book.slug}`}
   ogImage={`/og/book-${book.slug}.png`}
+  fullViewport
+  hideFooter
 >
-  <article class="page-frame book" data-pagefind-body>
+  <article class="book" data-pagefind-body>
     <p class="workbench breadcrumb">
       <a href={localePath(locale, 'inspiration')}>{strings.books.backToBooks}</a>
     </p>
 
-    {/* ── Catalog plate: the cover tipped in beside its catalog card. ── */}
-    <div class="plate">
-      <aside class="cover" aria-hidden="true">
-        <img src={book.data.cover} alt="" loading="eager" />
+    {/* ── Spread: the cover plate beside its catalog card + notes. ───── */}
+    <div class="spread">
+      <aside class="plate-rail">
+        <div class="cover" aria-hidden="true">
+          <img src={book.data.cover} alt="" loading="eager" />
+        </div>
       </aside>
 
-      <div class="card">
+      <div class="reading">
         <p class="workbench stamps">
           <span class="stamp stamp-read">{isBacklog ? strings.books.backlog : `${strings.books.read} · ${readStamp}`}</span>
           {rating > 0 && (
@@ -72,29 +76,32 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
         <p class="author"><span class="by">{strings.books.by}</span> <span class="name">{book.data.author}</span></p>
 
         <p class="summary">{book.data.summary}</p>
+
+        {hasNotes && (
+          <section class="notes">
+            <p class="workbench notes-label">/ {strings.books.notes}</p>
+            <div class="notes-body">
+              <Content />
+            </div>
+          </section>
+        )}
       </div>
     </div>
-
-    {hasNotes && (
-      <section class="notes">
-        <p class="workbench notes-label">/ {strings.books.notes}</p>
-        <div class="notes-body">
-          <Content />
-        </div>
-      </section>
-    )}
   </article>
 </BaseLayout>
 
 <style>
+  /* ── Mobile / narrow: a stacked flow ─────────────────────────────── */
   .book {
     max-width: 60rem;
     margin-inline: auto;
     padding: var(--space-4) var(--space-3) var(--space-6);
+    display: flex;
+    flex-direction: column;
   }
 
   .breadcrumb {
-    margin: 0 0 var(--space-5);
+    margin: 0 0 var(--space-4);
   }
   .breadcrumb a {
     color: var(--ink-muted);
@@ -105,16 +112,15 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
     color: var(--orange-accent);
   }
 
-  /* ── Plate: cover plate + catalog card, spending width not height. ── */
-  .plate {
+  .spread {
     display: grid;
-    grid-template-columns: clamp(168px, 24vw, 232px) minmax(0, 1fr);
-    gap: clamp(var(--space-3), 4vw, var(--space-5));
-    align-items: start;
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
   }
 
   /* The cover is a tipped-in plate with the site's hard offset shadow. */
   .cover {
+    width: min(190px, 52vw);
     aspect-ratio: 2 / 3;
     overflow: hidden;
     background: var(--bg-elevated);
@@ -134,7 +140,11 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
     display: block;
   }
 
-  /* ── Catalog card: stamps, title, author, standfirst, action. ────── */
+  /* ── Reading column: stamps, title, author, standfirst, notes. ───── */
+  .reading {
+    min-width: 0;
+    max-width: var(--measure);
+  }
   .stamps {
     display: flex;
     flex-wrap: wrap;
@@ -200,14 +210,12 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
     line-height: 1.5;
     color: var(--ink);
     margin: var(--space-3) 0 0;
-    max-width: 42ch;
     text-wrap: pretty;
   }
 
   /* ── Notes: only present when there's a real annotation. ─────────── */
   .notes {
-    max-width: var(--measure);
-    margin-top: clamp(var(--space-5), 7vw, var(--space-6));
+    margin-top: var(--space-4);
     padding-top: var(--space-4);
     border-top: 1px solid var(--rule);
   }
@@ -223,6 +231,13 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
   }
   .notes-body :global(p:last-child) {
     margin-bottom: 0;
+  }
+  .notes-body :global(blockquote) {
+    border-left: 3px solid var(--green-primary);
+    padding: 0 0 0 var(--space-3);
+    margin: 0 0 var(--space-3);
+    color: var(--ink-muted);
+    font-style: italic;
   }
   .notes-body :global(hr) {
     border: none;
@@ -254,17 +269,36 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
     margin-bottom: 0.4rem;
   }
 
-  /* ── Narrow: the plate stacks, cover left at a calmer size. ──────── */
-  @media (max-width: 600px) {
-    .plate {
-      grid-template-columns: 1fr;
-      gap: var(--space-3);
+  /* ════════════════════════════════════════════════════════════════
+     Desktop: a two-column spread that fills the screen. Soft fill (no
+     overflow lock) — short entries fill the viewport, long notes simply
+     grow the page and scroll.
+     ════════════════════════════════════════════════════════════════ */
+  @media (min-width: 960px) {
+    :global(body.full-viewport main) {
+      display: flex;
+    }
+    .book {
+      flex: 1;
+      max-width: none;
+      margin: 0;
+      padding: var(--space-4) clamp(var(--space-4), 5vw, var(--space-6)) var(--space-5);
+    }
+    .spread {
+      flex: 1 1 auto;
+      grid-template-columns: clamp(200px, 26vw, 300px) minmax(0, 1fr);
+      gap: clamp(var(--space-4), 5vw, var(--space-6));
+      align-items: start;
     }
     .cover {
-      width: min(180px, 52vw);
+      width: 100%;
     }
-    .summary {
-      font-size: 1.2rem;
+    .reading {
+      /* The notes want a comfortable measure; the title can run wider. */
+      max-width: 60ch;
+    }
+    .title {
+      font-size: clamp(2rem, 2vw + 1.2rem, 2.9rem);
     }
   }
 </style>
