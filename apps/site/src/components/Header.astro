@@ -68,14 +68,18 @@ const currentPath = Astro.url.pathname;
     backdrop-filter: saturate(140%) blur(6px);
   }
   .header-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "brand controls"
+      "nav nav";
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-3);
-    padding: var(--space-2) var(--space-3);
-    flex-wrap: wrap;
+    gap: 0.45rem var(--space-2);
+    padding: 0.55rem var(--space-3);
   }
   .brand {
+    grid-area: brand;
     font-family: var(--font-mono);
     font-size: 0.95rem;
     color: var(--ink);
@@ -93,13 +97,26 @@ const currentPath = Astro.url.pathname;
     font-weight: 700;
     text-transform: lowercase;
   }
+  nav {
+    grid-area: nav;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  nav::-webkit-scrollbar {
+    display: none;
+  }
   nav ul {
     list-style: none;
     margin: 0;
     padding: 0;
     display: flex;
-    gap: var(--space-3);
-    flex-wrap: wrap;
+    gap: clamp(1rem, 4vw, var(--space-3));
+    flex-wrap: nowrap;
+    width: max-content;
+  }
+  nav li {
+    flex: 0 0 auto;
   }
   .nav-link {
     font-family: var(--font-mono);
@@ -110,6 +127,7 @@ const currentPath = Astro.url.pathname;
     border: none;
     padding: 4px 0;
     border-bottom: 1.5px solid transparent;
+    white-space: nowrap;
   }
   .nav-link:hover {
     background: transparent;
@@ -121,14 +139,31 @@ const currentPath = Astro.url.pathname;
     border-bottom-color: var(--green-primary);
   }
   .header-end {
+    grid-area: controls;
     display: flex;
     gap: var(--space-2);
     align-items: center;
+    justify-self: end;
   }
   .search-slot {
     display: none;
   }
   @media (min-width: 768px) {
+    .header-row {
+      display: flex;
+      gap: var(--space-3);
+      padding: var(--space-2) var(--space-3);
+      flex-wrap: wrap;
+    }
+    nav {
+      overflow: visible;
+    }
+    nav ul {
+      flex-wrap: wrap;
+      width: auto;
+      max-width: none;
+      gap: var(--space-3);
+    }
     .search-slot {
       display: inline-block;
     }
