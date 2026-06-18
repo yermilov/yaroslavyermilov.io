@@ -79,7 +79,6 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
 
         {hasNotes && (
           <section class="notes">
-            <p class="workbench notes-label">/ {strings.books.notes}</p>
             <div class="notes-body">
               <Content />
             </div>
@@ -93,6 +92,13 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
 <style>
   /* ── Mobile / narrow: a stacked flow ─────────────────────────────── */
   .book {
+    /* One small, semantic type scale used throughout: a display size for
+       the title, a lede size for the standfirst, and one body size shared
+       by the author line and the notes. Mono UI labels keep .workbench. */
+    --fs-title: clamp(1.85rem, 1.6vw + 1.15rem, 2.4rem);
+    --fs-lede: 1.25rem;
+    --fs-body: 1.05rem;
+
     max-width: 60rem;
     margin-inline: auto;
     padding: var(--space-4) var(--space-3) var(--space-6);
@@ -148,8 +154,8 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
   .stamps {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0 0.55rem;
+    align-items: center;
+    gap: 0 0.6rem;
     margin: 0 0 var(--space-2);
     color: var(--ink-muted);
   }
@@ -162,8 +168,8 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
     color: var(--green-primary);
   }
   .rating {
-    letter-spacing: 0.08em;
-    font-size: 0.92rem;
+    letter-spacing: 0.1em;
+    font-size: 1.3rem;
     line-height: 1;
   }
   .stars-filled {
@@ -179,7 +185,7 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
 
   .title {
     font-family: var(--font-display);
-    font-size: clamp(1.7rem, 2.4vw + 0.8rem, 2.7rem);
+    font-size: var(--fs-title);
     font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1.1;
@@ -188,7 +194,7 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
   }
   .author {
     font-family: var(--font-body);
-    font-size: 1.1rem;
+    font-size: var(--fs-body);
     color: var(--ink-muted);
     margin: 0;
     line-height: 1.4;
@@ -205,7 +211,7 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
   /* Summary as the standfirst — the book's essence, stated once. */
   .summary {
     font-family: var(--font-display);
-    font-size: clamp(1.15rem, 0.7vw + 1rem, 1.4rem);
+    font-size: var(--fs-lede);
     font-weight: 450;
     line-height: 1.5;
     color: var(--ink);
@@ -219,11 +225,8 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
     padding-top: var(--space-4);
     border-top: 1px solid var(--rule);
   }
-  .notes-label {
-    color: var(--ink-muted);
-    margin: 0 0 var(--space-3);
-  }
   .notes-body {
+    font-size: var(--fs-body);
     line-height: var(--leading-body);
   }
   .notes-body :global(p) {
@@ -297,8 +300,9 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
       /* The notes want a comfortable measure; the title can run wider. */
       max-width: 60ch;
     }
-    .title {
-      font-size: clamp(2rem, 2vw + 1.2rem, 2.9rem);
+    /* Nudge only the display size up on the wider canvas; lede/body hold. */
+    .book {
+      --fs-title: clamp(2.1rem, 1.8vw + 1.2rem, 2.8rem);
     }
   }
 </style>
