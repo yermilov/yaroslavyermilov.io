@@ -238,6 +238,10 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
   .notes-body :global(p:last-child) {
     margin-bottom: 0;
   }
+  /* Embedded cards (e.g. a tweet) need the same rhythm as paragraphs. */
+  .notes-body :global(.tweet) {
+    margin: 0 0 var(--space-3);
+  }
   .notes-body :global(blockquote) {
     border-left: 3px solid var(--green-primary);
     padding: 0 0 0 var(--space-3);
