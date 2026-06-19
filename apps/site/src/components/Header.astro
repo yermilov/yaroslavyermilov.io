@@ -45,15 +45,24 @@ const currentPath = Astro.url.pathname;
             );
           })
         }
+        <li class="mobile-locale">
+          <LocaleSwitcher
+            locale={locale}
+            alternatePath={alternatePath}
+            alternateMissing={alternateMissing}
+          />
+        </li>
       </ul>
     </nav>
     <div class="header-end">
       <div class="search-slot"><Search locale={locale} /></div>
-      <LocaleSwitcher
-        locale={locale}
-        alternatePath={alternatePath}
-        alternateMissing={alternateMissing}
-      />
+      <div class="desktop-locale">
+        <LocaleSwitcher
+          locale={locale}
+          alternatePath={alternatePath}
+          alternateMissing={alternateMissing}
+        />
+      </div>
     </div>
   </div>
 </header>
@@ -68,18 +77,17 @@ const currentPath = Astro.url.pathname;
     backdrop-filter: saturate(140%) blur(6px);
   }
   .header-row {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      "brand controls"
-      "nav nav";
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.45rem var(--space-2);
-    padding: 0.55rem var(--space-3);
+    gap: 0.35rem 0.5rem;
+    max-width: min(64rem, 100vw);
+    padding: 0.5rem var(--space-3);
+    width: 100%;
   }
   .brand {
-    grid-area: brand;
+    align-self: flex-start;
     font-family: var(--font-mono);
     font-size: 0.95rem;
     color: var(--ink);
@@ -98,29 +106,29 @@ const currentPath = Astro.url.pathname;
     text-transform: lowercase;
   }
   nav {
-    grid-area: nav;
+    flex: 1 1 min(18rem, calc(100vw - 5rem));
+    max-width: min(18rem, calc(100vw - 5rem));
     min-width: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  nav::-webkit-scrollbar {
-    display: none;
+    overflow: visible;
   }
   nav ul {
     list-style: none;
     margin: 0;
     padding: 0;
     display: flex;
-    gap: clamp(1rem, 4vw, var(--space-3));
-    flex-wrap: nowrap;
-    width: max-content;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
   }
   nav li {
     flex: 0 0 auto;
   }
+  .mobile-locale {
+    display: flex;
+  }
   .nav-link {
     font-family: var(--font-mono);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     text-transform: lowercase;
     letter-spacing: 0.02em;
     color: var(--ink-muted);
@@ -139,11 +147,7 @@ const currentPath = Astro.url.pathname;
     border-bottom-color: var(--green-primary);
   }
   .header-end {
-    grid-area: controls;
-    display: flex;
-    gap: var(--space-2);
-    align-items: center;
-    justify-self: end;
+    display: none;
   }
   .search-slot {
     display: none;
@@ -155,14 +159,35 @@ const currentPath = Astro.url.pathname;
       padding: var(--space-2) var(--space-3);
       flex-wrap: wrap;
     }
+    .brand {
+      align-self: auto;
+    }
     nav {
+      display: block;
+      max-width: none;
+      min-width: 0;
       overflow: visible;
     }
     nav ul {
+      display: flex;
       flex-wrap: wrap;
-      width: auto;
-      max-width: none;
       gap: var(--space-3);
+    }
+    .nav-link {
+      font-size: 0.85rem;
+    }
+    .mobile-locale {
+      display: none;
+    }
+    .header-end {
+      flex: 0 0 auto;
+      display: flex;
+      gap: var(--space-2);
+      align-items: center;
+      margin-left: auto;
+    }
+    .desktop-locale {
+      display: block;
     }
     .search-slot {
       display: inline-block;

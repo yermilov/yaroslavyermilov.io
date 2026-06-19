@@ -17,3 +17,5 @@ apps/site/public/pagefind
 .vscode/*
 !.vscode/extensions.json
 .idea
+.claude/launch.json
+.claude/worktrees/
