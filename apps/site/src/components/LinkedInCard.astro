@@ -1,0 +1,175 @@
+---
+/**
+ * A native embed of a LinkedIn post — rendered in the site's own design, with
+ * no third-party script (keeps the site cookieless and on-aesthetic). Sibling
+ * of TweetCard.astro; used to quote audience feedback on talks. Pass the post's
+ * data; the talk-related excerpt is the default slot. The whole card links to
+ * the real post.
+ */
+interface Props {
+  /** Permalink to the LinkedIn post. */
+  url: string;
+  /** Display name, e.g. "Kateryna Hrytsaienko". */
+  author: string;
+  /** Headline / role line shown under the name, e.g. "Engineering Manager". */
+  headline?: string | undefined;
+  /** Optional avatar image (path under public/). Falls back to an initial. */
+  avatar?: string | undefined;
+  /** Optional human date string, e.g. "May 16, 2026". */
+  date?: string | undefined;
+}
+const { url, author, headline, avatar, date } = Astro.props;
+const initial = author.trim().charAt(0).toUpperCase();
+---
+
+<a class="li" href={url} rel="noopener" target="_blank">
+  <div class="li-head">
+    {avatar ? (
+      <img class="li-avatar" src={avatar} alt="" loading="lazy" />
+    ) : (
+      <span class="li-avatar li-avatar-fallback" aria-hidden="true">{initial}</span>
+    )}
+    <span class="li-id">
+      <span class="li-name">{author}</span>
+      {headline && <span class="li-headline">{headline}</span>}
+    </span>
+    <span class="li-mark" aria-hidden="true">in</span>
+  </div>
+
+  <p class="li-body"><slot /></p>
+
+  <span class="li-foot">
+    {date && <span class="li-date">{date}</span>}
+    <span class="li-cta">View on LinkedIn<span class="li-arrow" aria-hidden="true">↗</span></span>
+  </span>
+</a>
+
+<style>
+  .li {
+    display: block;
+    margin: 0;
+    max-width: 38rem;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    background: var(--bg-elevated);
+    padding: var(--space-3);
+    box-shadow: 4px 6px 0 0 var(--rule);
+    color: var(--ink);
+    text-decoration: none;
+    transition: transform 160ms ease, box-shadow 160ms ease;
+  }
+  .li:hover {
+    background: var(--bg-elevated);
+    transform: translate(-1px, -1px);
+    box-shadow: 6px 8px 0 0 var(--rule);
+    color: var(--ink);
+  }
+
+  .li-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .li-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--rule);
+    flex: 0 0 auto;
+  }
+  .li-avatar-fallback {
+    display: grid;
+    place-items: center;
+    background: var(--green-deep);
+    color: var(--bg-elevated);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+  .li-id {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+    min-width: 0;
+  }
+  .li-name {
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .li-headline {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink-muted);
+    /* Headlines on LinkedIn run long — keep the card to one tidy line. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* The one place we spend the LinkedIn signature: the recognizable «in» chip. */
+  .li-mark {
+    margin-left: auto;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 4px;
+    background: #0a66c2;
+    color: #fff;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.82rem;
+    letter-spacing: -0.02em;
+  }
+
+  /* Plain body text — deliberately not the global blockquote treatment. */
+  .li-body {
+    margin: var(--space-2) 0 var(--space-3);
+    font-size: 1.08rem;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  .li-foot {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+    border-top: 1px solid var(--rule);
+    padding-top: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+  }
+  .li-date {
+    color: var(--ink-muted);
+  }
+  .li-cta {
+    margin-left: auto;
+    color: var(--green-primary);
+    border-bottom: 1.5px solid transparent;
+  }
+  .li:hover .li-cta {
+    color: var(--orange-accent);
+    border-bottom-color: var(--orange-accent);
+  }
+  .li-arrow {
+    display: inline-block;
+    margin-left: 0.25em;
+    color: var(--orange-accent);
+    transition: transform 160ms ease;
+  }
+  .li:hover .li-arrow {
+    transform: translate(2px, -2px);
+  }
+
+  @media (max-width: 540px) {
+    .li {
+      box-shadow: 3px 4px 0 0 var(--rule);
+    }
+    .li:hover {
+      box-shadow: 4px 5px 0 0 var(--rule);
+    }
+  }
+</style>

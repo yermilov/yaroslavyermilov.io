@@ -2,6 +2,7 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { LOCALES, t, localePath, languageBadge, bcp47Locale, type Locale } from '@lib/i18n';
 import BaseLayout from '@layouts/BaseLayout.astro';
+import LinkedInCard from '@components/LinkedInCard.astro';
 
 export async function getStaticPaths() {
   const talks = await getCollection('talks');
@@ -100,12 +101,19 @@ const relative = buildRelative(talk.data.date);
  * Artifacts present on this talk. The order defines the numbered acts
  * — talks with only slides + photos get them as 01 and 02, not 02 and 03.
  */
-type Artifact = 'recording' | 'slides' | 'repo' | 'photos';
+type Artifact = 'recording' | 'slides' | 'repo' | 'photos' | 'feedback';
 const artifacts: Artifact[] = [];
 if (embedUrl || talk.data.videoUrl || talk.data.videoOnRequest) artifacts.push('recording');
 if (slidesEmbedUrl || talk.data.slidesUrl) artifacts.push('slides');
 if (talk.data.repoUrl) artifacts.push('repo');
 if (talk.data.photos.length > 0) artifacts.push('photos');
+if (talk.data.feedback.length > 0) artifacts.push('feedback');
+
+const feedbackDateFmt = new Intl.DateTimeFormat(bcp47, {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
 
 /** Primary contact channel surfaced for on-request recordings. */
 const linkedInUrl = 'https://www.linkedin.com/in/yarik-yermilov/';
@@ -116,6 +124,7 @@ const artifactLabel: Record<Artifact, string> = {
   slides: strings.talks.slides,
   photos: strings.talks.photos,
   repo: strings.talks.repo,
+  feedback: strings.talks.feedback,
 };
 ---
 
@@ -243,6 +252,27 @@ const artifactLabel: Record<Artifact, string> = {
                 </span>
                 <span class="caption">№{String(i + 1).padStart(2, '0')}</span>
               </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {talk.data.feedback.length > 0 && (
+      <section class="act" id="feedback">
+        <p class="act-label workbench"><span class="ord">▸ {ord('feedback')}</span> · {strings.talks.feedback} <span class="count">— {talk.data.feedback.length}</span></p>
+        <ul class="feedback-wall" role="list">
+          {talk.data.feedback.map((f) => (
+            <li>
+              <LinkedInCard
+                url={f.url}
+                author={f.author}
+                headline={f.headline}
+                avatar={f.avatar}
+                date={f.date ? feedbackDateFmt.format(f.date) : undefined}
+              >
+                {f.excerpt}
+              </LinkedInCard>
             </li>
           ))}
         </ul>
@@ -559,6 +589,20 @@ const artifactLabel: Record<Artifact, string> = {
     .contact-sheet {
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     }
+  }
+
+  /* ── Feedback wall — quoted LinkedIn posts ─────────────────────── */
+  .feedback-wall {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+    gap: var(--space-3);
+    align-items: start;
+  }
+  .feedback-wall > li {
+    min-width: 0;
   }
 
   /* ── Closing tombstone ─────────────────────────────────────────── */

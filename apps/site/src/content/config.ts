@@ -40,6 +40,26 @@ const talks = defineCollection({
     eventUrl: z.string().url().optional(),
     /** paths under apps/site/public/, e.g. "/talks/<slug>/01.jpg" */
     photos: z.array(z.string()).default([]),
+    /**
+     * Audience feedback quoted from LinkedIn. Each entry renders as a native
+     * LinkedInCard (no third-party script). `excerpt` is the talk-related part
+     * of the post — not the whole thing — and `url` opens the real post.
+     */
+    feedback: z
+      .array(
+        z.object({
+          author: z.string(),
+          /** role / headline line shown under the name */
+          headline: z.string().optional(),
+          /** path under apps/site/public/, e.g. "/talks/<slug>/feedback/<name>.jpg" */
+          avatar: z.string().optional(),
+          /** the talk-related excerpt of the post */
+          excerpt: z.string(),
+          url: z.string().url(),
+          date: z.coerce.date().optional(),
+        }),
+      )
+      .default([]),
   }),
 });
 

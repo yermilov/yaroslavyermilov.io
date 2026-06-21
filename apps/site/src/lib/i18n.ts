@@ -118,6 +118,7 @@ export interface Strings {
     slides: string;
     photos: string;
     repo: string;
+    feedback: string;
     backToTalks: string;
   };
   kit: {
@@ -259,6 +260,7 @@ const STRINGS: Record<Locale, Strings> = {
       slides: 'Slides',
       photos: 'Photos',
       repo: 'Repo',
+      feedback: 'Feedback',
       backToTalks: '← Back to talks',
     },
     kit: {
@@ -400,6 +402,7 @@ const STRINGS: Record<Locale, Strings> = {
       slides: 'Слайди',
       photos: 'Фото',
       repo: 'Репо',
+      feedback: 'Відгуки',
       backToTalks: '← До доповідей',
     },
     kit: {
