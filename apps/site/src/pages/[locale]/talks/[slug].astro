@@ -106,8 +106,8 @@ const artifacts: Artifact[] = [];
 if (embedUrl || talk.data.videoUrl || talk.data.videoOnRequest) artifacts.push('recording');
 if (slidesEmbedUrl || talk.data.slidesUrl) artifacts.push('slides');
 if (talk.data.repoUrl) artifacts.push('repo');
-if (talk.data.photos.length > 0) artifacts.push('photos');
 if (talk.data.feedback.length > 0) artifacts.push('feedback');
+if (talk.data.photos.length > 0) artifacts.push('photos');
 
 const feedbackDateFmt = new Intl.DateTimeFormat(bcp47, {
   year: 'numeric',
@@ -240,24 +240,6 @@ const artifactLabel: Record<Artifact, string> = {
       </section>
     )}
 
-    {talk.data.photos.length > 0 && (
-      <section class="act" id="photos">
-        <p class="act-label workbench"><span class="ord">▸ {ord('photos')}</span> · {strings.talks.photos} <span class="count">— {talk.data.photos.length}</span></p>
-        <ul class="contact-sheet" role="list">
-          {talk.data.photos.map((src, i) => (
-            <li>
-              <a href={src} target="_blank" rel="noopener" aria-label={`Photo ${i + 1}`}>
-                <span class="frame">
-                  <img src={src} alt="" loading="lazy" />
-                </span>
-                <span class="caption">№{String(i + 1).padStart(2, '0')}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
-    )}
-
     {talk.data.feedback.length > 0 && (
       <section class="act" id="feedback">
         <p class="act-label workbench"><span class="ord">▸ {ord('feedback')}</span> · {strings.talks.feedback} <span class="count">— {talk.data.feedback.length}</span></p>
@@ -273,6 +255,24 @@ const artifactLabel: Record<Artifact, string> = {
               >
                 {f.excerpt}
               </LinkedInCard>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {talk.data.photos.length > 0 && (
+      <section class="act" id="photos">
+        <p class="act-label workbench"><span class="ord">▸ {ord('photos')}</span> · {strings.talks.photos} <span class="count">— {talk.data.photos.length}</span></p>
+        <ul class="contact-sheet" role="list">
+          {talk.data.photos.map((src, i) => (
+            <li>
+              <a href={src} target="_blank" rel="noopener" aria-label={`Photo ${i + 1}`}>
+                <span class="frame">
+                  <img src={src} alt="" loading="lazy" />
+                </span>
+                <span class="caption">№{String(i + 1).padStart(2, '0')}</span>
+              </a>
             </li>
           ))}
         </ul>
