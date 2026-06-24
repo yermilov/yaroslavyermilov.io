@@ -3,7 +3,7 @@ import { LOCALES, t, localePath, languageBadge, bcp47Locale, type Locale } from 
 import BaseLayout from '@layouts/BaseLayout.astro';
 import Timeline from '@components/Timeline.astro';
 import RelativeDays from '@components/RelativeDays.tsx';
-import { getStampedBooks, getStampedLinks, getTalks, getWritingTalkingTimeline } from '@lib/content';
+import { bookSlug, getStampedBooks, getStampedLinks, getTalks, getWritingTalkingTimeline } from '@lib/content';
 
 export async function getStaticPaths() {
   return LOCALES.map((locale) => ({ params: { locale } }));
@@ -46,7 +46,7 @@ interface ShelfItem {
   external: boolean;
   date: number;
 }
-const [stampedBooks, stampedLinks] = await Promise.all([getStampedBooks(), getStampedLinks()]);
+const [stampedBooks, stampedLinks] = await Promise.all([getStampedBooks(locale), getStampedLinks()]);
 const shelfPool: ShelfItem[] = [
   ...stampedBooks.map((book): ShelfItem => ({
     title: book.data.title,
@@ -54,7 +54,7 @@ const shelfPool: ShelfItem[] = [
     cover: book.data.cover,
     rating: book.data.rating ?? null,
     summary: book.data.summary,
-    href: localePath(locale, `books/${book.slug}`),
+    href: localePath(locale, `books/${bookSlug(book)}`),
     external: false,
     date: book.data.readAt?.getTime() ?? 0,
   })),

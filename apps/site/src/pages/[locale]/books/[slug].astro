@@ -5,11 +5,16 @@ import { getBooks } from '@lib/content';
 
 export async function getStaticPaths() {
   const books = await getBooks();
+  const canonical = [...new Set(books.map((b) => b.data.canonicalSlug))];
+  // One page per canonicalSlug × locale; the props carry the locale's entry
+  // (or the other-language fallback so /en/ and /ua/ both resolve).
   return LOCALES.flatMap((locale) =>
-    books.map((book) => ({
-      params: { locale, slug: book.slug },
-      props: { book },
-    })),
+    canonical.map((slug) => {
+      const book =
+        books.find((b) => b.data.canonicalSlug === slug && b.data.language === locale) ??
+        books.find((b) => b.data.canonicalSlug === slug)!;
+      return { params: { locale, slug }, props: { book } };
+    }),
   );
 }
 
@@ -46,8 +51,8 @@ const hasNotes = bodyText.length > 0 && bodyText !== bookSummary.trim();
   locale={locale}
   title={`${book.data.title} — ${book.data.author}`}
   description={bookSummary}
-  alternatePath={`books/${book.slug}`}
-  ogImage={`/og/book-${book.slug}.png`}
+  alternatePath={`books/${book.data.canonicalSlug}`}
+  ogImage={`/og/book-${book.data.canonicalSlug}.png`}
   fullViewport
   hideFooter
 >

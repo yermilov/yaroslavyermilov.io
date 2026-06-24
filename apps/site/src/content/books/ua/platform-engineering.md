@@ -1,5 +1,6 @@
 ---
 title: "Platform Engineering: A Guide for Technical, Product, and People Leaders"
+canonicalSlug: "platform-engineering"
 author: "Camille Fournier, Ian Nowland"
 cover: "/books/platform-engineering/cover.png"
 rating: 5

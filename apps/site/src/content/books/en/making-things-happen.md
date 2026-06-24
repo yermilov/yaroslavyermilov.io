@@ -1,5 +1,6 @@
 ---
 title: "Making Things Happen: Mastering Project Management"
+canonicalSlug: "making-things-happen"
 author: "Scott Berkun"
 cover: "/books/making-things-happen/cover.jpg"
 rating: 4

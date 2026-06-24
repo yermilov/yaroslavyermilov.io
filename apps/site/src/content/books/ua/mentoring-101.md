@@ -1,5 +1,6 @@
 ---
 title: "Mentoring 101: What Every Leader Needs to Know"
+canonicalSlug: "mentoring-101"
 author: "John C. Maxwell"
 cover: "/books/mentoring-101/cover.jpg"
 rating: 2

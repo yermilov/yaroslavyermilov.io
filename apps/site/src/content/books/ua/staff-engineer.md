@@ -1,5 +1,6 @@
 ---
 title: "Staff Engineer: Leadership Beyond the Management Track"
+canonicalSlug: "staff-engineer"
 author: "Will Larson"
 cover: "/books/staff-engineer/cover.jpg"
 rating: 4

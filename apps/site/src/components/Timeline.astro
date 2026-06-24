@@ -10,7 +10,7 @@
  * client-side so a stale static build self-corrects on load.
  */
 import type { TimelineEntry } from '@lib/content';
-import { postSlug } from '@lib/content';
+import { bookSlug, postSlug } from '@lib/content';
 import { bcp47Locale, languageBadge, localePath, localized, t, type Locale } from '@lib/i18n';
 import TweetCard from '@components/TweetCard.astro';
 
@@ -297,7 +297,7 @@ function kindLabel(kind: KindLabelKey): string {
     }
 
     const book = entry.book;
-    const href = localePath(locale, `books/${book.slug}`);
+    const href = localePath(locale, `books/${bookSlug(book)}`);
     const stars = book.data.rating
       ? '★'.repeat(book.data.rating) + '☆'.repeat(5 - book.data.rating)
       : null;

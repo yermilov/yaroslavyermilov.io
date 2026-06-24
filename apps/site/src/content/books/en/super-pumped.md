@@ -1,5 +1,6 @@
 ---
 title: "Super Pumped: The Battle for Uber"
+canonicalSlug: "super-pumped"
 author: "Mike Isaac"
 cover: "/books/super-pumped/cover.jpg"
 rating: 4

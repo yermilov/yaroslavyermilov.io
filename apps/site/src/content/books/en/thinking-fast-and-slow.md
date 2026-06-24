@@ -1,5 +1,6 @@
 ---
 title: "Thinking, Fast and Slow"
+canonicalSlug: "thinking-fast-and-slow"
 author: "Daniel Kahneman"
 cover: "/books/thinking-fast-and-slow/cover.jpg"
 rating: 5

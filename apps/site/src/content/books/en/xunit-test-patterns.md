@@ -1,5 +1,6 @@
 ---
 title: "xUnit Test Patterns: Refactoring Test Code"
+canonicalSlug: "xunit-test-patterns"
 author: "Gerard Meszaros"
 cover: "/books/xunit-test-patterns/cover.jpg"
 rating: 4

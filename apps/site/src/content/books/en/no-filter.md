@@ -1,5 +1,6 @@
 ---
 title: "No Filter: The Inside Story of Instagram"
+canonicalSlug: "no-filter"
 author: "Sarah Frier"
 cover: "/books/no-filter/cover.jpg"
 rating: 4

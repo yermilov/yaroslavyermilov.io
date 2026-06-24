@@ -1,5 +1,6 @@
 ---
 title: "The Everything Store: Jeff Bezos and the Age of Amazon"
+canonicalSlug: "the-everything-store"
 author: "Brad Stone"
 cover: "/books/the-everything-store/cover.jpg"
 rating: 4

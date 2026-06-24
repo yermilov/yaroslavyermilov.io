@@ -71,9 +71,14 @@ async function buildCards(): Promise<OgCard[]> {
     });
   }
 
+  // One card per canonicalSlug (the cover + English title/author are
+  // language-neutral); the id matches the detail page's ogImage path.
+  const seenBooks = new Set<string>();
   for (const book of await getBooks()) {
+    if (seenBooks.has(book.data.canonicalSlug)) continue;
+    seenBooks.add(book.data.canonicalSlug);
     cards.push({
-      id: `book-${book.slug}`,
+      id: `book-${book.data.canonicalSlug}`,
       language: book.data.language,
       eyebrow: `BOOK · ${book.data.author.toUpperCase()}`,
       title: book.data.title,

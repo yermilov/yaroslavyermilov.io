@@ -11,8 +11,8 @@ export async function getStaticPaths() {
 const locale = Astro.params.locale as Locale;
 const strings = t(locale);
 const [stamped, backlog] = await Promise.all([
-  getInspirationTimeline(),
-  getBacklogTimeline(),
+  getInspirationTimeline(locale),
+  getBacklogTimeline(locale),
 ]);
 ---
 

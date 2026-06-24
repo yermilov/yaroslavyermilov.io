@@ -1,5 +1,6 @@
 ---
 title: "Bad Blood: Secrets and Lies in a Silicon Valley Startup"
+canonicalSlug: "bad-blood"
 author: "John Carreyrou"
 cover: "/books/bad-blood/cover.jpg"
 rating: 4

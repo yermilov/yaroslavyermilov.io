@@ -113,6 +113,8 @@ const books = defineCollection({
   type: 'content',
   schema: z.object({
     title: z.string(),
+    /** joins a book's per-language files (content/books/{en,ua}/<slug>.md). */
+    canonicalSlug: z.string(),
     author: z.string(),
     /** path under apps/site/public/, e.g. "/books/<slug>/cover.jpg" */
     cover: z.string(),

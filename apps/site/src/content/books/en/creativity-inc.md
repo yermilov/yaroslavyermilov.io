@@ -1,5 +1,6 @@
 ---
 title: "Creativity, Inc.: Overcoming the Unseen Forces That Stand in the Way of True Inspiration"
+canonicalSlug: "creativity-inc"
 author: "Ed Catmull"
 cover: "/books/creativity-inc/cover.jpg"
 rating: 3

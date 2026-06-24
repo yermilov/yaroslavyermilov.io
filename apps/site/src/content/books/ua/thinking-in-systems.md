@@ -1,5 +1,6 @@
 ---
 title: "Thinking In Systems: A Primer"
+canonicalSlug: "thinking-in-systems"
 author: "Donella H. Meadows, Diana Wright"
 cover: "/books/thinking-in-systems/cover.jpg"
 rating: 4

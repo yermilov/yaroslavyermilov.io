@@ -1,5 +1,6 @@
 ---
 title: "Release It!: Design and Deploy Production-Ready Software"
+canonicalSlug: "release-it"
 author: "Michael T. Nygard"
 cover: "/books/release-it/cover.jpg"
 rating: 5

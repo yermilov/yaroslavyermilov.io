@@ -1,5 +1,6 @@
 ---
 title: "Radical Focus: Achieving Your Most Important Goals with Objectives and Key Results"
+canonicalSlug: "radical-focus"
 author: "Christina Wodtke"
 cover: "/books/radical-focus/cover.jpg"
 rating: 4

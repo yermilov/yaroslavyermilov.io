@@ -1,5 +1,6 @@
 ---
 title: "Turn the Ship Around!: A True Story of Turning Followers into Leaders"
+canonicalSlug: "turn-the-ship-around"
 author: "L. David Marquet"
 cover: "/books/turn-the-ship-around/cover.jpg"
 rating: 4

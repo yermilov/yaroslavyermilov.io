@@ -1,5 +1,6 @@
 ---
 title: "Software Engineering at Google: Lessons Learned from Programming Over Time"
+canonicalSlug: "software-engineering-at-google"
 author: "Titus Winters, Tom Manshreck, Hyrum Wright"
 cover: "/books/software-engineering-at-google/cover.jpg"
 rating: 5

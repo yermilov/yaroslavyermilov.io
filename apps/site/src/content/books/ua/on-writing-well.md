@@ -1,5 +1,6 @@
 ---
 title: "On Writing Well: The Classic Guide to Writing Nonfiction"
+canonicalSlug: "on-writing-well"
 author: "William Zinsser"
 cover: "/books/on-writing-well/cover.jpg"
 rating: 3

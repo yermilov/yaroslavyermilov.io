@@ -1,5 +1,6 @@
 ---
 title: "How Not to Be Wrong: The Power of Mathematical Thinking"
+canonicalSlug: "how-not-to-be-wrong"
 author: "Jordan Ellenberg"
 cover: "/books/how-not-to-be-wrong/cover.jpg"
 rating: 5

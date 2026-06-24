@@ -1,5 +1,6 @@
 ---
 title: "Good Strategy/Bad Strategy: The Difference and Why It Matters"
+canonicalSlug: "good-strategy-bad-strategy"
 author: "Richard Rumelt"
 cover: "/books/good-strategy-bad-strategy/cover.jpg"
 rating: 5

@@ -111,17 +111,35 @@ export async function getBooks(): Promise<BookEntry[]> {
   return all.sort((a, b) => readAtTime(b) - readAtTime(a));
 }
 
-/** Books I've read/tried — the journal archive, newest first. */
-export async function getStampedBooks(): Promise<BookEntry[]> {
+/** URL slug for a book — strip the locale dir (content/books/{en,ua}/<slug>). */
+export function bookSlug(entry: BookEntry): string {
+  return entry.slug.split('/').pop() ?? entry.slug;
+}
+
+/** One book per canonicalSlug, preferring the active locale and falling back to
+ *  the other language so a locale with no translation still shows the entry. */
+function dedupeBooksByLocale(all: BookEntry[], locale: Locale): BookEntry[] {
+  const byCanonical = new Map<string, BookEntry>();
+  for (const book of all) {
+    const existing = byCanonical.get(book.data.canonicalSlug);
+    if (!existing || (book.data.language === locale && existing.data.language !== locale)) {
+      byCanonical.set(book.data.canonicalSlug, book);
+    }
+  }
+  return [...byCanonical.values()];
+}
+
+/** Books I've read/tried — the journal archive for one locale, newest first. */
+export async function getStampedBooks(locale: Locale): Promise<BookEntry[]> {
   const all = await getCollection('books', isPublished);
-  return all
+  return dedupeBooksByLocale(all, locale)
     .filter((b) => b.data.status !== 'backlog')
     .sort((a, b) => readAtTime(b) - readAtTime(a));
 }
 
-async function getBacklogBooksRaw(): Promise<BookEntry[]> {
+async function getBacklogBooksRaw(locale: Locale): Promise<BookEntry[]> {
   const all = await getCollection('books', isPublished);
-  return all.filter((b) => b.data.status === 'backlog');
+  return dedupeBooksByLocale(all, locale).filter((b) => b.data.status === 'backlog');
 }
 
 async function getLinksByStatus(status: 'stamped' | 'backlog'): Promise<LinkEntry[]> {
@@ -135,9 +153,22 @@ export async function getStampedLinks(): Promise<LinkEntry[]> {
   return links.sort((a, b) => readAtTime(b) - readAtTime(a));
 }
 
-export async function getBookBySlug(slug: string): Promise<BookEntry | undefined> {
+/** Resolve a book's per-locale entry by canonicalSlug, falling back to the
+ *  other language when no translation exists (so the page never 404s). */
+export async function getBookByCanonicalSlug(
+  canonicalSlug: string,
+  locale: Locale,
+): Promise<BookEntry | undefined> {
   const all = await getCollection('books', isPublished);
-  return all.find((b) => b.slug === slug);
+  return (
+    all.find((b) => b.data.canonicalSlug === canonicalSlug && b.data.language === locale) ??
+    all.find((b) => b.data.canonicalSlug === canonicalSlug)
+  );
+}
+
+export async function getAllBookCanonicalSlugs(): Promise<string[]> {
+  const all = await getCollection('books', isPublished);
+  return [...new Set(all.map((b) => b.data.canonicalSlug))];
 }
 
 /* ── Unified timelines ─────────────────────────────────────────────
@@ -167,8 +198,8 @@ export async function getWritingTalkingTimeline(locale: Locale): Promise<Timelin
 }
 
 /** The "stamped" archive: books + links read/tried, dated, newest first. */
-export async function getInspirationTimeline(): Promise<TimelineEntry[]> {
-  const [books, links] = await Promise.all([getStampedBooks(), getLinksByStatus('stamped')]);
+export async function getInspirationTimeline(locale: Locale): Promise<TimelineEntry[]> {
+  const [books, links] = await Promise.all([getStampedBooks(locale), getLinksByStatus('stamped')]);
   const entries: TimelineEntry[] = [
     ...books.map((book): TimelineEntry => ({
       kind: 'book',
@@ -190,8 +221,8 @@ export async function getInspirationTimeline(): Promise<TimelineEntry[]> {
  * The backlog: planned books + links, undated. Rendered in addedAt order
  * (most recently added first), with title as the tiebreaker.
  */
-export async function getBacklogTimeline(): Promise<TimelineEntry[]> {
-  const [books, links] = await Promise.all([getBacklogBooksRaw(), getLinksByStatus('backlog')]);
+export async function getBacklogTimeline(locale: Locale): Promise<TimelineEntry[]> {
+  const [books, links] = await Promise.all([getBacklogBooksRaw(locale), getLinksByStatus('backlog')]);
   const items = [
     ...books.map((book) => ({ entry: { kind: 'book', date: EPOCH, book } as TimelineEntry, item: book })),
     ...links.map((link) => ({ entry: { kind: 'link', date: EPOCH, link } as TimelineEntry, item: link })),

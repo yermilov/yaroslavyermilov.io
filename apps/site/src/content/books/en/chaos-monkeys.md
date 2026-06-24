@@ -1,5 +1,6 @@
 ---
 title: "Chaos Monkeys: Obscene Fortune and Random Failure in Silicon Valley"
+canonicalSlug: "chaos-monkeys"
 author: "Antonio García Martínez"
 cover: "/books/chaos-monkeys/cover.jpg"
 rating: 5

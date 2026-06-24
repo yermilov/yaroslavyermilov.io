@@ -1,5 +1,6 @@
 ---
 title: "That Will Never Work: The Birth of Netflix and the Amazing Life of an Idea"
+canonicalSlug: "that-will-never-work"
 author: "Marc Randolph"
 cover: "/books/that-will-never-work/cover.jpg"
 rating: 5
