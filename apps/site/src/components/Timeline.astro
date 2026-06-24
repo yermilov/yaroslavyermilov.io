@@ -12,6 +12,7 @@
 import type { TimelineEntry } from '@lib/content';
 import { postSlug } from '@lib/content';
 import { bcp47Locale, languageBadge, localePath, t, type Locale } from '@lib/i18n';
+import TweetCard from '@components/TweetCard.astro';
 
 interface Props {
   locale: Locale;
@@ -29,6 +30,17 @@ const strings = t(locale);
 const monthFmt = new Intl.DateTimeFormat(bcp47Locale(locale), { month: 'short' });
 function stampMonth(d: Date): string {
   return monthFmt.format(d).replace(/\.$/, '').toUpperCase();
+}
+
+// Full date for embedded tweet cards, e.g. "May 23, 2026".
+const tweetDateFmt = new Intl.DateTimeFormat(bcp47Locale(locale), {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+/** "Peter Steinberger · X" → "Peter Steinberger" for the tweet-card name. */
+function authorFromSource(source: string): string {
+  return source.split('·')[0]!.trim();
 }
 
 const today = new Date();
@@ -196,6 +208,10 @@ function kindLabel(kind: KindLabelKey): string {
 
     if (entry.kind === 'link') {
       const link = entry.link;
+      // Tweets with card data render as an embedded TweetCard (the native
+      // sibling of the talks' LinkedIn cards); other links keep the plain row.
+      const asTweetCard =
+        !compact && link.data.kind === 'tweet' && !!link.data.handle && !!link.data.body;
       return (
         <li class="entry entry-link" data-iso={entry.date.toISOString()}>
           {stamp}
@@ -204,23 +220,41 @@ function kindLabel(kind: KindLabelKey): string {
               <span class="kind">{KIND_GLYPHS.link} {kindLabel(link.data.kind)}</span>
               <span class="kind-event">{link.data.source}</span>
             </p>
-            <h3 class="title">
-              <a href={link.data.url} rel="noopener" target="_blank">
-                {link.data.title}<span class="ext" aria-hidden="true">↗</span>
-              </a>
-            </h3>
-            {!compact && link.data.summary && <p class="summary">{link.data.summary}</p>}
-            {!compact && link.data.thumbnail && (
-              <a
-                class="link-media"
-                href={link.data.url}
-                rel="noopener"
-                target="_blank"
-                aria-label={link.data.hasVideo ? `${kindLabel(link.data.kind)} — ${link.data.source}` : undefined}
+            {asTweetCard ? (
+              <TweetCard
+                url={link.data.url}
+                author={authorFromSource(link.data.source)}
+                handle={link.data.handle!}
+                date={tweetDateFmt.format(link.data.postedAt ?? entry.date)}
+                avatar={link.data.avatar}
+                media={!compact ? link.data.thumbnail : undefined}
+                hasVideo={link.data.hasVideo}
               >
-                <img src={link.data.thumbnail} alt="" loading="lazy" />
-                {link.data.hasVideo && <span class="link-play" aria-hidden="true"></span>}
-              </a>
+                {link.data.body!.trim().split('\n').map((line, i) => (
+                  <Fragment>{i > 0 && <br />}{line}</Fragment>
+                ))}
+              </TweetCard>
+            ) : (
+              <>
+                <h3 class="title">
+                  <a href={link.data.url} rel="noopener" target="_blank">
+                    {link.data.title}<span class="ext" aria-hidden="true">↗</span>
+                  </a>
+                </h3>
+                {!compact && link.data.summary && <p class="summary">{link.data.summary}</p>}
+                {!compact && link.data.thumbnail && (
+                  <a
+                    class="link-media"
+                    href={link.data.url}
+                    rel="noopener"
+                    target="_blank"
+                    aria-label={link.data.hasVideo ? `${kindLabel(link.data.kind)} — ${link.data.source}` : undefined}
+                  >
+                    <img src={link.data.thumbnail} alt="" loading="lazy" />
+                    {link.data.hasVideo && <span class="link-play" aria-hidden="true"></span>}
+                  </a>
+                )}
+              </>
             )}
           </article>
         </li>

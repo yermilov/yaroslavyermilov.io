@@ -18,8 +18,12 @@ interface Props {
   avatar?: string | undefined;
   /** Optional "Replying to @…" handle (without the @). */
   replyTo?: string | undefined;
+  /** Optional media image (path under public/) shown below the body. */
+  media?: string | undefined;
+  /** Render a play affordance over the media (the tweet links to the video). */
+  hasVideo?: boolean | undefined;
 }
-const { url, author, handle, date, avatar, replyTo } = Astro.props;
+const { url, author, handle, date, avatar, replyTo, media, hasVideo } = Astro.props;
 ---
 
 <figure class="tweet">
@@ -37,6 +41,13 @@ const { url, author, handle, date, avatar, replyTo } = Astro.props;
   )}
 
   <p class="tweet-body"><slot /></p>
+
+  {media && (
+    <a class="tweet-media" href={url} rel="noopener" target="_blank" aria-label={hasVideo ? `Watch — @${handle} on X` : undefined}>
+      <img src={media} alt="" loading="lazy" />
+      {hasVideo && <span class="tweet-play" aria-hidden="true"></span>}
+    </a>
+  )}
 
   <a class="tweet-link" href={url} rel="noopener" target="_blank">
     <span class="tweet-date">{date}</span>
@@ -99,12 +110,62 @@ const { url, author, handle, date, avatar, replyTo } = Astro.props;
     color: var(--green-primary);
   }
 
-  /* Plain body text — deliberately not the global blockquote treatment. */
+  /* Plain body text — deliberately not the global blockquote treatment.
+     Callers pass <br> for intentional line breaks (see Timeline's tweet cards). */
   .tweet-body {
     margin: var(--space-2) 0 var(--space-3);
     font-size: 1.15rem;
     line-height: 1.45;
     color: var(--ink);
+  }
+
+  /* Inline media (e.g. a video poster) — mirrors the timeline's link-media. */
+  .tweet-media {
+    display: block;
+    position: relative;
+    margin: 0 0 var(--space-3);
+    max-width: 420px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: 4px 6px 0 0 var(--rule);
+    transition: transform 180ms ease, box-shadow 180ms ease;
+  }
+  .tweet-media:hover {
+    background: transparent;
+    transform: translate(-1px, -1px);
+    box-shadow: 6px 8px 0 0 var(--rule);
+  }
+  .tweet-media img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .tweet-play {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: color-mix(in oklab, var(--bg-paper) 82%, transparent);
+    border: 2px solid var(--bg-paper);
+    box-shadow: 0 2px 12px color-mix(in oklab, black 28%, transparent);
+    display: grid;
+    place-items: center;
+    transition: background 160ms ease;
+  }
+  .tweet-play::before {
+    content: '';
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 9px 0 9px 15px;
+    border-color: transparent transparent transparent var(--orange-accent);
+    margin-left: 3px;
+  }
+  .tweet-media:hover .tweet-play {
+    background: var(--bg-paper);
   }
 
   .tweet-link {

@@ -155,6 +155,18 @@ const links = defineCollection({
     thumbnail: z.string().optional(),
     /** show a play affordance over the thumbnail (clicking opens the source). */
     hasVideo: z.boolean().default(false),
+    /**
+     * Tweet-card fields (kind: 'tweet'). When `handle` is present, /inspiration/
+     * renders an embedded TweetCard (avatar, @handle, verbatim body) instead of
+     * the plain link row — the native sibling of the talks' LinkedIn cards.
+     */
+    handle: z.string().optional(),
+    /** the tweet's own date (distinct from addedAt/readAt, which track curation). */
+    postedAt: z.coerce.date().optional(),
+    /** author avatar under apps/site/public/, e.g. "/links/<slug>/avatar.jpg". */
+    avatar: z.string().optional(),
+    /** verbatim tweet text rendered as the card body (links expanded, media stripped). */
+    body: z.string().optional(),
     draft: z.boolean().default(false),
   }),
 });
