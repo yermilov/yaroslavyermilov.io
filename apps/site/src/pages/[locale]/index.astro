@@ -29,7 +29,7 @@ const upcoming = allTalks
  * talks already shown in "Catch me at". We render a generous batch; on
  * desktop a clamp script hides whatever doesn't fit the viewport. */
 const RECENT_COUNT = 8;
-const recent = (await getWritingTalkingTimeline())
+const recent = (await getWritingTalkingTimeline(locale))
   .filter((e) => !(e.kind === 'talk' && atMidnight(e.date) >= today))
   .slice(0, RECENT_COUNT);
 

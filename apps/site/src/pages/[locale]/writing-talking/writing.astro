@@ -11,7 +11,7 @@ export async function getStaticPaths() {
 
 const locale = Astro.params.locale as Locale;
 const strings = t(locale);
-const entries = (await getWritingTalkingTimeline()).filter((e) => e.kind === 'post');
+const entries = (await getWritingTalkingTimeline(locale)).filter((e) => e.kind === 'post');
 
 const tabs = [
   { href: localePath(locale, 'writing-talking'), label: strings.subnav.all },

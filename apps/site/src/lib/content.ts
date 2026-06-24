@@ -37,6 +37,26 @@ export async function getPosts(): Promise<PostEntry[]> {
   return all.sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime());
 }
 
+/**
+ * Posts for one locale's timeline: one entry per canonicalSlug, preferring the
+ * active-locale version and falling back to the other language when no
+ * translation exists yet — so /en/ shows English where it exists (and the
+ * Ukrainian-only originals where it doesn't), without listing both at once.
+ */
+export async function getPostsByLocale(locale: Locale): Promise<PostEntry[]> {
+  const all = await getCollection('posts', isPublished);
+  const byCanonical = new Map<string, PostEntry>();
+  for (const post of all) {
+    const existing = byCanonical.get(post.data.canonicalSlug);
+    if (!existing || (post.data.language === locale && existing.data.language !== locale)) {
+      byCanonical.set(post.data.canonicalSlug, post);
+    }
+  }
+  return [...byCanonical.values()].sort(
+    (a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime(),
+  );
+}
+
 export async function getPostByCanonicalSlug(canonicalSlug: string, locale: Locale): Promise<PostEntry | undefined> {
   const all = await getCollection('posts', isPublished);
   return all.find((p) => p.data.canonicalSlug === canonicalSlug && p.data.language === locale);
@@ -137,8 +157,8 @@ function byDateDesc(a: TimelineEntry, b: TimelineEntry): number {
   return b.date.getTime() - a.date.getTime();
 }
 
-export async function getWritingTalkingTimeline(): Promise<TimelineEntry[]> {
-  const [posts, talks] = await Promise.all([getPosts(), getTalks()]);
+export async function getWritingTalkingTimeline(locale: Locale): Promise<TimelineEntry[]> {
+  const [posts, talks] = await Promise.all([getPostsByLocale(locale), getTalks()]);
   const entries: TimelineEntry[] = [
     ...posts.map((post): TimelineEntry => ({ kind: 'post', date: post.data.publishedAt, post })),
     ...talks.map((talk): TimelineEntry => ({ kind: 'talk', date: talk.data.date, talk })),
