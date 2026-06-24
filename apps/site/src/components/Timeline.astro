@@ -43,6 +43,30 @@ function authorFromSource(source: string): string {
   return source.split('·')[0]!.trim();
 }
 
+// Auto-linkify URLs inside a tweet body line — bare https:// links and
+// scheme-less host.tld/path (the /path guard keeps prose like "codex cli:" from
+// matching). Trailing punctuation stays outside the link. Returns text/link
+// segments for the renderer to map.
+const TWEET_URL_RE = /(https?:\/\/[^\s]+|(?:[a-z0-9-]+\.)+[a-z]{2,}\/[^\s]+)/gi;
+type Segment = string | { href: string; text: string };
+function linkifyLine(line: string): Segment[] {
+  const out: Segment[] = [];
+  let last = 0;
+  for (const m of line.matchAll(TWEET_URL_RE)) {
+    const idx = m.index ?? 0;
+    if (idx > last) out.push(line.slice(last, idx));
+    let raw = m[0];
+    const trail = raw.match(/[.,!?:;)\]]+$/);
+    const suffix = trail ? trail[0] : '';
+    if (suffix) raw = raw.slice(0, raw.length - suffix.length);
+    out.push({ href: raw.startsWith('http') ? raw : `https://${raw}`, text: raw });
+    if (suffix) out.push(suffix);
+    last = idx + m[0].length;
+  }
+  if (last < line.length) out.push(line.slice(last));
+  return out;
+}
+
 const today = new Date();
 today.setHours(0, 0, 0, 0);
 function isUpcoming(d: Date): boolean {
@@ -231,7 +255,16 @@ function kindLabel(kind: KindLabelKey): string {
                 hasVideo={link.data.hasVideo}
               >
                 {link.data.body!.trim().split('\n').map((line, i) => (
-                  <Fragment>{i > 0 && <br />}{line}</Fragment>
+                  <Fragment>
+                    {i > 0 && <br />}
+                    {linkifyLine(line).map((seg) =>
+                      typeof seg === 'string' ? (
+                        seg
+                      ) : (
+                        <a class="tweet-body-link" href={seg.href} rel="noopener noreferrer" target="_blank">{seg.text}</a>
+                      ),
+                    )}
+                  </Fragment>
                 ))}
               </TweetCard>
             ) : (
@@ -549,6 +582,17 @@ function kindLabel(kind: KindLabelKey): string {
     color: var(--ink-muted);
     margin: 0;
     max-width: var(--measure);
+  }
+  /* Inline links inside a tweet body (e.g. github.com/…). */
+  .tweet-body-link {
+    color: var(--green-primary);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+    transition: color 160ms ease;
+  }
+  .tweet-body-link:hover {
+    color: var(--orange-accent);
   }
   .author {
     font-style: italic;
