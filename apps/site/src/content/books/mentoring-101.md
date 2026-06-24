@@ -5,7 +5,8 @@ cover: "/books/mentoring-101/cover.jpg"
 rating: 2
 readAt: 2025-08-28
 language: "ua"
-summary: "Менторство — потрібне; ця конкретна книжка — необов'язкова."
+summary: "Mentoring is necessary; this particular book is optional."
+summaryUk: "Менторство — потрібне; ця конкретна книжка — необов'язкова."
 ---
 any recommendations on practical intro to mentoring?
 

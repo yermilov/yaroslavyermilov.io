@@ -5,7 +5,8 @@ cover: "/books/staff-engineer/cover.jpg"
 rating: 4
 readAt: 2025-09-25
 language: "ua"
-summary: "Прагматичний підхід до ролі Staff Engineer — компіляція реальних інтерв'ю з інженерами, без води."
+summary: "A pragmatic take on the Staff Engineer role — a compilation of real interviews with engineers, no fluff."
+summaryUk: "Прагматичний підхід до ролі Staff Engineer — компіляція реальних інтерв'ю з інженерами, без води."
 ---
 Дуже прагматичний підхід до Staff Engineer ролі — аж до того що треба в усьому погоджуватися зі своїм менеджером (не треба!)
 

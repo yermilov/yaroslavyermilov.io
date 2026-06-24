@@ -127,9 +127,12 @@ const books = defineCollection({
     /** the read date is a rough guess — render "long time ago" and bucket
         these together instead of an exact stamp. readAt still orders them. */
     readApprox: z.boolean().default(false),
-    /** language of the review/notes, not the book itself */
+    /** language of the review/notes body (the detail-page notes); the summary
+        defaults to English with an optional Ukrainian override below. */
     language: localeEnum,
     summary: z.string(),
+    /** Ukrainian summary shown on /ua/; falls back to the English default. */
+    summaryUk: z.string().optional(),
     genre: z.string().optional(),
     series: z.string().optional(),
     /** external bookstore link (Amazon, publisher, etc.) */

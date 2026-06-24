@@ -317,7 +317,7 @@ function kindLabel(kind: KindLabelKey): string {
             </p>
             <h3 class="title"><a href={href}>{book.data.title}</a></h3>
             <p class="author">{strings.books.by} {book.data.author}</p>
-            {!compact && <p class="summary">{book.data.summary}</p>}
+            {!compact && <p class="summary">{localized(locale, book.data.summary, book.data.summaryUk)}</p>}
           </div>
         </article>
       </li>

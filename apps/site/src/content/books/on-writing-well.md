@@ -5,7 +5,8 @@ cover: "/books/on-writing-well/cover.jpg"
 rating: 3
 readAt: 2025-09-10
 language: "ua"
-summary: "Класика про написання нонфікшну — і чому вміння ясно писати людською мовою стає головним інженерним скілом."
+summary: "A classic on writing nonfiction — and why writing clearly in plain human language is becoming the key engineering skill."
+summaryUk: "Класика про написання нонфікшну — і чому вміння ясно писати людською мовою стає головним інженерним скілом."
 draft: false
 ---
 Спочатку ви пишете код. Вам дають задачу і використовуючи мови машин ви намагаєтеся донести до машин що їм треба зробити.

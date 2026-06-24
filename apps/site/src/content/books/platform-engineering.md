@@ -5,7 +5,8 @@ cover: "/books/platform-engineering/cover.png"
 rating: 5
 readAt: 2025-10-19
 language: "ua"
-summary: "Книга про побудову внутрішніх платформ — зі сторони техніки, продукту і людей."
+summary: "A book on building internal platforms — from the technical, product, and people sides."
+summaryUk: "Книга про побудову внутрішніх платформ — зі сторони техніки, продукту і людей."
 ---
 платформа — продукт, який всі люблять і хочуть (інженери, менеджери, лідершип). платформені інженери — нещасні люди якими всі ці ж люди потурають як можуть
 

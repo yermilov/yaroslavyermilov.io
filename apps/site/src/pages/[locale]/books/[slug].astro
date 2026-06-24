@@ -1,5 +1,5 @@
 ---
-import { LOCALES, t, localePath, bcp47Locale, type Locale } from '@lib/i18n';
+import { LOCALES, t, localePath, bcp47Locale, localized, type Locale } from '@lib/i18n';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import { getBooks } from '@lib/content';
 
@@ -17,6 +17,8 @@ const { book } = Astro.props;
 const locale = Astro.params.locale as Locale;
 const strings = t(locale);
 const { Content } = await book.render();
+// Summary defaults to English; Ukrainian override renders on /ua/.
+const bookSummary = localized(locale, book.data.summary, book.data.summaryUk);
 
 const hasRating = typeof book.data.rating === 'number';
 const rating = book.data.rating ?? 0;
@@ -37,13 +39,13 @@ const readStamp =
 // summary verbatim (or are empty). Only open a notes section when the body
 // genuinely adds something beyond the standfirst — no more duplication.
 const bodyText = (book.body ?? '').trim();
-const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
+const hasNotes = bodyText.length > 0 && bodyText !== bookSummary.trim();
 ---
 
 <BaseLayout
   locale={locale}
   title={`${book.data.title} — ${book.data.author}`}
-  description={book.data.summary}
+  description={bookSummary}
   alternatePath={`books/${book.slug}`}
   ogImage={`/og/book-${book.slug}.png`}
   fullViewport
@@ -85,7 +87,7 @@ const hasNotes = bodyText.length > 0 && bodyText !== book.data.summary.trim();
             </div>
           </section>
         ) : (
-          <p class="summary">{book.data.summary}</p>
+          <p class="summary">{bookSummary}</p>
         )}
       </div>
     </div>
