@@ -11,7 +11,7 @@
  */
 import type { TimelineEntry } from '@lib/content';
 import { postSlug } from '@lib/content';
-import { bcp47Locale, languageBadge, localePath, t, type Locale } from '@lib/i18n';
+import { bcp47Locale, languageBadge, localePath, localized, t, type Locale } from '@lib/i18n';
 import TweetCard from '@components/TweetCard.astro';
 
 interface Props {
@@ -159,7 +159,9 @@ function kindLabel(kind: KindLabelKey): string {
     if (entry.kind === 'talk') {
       const talk = entry.talk;
       const href = localePath(locale, `talks/${talk.slug}`);
-      const firstPara = talk.data.abstract.split(/\n\n+/)[0];
+      const talkTitle = localized(locale, talk.data.title, talk.data.titleUk);
+      const talkEvent = localized(locale, talk.data.event, talk.data.eventUk);
+      const firstPara = localized(locale, talk.data.abstract, talk.data.abstractUk).split(/\n\n+/)[0];
       return (
         <li
           class:list={['entry', 'entry-talk', { 'is-upcoming': upcoming }]}
@@ -173,14 +175,14 @@ function kindLabel(kind: KindLabelKey): string {
               {upcoming && <span class="kind-upcoming" data-upcoming-tag>{strings.timeline.upcoming}</span>}
               <span class="kind-event">
                 {talk.data.eventUrl ? (
-                  <a href={talk.data.eventUrl} rel="noopener">{talk.data.event}</a>
+                  <a href={talk.data.eventUrl} rel="noopener">{talkEvent}</a>
                 ) : (
-                  talk.data.event
+                  talkEvent
                 )}
               </span>
               {talk.data.language && <span class="kind-badge">{languageBadge(talk.data.language)}</span>}
             </p>
-            <h3 class="title"><a href={href}>{talk.data.title}</a></h3>
+            <h3 class="title"><a href={href}>{talkTitle}</a></h3>
             {!compact && firstPara && <p class="summary">{firstPara}</p>}
             {!compact && (
               <ul class="links" role="list">

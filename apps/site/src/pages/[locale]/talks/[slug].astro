@@ -1,6 +1,6 @@
 ---
 import { getCollection, type CollectionEntry } from 'astro:content';
-import { LOCALES, t, localePath, languageBadge, bcp47Locale, type Locale } from '@lib/i18n';
+import { LOCALES, t, localePath, languageBadge, bcp47Locale, localized, type Locale } from '@lib/i18n';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import LinkedInCard from '@components/LinkedInCard.astro';
 
@@ -18,6 +18,10 @@ const { talk } = Astro.props as { talk: CollectionEntry<'talks'> };
 const locale = Astro.params.locale as Locale;
 const strings = t(locale);
 const bcp47 = bcp47Locale(locale);
+// English fields are the default; the *Uk overrides render on /ua/.
+const talkTitle = localized(locale, talk.data.title, talk.data.titleUk);
+const talkEvent = localized(locale, talk.data.event, talk.data.eventUk);
+const talkAbstract = localized(locale, talk.data.abstract, talk.data.abstractUk);
 
 const dateFmt = new Intl.DateTimeFormat(bcp47, {
   year: 'numeric',
@@ -79,7 +83,7 @@ function parseSlideShare(url: string | undefined): string | null {
 }
 const slidesEmbedUrl = parseSlideShare(talk.data.slidesUrl);
 
-const paragraphs = talk.data.abstract.split(/\n\n+/);
+const paragraphs = talkAbstract.split(/\n\n+/);
 
 /**
  * Server-rendered relative time. Only emitted for talks older than 30 days,
@@ -130,7 +134,7 @@ const artifactLabel: Record<Artifact, string> = {
 
 <BaseLayout
   locale={locale}
-  title={talk.data.title}
+  title={talkTitle}
   description={paragraphs[0]}
   alternatePath={`talks/${talk.slug}`}
   ogImage={`/og/talk-${talk.slug}.png`}
@@ -144,13 +148,13 @@ const artifactLabel: Record<Artifact, string> = {
       <p class="kicker">
         <span aria-hidden="true">▸ </span>
         {talk.data.eventUrl ? (
-          <a class="event-link" href={talk.data.eventUrl} rel="noopener">{talk.data.event}</a>
+          <a class="event-link" href={talk.data.eventUrl} rel="noopener">{talkEvent}</a>
         ) : (
-          <span>{talk.data.event}</span>
+          <span>{talkEvent}</span>
         )}
       </p>
 
-      <h1 class="title">{talk.data.title}</h1>
+      <h1 class="title">{talkTitle}</h1>
 
       <p class="credit">
         <time datetime={talk.data.date.toISOString()}>{dateFmt.format(talk.data.date)}</time>
@@ -182,7 +186,7 @@ const artifactLabel: Record<Artifact, string> = {
           <div class="media-frame video-frame">
             <iframe
               src={embedUrl}
-              title={talk.data.title}
+              title={talkTitle}
               loading="lazy"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowfullscreen
@@ -210,7 +214,7 @@ const artifactLabel: Record<Artifact, string> = {
         <div class="media-frame slides-frame">
           <iframe
             src={slidesEmbedUrl}
-            title={`${talk.data.title} — slides`}
+            title={`${talkTitle} — slides`}
             loading="lazy"
             allowfullscreen
           ></iframe>

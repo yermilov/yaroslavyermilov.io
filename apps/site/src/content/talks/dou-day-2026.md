@@ -1,10 +1,13 @@
 ---
-title: "Невигадані історії AI-first трансформації в інженерних командах (про які неможливо мовчати)"
-event: "DOU Day 2026, Київ"
+title: "True stories of AI-first transformation in engineering teams (the ones you can't keep quiet about)"
+titleUk: "Невигадані історії AI-first трансформації в інженерних командах (про які неможливо мовчати)"
+event: "DOU Day 2026, Kyiv"
+eventUk: "DOU Day 2026, Київ"
 eventUrl: "https://ticket.dou.ua/dou-day-2026/agenda"
 date: 2026-05-16
 language: "ua"
-abstract: "За останній рік у Superhuman (раніше Grammarly) ми провели десятки експериментів із ШІ-агентами для написання коду — деякі дали сильний результат, інші — повністю провалилися. Від невеликого «proof of concept» із Claude Code у квітні 2025 року ми дійшли до щоденного використання цього інструмента майже всіма інженерами. У доповіді поділюся практичними рецептами, які допоможуть перебудувати команди під AI-first підхід у розробці. Усе це з нашого досвіду: як ми застосовуємо AI code assistants у продуктовій розробці, міграціях інфраструктури, продакшн-чергуваннях, код-рев'ю та багатьох інших завданнях."
+abstract: "Over the past year at Superhuman (formerly Grammarly) we ran dozens of experiments with AI agents for writing code — some delivered strong results, others failed completely. From a small proof of concept with Claude Code in April 2025, we got to nearly every engineer using the tool every day. In this talk I'll share practical recipes that help re-tool teams around an AI-first approach to development. All of it from our own experience: how we apply AI code assistants in product development, infrastructure migrations, production on-call, code review, and many other tasks."
+abstractUk: "За останній рік у Superhuman (раніше Grammarly) ми провели десятки експериментів із ШІ-агентами для написання коду — деякі дали сильний результат, інші — повністю провалилися. Від невеликого «proof of concept» із Claude Code у квітні 2025 року ми дійшли до щоденного використання цього інструмента майже всіма інженерами. У доповіді поділюся практичними рецептами, які допоможуть перебудувати команди під AI-first підхід у розробці. Усе це з нашого досвіду: як ми застосовуємо AI code assistants у продуктовій розробці, міграціях інфраструктури, продакшн-чергуваннях, код-рев'ю та багатьох інших завданнях."
 videoOnRequest: true
 slidesUrl: "https://yermilov.github.io/dou-days-2026/"
 repoUrl: "https://github.com/yermilov/dou-days-2026"

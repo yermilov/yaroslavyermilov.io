@@ -30,8 +30,15 @@ const talks = defineCollection({
     title: z.string(),
     event: z.string(),
     date: z.coerce.date(),
+    /** Language the talk was delivered in — drives the UA/EN badge, not the
+        displayed copy (the English fields above are the default; the *Uk
+        overrides below render on /ua/). */
     language: localeEnum.optional(),
     abstract: z.string(),
+    /** Ukrainian overrides shown on /ua/; fall back to the English default. */
+    titleUk: z.string().optional(),
+    eventUk: z.string().optional(),
+    abstractUk: z.string().optional(),
     videoUrl: z.string().url().optional(),
     /** Recording exists but is private; render an on-request CTA instead of a player. */
     videoOnRequest: z.boolean().default(false),

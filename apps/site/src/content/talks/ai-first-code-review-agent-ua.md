@@ -1,10 +1,13 @@
 ---
-title: "AI-first розробка: кейс створення code review агента"
-event: "AI-First Meetup — Superhuman, Київ"
+title: "AI-first development: building a code review agent"
+titleUk: "AI-first розробка: кейс створення code review агента"
+event: "AI-First Meetup — Superhuman, Kyiv"
+eventUk: "AI-First Meetup — Superhuman, Київ"
 eventUrl: "https://luma.com/uo4f81v0"
 date: 2026-05-20
 language: "ua"
-abstract: "За останній рік команда Superhuman (раніше Grammarly) провела десятки експериментів із ШІ-агентами для написання коду — від невеликого proof of concept із Claude Code у квітні 2025 року до щоденного використання code-асистентів майже всіма розробниками. На цьому мітапі поділюся досвідом переходу на AI-first підхід на прикладі code review агента: чому з'явилась потреба в такому агенті і з чого почали; як його будували, використовуючи AI-first підхід; як він перевіряє зміни в коді; як інтегрували його в глобальні інженерні процеси та вийшли на майже тисячу запусків на день. Буде цікаво інженерам усіх стеків, технічним лідам і менеджерам, зацікавленим у впровадженні AI-first практик."
+abstract: "Over the past year the Superhuman (formerly Grammarly) team ran dozens of experiments with AI agents for writing code — from a small proof of concept with Claude Code in April 2025 to daily use of code assistants by almost every developer. At this meetup I'll share our experience of moving to an AI-first approach through the example of a code review agent: why the need for such an agent arose and where we started; how we built it using an AI-first approach; how it reviews code changes; and how we integrated it into our global engineering processes and scaled to nearly a thousand runs a day. It'll be useful for engineers of every stack, tech leads, and managers interested in adopting AI-first practices."
+abstractUk: "За останній рік команда Superhuman (раніше Grammarly) провела десятки експериментів із ШІ-агентами для написання коду — від невеликого proof of concept із Claude Code у квітні 2025 року до щоденного використання code-асистентів майже всіма розробниками. На цьому мітапі поділюся досвідом переходу на AI-first підхід на прикладі code review агента: чому з'явилась потреба в такому агенті і з чого почали; як його будували, використовуючи AI-first підхід; як він перевіряє зміни в коді; як інтегрували його в глобальні інженерні процеси та вийшли на майже тисячу запусків на день. Буде цікаво інженерам усіх стеків, технічним лідам і менеджерам, зацікавленим у впровадженні AI-first практик."
 videoOnRequest: true
 slidesUrl: "https://yermilov.github.io/ai-first-code-review-agent-ua/"
 repoUrl: "https://github.com/yermilov/ai-first-code-review-agent-ua"

@@ -471,6 +471,16 @@ export function languageBadge(language: Locale): string {
   return language.toUpperCase();
 }
 
+/**
+ * Pick the locale-appropriate copy for content with per-locale overrides:
+ * the Ukrainian override on /ua/ (when present), the English default elsewhere.
+ * Lets a single content entry carry both languages (talks, books) without
+ * duplicating the file.
+ */
+export function localized<T>(locale: Locale, base: T, uk: T | null | undefined): T {
+  return locale === 'ua' && uk != null ? uk : base;
+}
+
 export function otherLocale(locale: Locale): Locale {
   return locale === 'en' ? 'ua' : 'en';
 }
