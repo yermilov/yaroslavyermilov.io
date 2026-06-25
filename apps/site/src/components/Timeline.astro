@@ -238,6 +238,11 @@ function kindLabel(kind: KindLabelKey): string {
       // sibling of the talks' LinkedIn cards); other links keep the plain row.
       const asTweetCard =
         !compact && link.data.kind === 'tweet' && !!link.data.handle && !!link.data.body;
+      // A stamped/tried link can carry a star rating + a one-line verdict — the
+      // link sibling of the books' rating, shown below the source card.
+      const linkStars = link.data.rating
+        ? '★'.repeat(link.data.rating) + '☆'.repeat(5 - link.data.rating)
+        : null;
       return (
         <li class="entry entry-link" data-iso={entry.date.toISOString()}>
           {stamp}
@@ -245,6 +250,9 @@ function kindLabel(kind: KindLabelKey): string {
             <p class="workbench kindline">
               <span class="kind">{KIND_GLYPHS.link} {kindLabel(link.data.kind)}</span>
               <span class="kind-event">{link.data.source}</span>
+              {linkStars && (
+                <span class="stars" aria-label={`${strings.books.rating}: ${link.data.rating}/5`}>{linkStars}</span>
+              )}
             </p>
             {asTweetCard ? (
               <TweetCard
@@ -291,6 +299,7 @@ function kindLabel(kind: KindLabelKey): string {
                 )}
               </>
             )}
+            {!compact && link.data.verdict && <p class="verdict">{link.data.verdict}</p>}
           </article>
         </li>
       );
@@ -584,6 +593,16 @@ function kindLabel(kind: KindLabelKey): string {
     color: var(--ink-muted);
     margin: 0;
     max-width: var(--measure);
+  }
+  /* My own take on a stamped/tried link — a quiet callout sitting under the
+     source card, set off by an orange ledger rule (the rating accent). */
+  .verdict {
+    color: var(--ink);
+    margin: 0.7rem 0 0;
+    max-width: var(--measure);
+    padding-left: 0.7rem;
+    border-left: 2px solid var(--orange-accent);
+    font-style: italic;
   }
   /* Inline links inside a tweet body (e.g. github.com/…). */
   .tweet-body-link {

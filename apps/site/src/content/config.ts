@@ -163,6 +163,8 @@ const links = defineCollection({
     readAt: z.coerce.date().optional(),
     readApprox: z.boolean().default(false),
     summary: z.string().optional(),
+    /** my own one-line take, shown with the star rating once a link is stamped/tried. */
+    verdict: z.string().optional(),
     /** poster/preview image under apps/site/public/, e.g. "/links/<slug>/poster.jpg" */
     thumbnail: z.string().optional(),
     /** show a play affordance over the thumbnail (clicking opens the source). */
