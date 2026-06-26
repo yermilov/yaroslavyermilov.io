@@ -1,46 +1,53 @@
-# yermilov.github.io
+# yaroslavyermilov.io
 
-Personal site of Yaroslav Yermilov — blog (EN + UK), lab, games, talks.
+Personal site of Yaroslav Yermilov — blog (EN + UA), lab, games, talks.
 
-Stack: Astro 5/6 · TypeScript strict · MDX · React 19 islands · Tailwind v4 ·
-Pagefind · pnpm workspaces · GitHub Pages.
+Stack: Astro 5 (SSR, Node adapter) · Hono on Bun API · TypeScript strict · MDX ·
+React 19 islands · Tailwind v4 · Pagefind · Drizzle/Postgres · pnpm workspaces ·
+Railway.
 
 ## Quick start
 
 ```sh
-nvm use                                # Node 24
 corepack enable                        # if pnpm isn't installed
 pnpm install
-pnpm dev                               # http://localhost:4321
+pnpm dev                               # site → http://localhost:4321
+pnpm --filter @yermilov/api dev        # API  → http://localhost:3001
 ```
 
 ## Layout
 
 ```
-apps/site/         Astro site
-apps/game-*/       (future) Tier-3 games, each with its own Vite build
+apps/web/          Astro site (SSR, Node adapter) + presentation-redirect middleware
+apps/api/          Hono on Bun API skeleton (pino, /api/healthz, Drizzle/Postgres)
+apps/game-*/       Tier-3 games, each with its own Vite build
 packages/shared-*/ design tokens, eslint/tsconfig/prettier base
+packages/db-schema, packages/api-types   shared backend schema + contracts
 scripts/           build-games.ts
-.github/workflows/ deploy.yml — GitHub Pages via Actions
 ```
 
-See `CLAUDE.md` for the full developer guide and the 3-tier interactivity rule.
+See `CLAUDE.md` for the full developer guide, the 3-tier interactivity rule, and
+the repo-split / SSR-redirect architecture.
 
 ## Deploy
 
-Pushing to `main` triggers `.github/workflows/deploy.yml`, which:
+Hosted on **Railway** (auto-deploys on push to `main`), one service per app —
+each configured by its `apps/<app>/railway.json` + `nixpacks.toml`:
 
-1. builds any `apps/game-*` and copies their `dist/` into `public/games/<slug>/`,
-2. builds the Astro site,
-3. generates the Pagefind index,
-4. publishes to GitHub Pages.
+- **web** — `pnpm build` (games → Astro SSR → Pagefind), served by the Astro Node
+  standalone server (`node ./dist/server/entry.mjs`).
+- **api** — `bun run src/index.ts`, healthcheck `/api/healthz`.
+- **Postgres** — Railway add-on (wired when the first backend feature needs it).
 
-GitHub Pages settings: Source = "GitHub Actions" (not "Deploy from branch").
+The Railway setup/ops procedure lives in the `railway` skill. (This repo used to
+deploy to GitHub Pages; that workflow was removed in the Railway migration.)
 
-## Old blog archive
+## Presentations & the old repo
 
-The 2017 Grain/Octopress archive lives in the separate
-[`yermilov/old-blog`](https://github.com/yermilov/old-blog) repo, which has its
-own GitHub Pages deploy mounted at `/old-blog/` (a same-owner project Pages site
-auto-mounts at that path on the user-site domain). The About page in this site
-links to it. Nothing in this repo touches the archive.
+The old [`yermilov/yermilov.github.io`](https://github.com/yermilov/yermilov.github.io)
+repo is now a redirect stub that 302s here, and — with its custom domain detached —
+natively hosts the talk decks at `yermilov.github.io/<name>`. This site
+302-redirects `/<name>` for known presentations back there (see
+`apps/web/src/config/presentations.ts`). The 2017 Grain/Octopress blog archive
+lives in [`yermilov/old-blog`](https://github.com/yermilov/old-blog), linked from
+the About page.
