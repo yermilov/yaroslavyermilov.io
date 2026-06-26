@@ -1,0 +1,20 @@
+# Railway build for the Astro SSR site (Node adapter, standalone).
+# pnpm-monorepo pattern (see the `railway` skill): install from the repo root,
+# build the web filter, then run the standalone Node server.
+[phases.setup]
+nixPkgs = ["nodejs_22"]
+
+[phases.install]
+cmds = [
+  "corepack enable",
+  "corepack prepare pnpm@9.15.0 --activate",
+  "pnpm install --frozen-lockfile",
+]
+
+# Root `build` = build games -> astro build (SSR) -> pagefind (dist/client).
+[phases.build]
+cmds = ["pnpm build"]
+
+# Astro Node standalone server reads HOST/PORT from the env; Railway injects PORT.
+[start]
+cmd = "cd apps/web && HOST=0.0.0.0 PORT=${PORT:-3000} node ./dist/server/entry.mjs"

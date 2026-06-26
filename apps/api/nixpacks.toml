@@ -1,0 +1,16 @@
+# Railway build for the Hono API (Bun runtime). Bun runs the TS entry directly,
+# so there's no build phase — just install from the repo root. pnpm-monorepo
+# pattern (see the `railway` skill).
+[phases.setup]
+nixPkgs = ["bun", "nodejs_22"]
+
+[phases.install]
+cmds = [
+  "corepack enable",
+  "corepack prepare pnpm@9.15.0 --activate",
+  "pnpm install --frozen-lockfile",
+]
+
+# loadEnv reads HOST/PORT (HOST defaults to 0.0.0.0); Railway injects PORT.
+[start]
+cmd = "cd apps/api && bun run src/index.ts"

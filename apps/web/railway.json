@@ -1,0 +1,12 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "nixpacksConfigPath": "apps/web/nixpacks.toml"
+  },
+  "deploy": {
+    "startCommand": "cd apps/web && HOST=0.0.0.0 PORT=${PORT:-3000} node ./dist/server/entry.mjs",
+    "healthcheckTimeout": 30,
+    "restartPolicyType": "ON_FAILURE"
+  }
+}
