@@ -1,0 +1,895 @@
+---
+export const prerender = true;
+import { LOCALES, t, localePath, languageBadge, bcp47Locale, type Locale } from '@lib/i18n';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import Timeline from '@components/Timeline.astro';
+import RelativeDays from '@components/RelativeDays.tsx';
+import { bookSlug, getStampedBooks, getStampedLinks, getTalks, getWritingTalkingTimeline } from '@lib/content';
+
+export async function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+
+const locale = Astro.params.locale as Locale;
+const strings = t(locale);
+
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+function atMidnight(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+const allTalks = await getTalks();
+const upcoming = allTalks
+  .filter((talk) => atMidnight(talk.data.date) >= today)
+  .reverse(); // soonest first
+
+/* Recent stream: the merged writing & talking timeline, minus the future
+ * talks already shown in "Catch me at". We render a generous batch; on
+ * desktop a clamp script hides whatever doesn't fit the viewport. */
+const RECENT_COUNT = 8;
+const recent = (await getWritingTalkingTimeline(locale))
+  .filter((e) => !(e.kind === 'talk' && atMidnight(e.date) >= today))
+  .slice(0, RECENT_COUNT);
+
+/* From the shelf: promote any inspiration entry worth recommending — books
+ * and links alike, gated at 4–5 stars. Newest server-rendered; the whole
+ * pool serialized so a tiny script can deal a random one per visit. */
+interface ShelfItem {
+  title: string;
+  byline: string;
+  cover: string | null;
+  rating: number | null;
+  summary: string;
+  href: string;
+  external: boolean;
+  date: number;
+}
+const [stampedBooks, stampedLinks] = await Promise.all([getStampedBooks(locale), getStampedLinks()]);
+const shelfPool: ShelfItem[] = [
+  ...stampedBooks.map((book): ShelfItem => ({
+    title: book.data.title,
+    byline: `${strings.books.by} ${book.data.author}`,
+    cover: book.data.cover,
+    rating: book.data.rating ?? null,
+    summary: book.data.summary,
+    href: localePath(locale, `books/${bookSlug(book)}`),
+    external: false,
+    date: book.data.readAt?.getTime() ?? 0,
+  })),
+  ...stampedLinks.map((link): ShelfItem => ({
+    title: link.data.title,
+    byline: link.data.source,
+    cover: link.data.thumbnail ?? null,
+    rating: link.data.rating ?? null,
+    summary: link.data.summary ?? '',
+    href: link.data.url,
+    external: true,
+    date: link.data.readAt?.getTime() ?? 0,
+  })),
+];
+const shelf = shelfPool
+  .filter((it) => (it.rating ?? 0) >= 4)
+  .sort((a, b) => b.date - a.date)
+  .map(({ date: _date, ...rest }) => rest);
+const shelfFirst = shelf[0];
+function starsOf(rating: number | null): string | null {
+  return rating ? '★'.repeat(rating) + '☆'.repeat(5 - rating) : null;
+}
+
+const monthFmt = new Intl.DateTimeFormat(bcp47Locale(locale), { month: 'short' });
+const rtf = new Intl.RelativeTimeFormat(bcp47Locale(locale), { numeric: 'auto' });
+const daysFromToday = (date: Date): number =>
+  Math.round((atMidnight(date).getTime() - today.getTime()) / 86_400_000);
+
+function calMonth(date: Date): string {
+  return monthFmt.format(date).replace(/\.$/, '').toUpperCase();
+}
+---
+
+<BaseLayout locale={locale} fullViewport hideFooter>
+  <div class="home">
+    {/* ── Cover: the journal's identity rail ──────────────────────── */}
+    <aside class="cover">
+      <div class="cover-banner">
+        <img src="/home/banner.jpg" alt="" loading="eager" />
+      </div>
+      <div class="cover-body">
+        <img class="avatar" src="/home/avatar.jpg" alt={strings.site.title} loading="eager" />
+        <h1 class="display">{strings.site.title}</h1>
+        <p class="role">{strings.home.role}</p>
+        <p class="workbench location">
+          ▸ {strings.home.location} <span class="flag" aria-hidden="true">🇺🇦</span>
+        </p>
+      </div>
+      <nav class="elsewhere" aria-label={strings.home.elsewhere}>
+        <a
+          class="elsewhere-main"
+          href="https://www.linkedin.com/in/yarik-yermilov/"
+          rel="me noopener"
+          target="_blank"
+          aria-label={strings.home.followLinkedIn}
+        >
+          <span class="elsewhere-eyebrow" aria-hidden="true">→ {strings.home.elsewhere}</span>
+          <span class="elsewhere-headline" aria-hidden="true">
+            LinkedIn<span class="elsewhere-arrow">↗</span>
+          </span>
+          <span class="elsewhere-handle" aria-hidden="true">in/yarik-yermilov</span>
+        </a>
+        <ul class="elsewhere-links" role="list">
+          <li><a href="https://github.com/yermilov" rel="me">github</a></li>
+          <li><a href="https://twitter.com/yermilov17" rel="me">twitter</a></li>
+          <li><a href={`${localePath(locale)}rss.xml`}>rss</a></li>
+          <li><a href={localePath(locale, 'writing-talking/kit')}>kit</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    {/* ── Contents: programme on top, recent | shelf below ─────────── */}
+    <div class="contents">
+      <section class="programme" data-programme="upcoming" hidden={upcoming.length === 0}>
+        <p class="workbench programme-label">→ {strings.home.catchMeAt}</p>
+        <ul class="programme-list" role="list">
+          {upcoming.map((talk) => {
+            const detailHref = localePath(locale, `talks/${talk.slug}`);
+            return (
+              <li class="programme-item" data-iso={talk.data.date.toISOString()}>
+                <div class="cal-tile" aria-hidden="true">
+                  <span class="cal-mo">{calMonth(talk.data.date)}</span>
+                  <span class="cal-day">{talk.data.date.getDate()}</span>
+                  <span class="cal-yr">{talk.data.date.getFullYear()}</span>
+                </div>
+                <div class="programme-content">
+                  <p class="workbench event">
+                    ▸ {talk.data.eventUrl ? (
+                      <a class="event-link" href={talk.data.eventUrl} rel="noopener">{talk.data.event}</a>
+                    ) : (
+                      <span>{talk.data.event}</span>
+                    )}
+                  </p>
+                  <h2 class="programme-title">
+                    <a href={detailHref}>{talk.data.title}</a>
+                  </h2>
+                  <p class="workbench meta">
+                    <RelativeDays
+                      client:idle
+                      iso={talk.data.date.toISOString()}
+                      bcp47={bcp47Locale(locale)}
+                      fallback={rtf.format(daysFromToday(talk.data.date), 'day')}
+                      serverDays={daysFromToday(talk.data.date)}
+                    />
+                    {talk.data.language && (
+                      <>
+                        <span aria-hidden="true">·</span>
+                        <span>{languageBadge(talk.data.language)}</span>
+                      </>
+                    )}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      <div class="lower">
+        <section class="recent" hidden={recent.length === 0}>
+          <div class="recent-head">
+            <p class="workbench recent-label">/ {strings.home.recent}</p>
+            <a class="workbench recent-all" href={localePath(locale, 'writing-talking')}>
+              {strings.home.everything}
+            </a>
+          </div>
+          <div class="recent-clip" data-recent-clamp>
+            <Timeline locale={locale} entries={recent} compact />
+          </div>
+        </section>
+
+        {shelfFirst && (
+          <section class="shelf">
+            <div class="recent-head">
+              <p class="workbench recent-label">/ {strings.home.fromTheShelf}</p>
+              <a class="workbench recent-all" href={localePath(locale, 'inspiration')}>
+                {strings.home.moreInspiration}
+              </a>
+            </div>
+            <div class="shelf-card" data-shelf-card>
+              <a
+                class="shelf-cover"
+                href={shelfFirst.href}
+                data-shelf-cover
+                aria-hidden="true"
+                tabindex="-1"
+                {...(shelfFirst.external ? { target: '_blank', rel: 'noopener' } : {})}
+              >
+                <img src={shelfFirst.cover ?? ''} alt="" data-shelf-img hidden={!shelfFirst.cover} />
+                <span class="shelf-glyph" data-shelf-glyph aria-hidden="true" hidden={!!shelfFirst.cover}>✦</span>
+              </a>
+              <div class="shelf-meta">
+                {starsOf(shelfFirst.rating) && (
+                  <p class="workbench shelf-stars" data-shelf-stars>{starsOf(shelfFirst.rating)}</p>
+                )}
+                <h2 class="shelf-title">
+                  <a href={shelfFirst.href} data-shelf-link {...(shelfFirst.external ? { target: '_blank', rel: 'noopener' } : {})}>{shelfFirst.title}</a>
+                </h2>
+                <p class="shelf-author" data-shelf-author>{shelfFirst.byline}</p>
+                <p class="shelf-summary" data-shelf-summary>{shelfFirst.summary}</p>
+              </div>
+            </div>
+            <script is:inline type="application/json" data-shelf-data set:html={JSON.stringify({ items: shelf })} />
+          </section>
+        )}
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  // "Catch me at" self-corrects on stale static builds: hide passed talks,
+  // hide the whole block when none remain.
+  {
+    const section = document.querySelector<HTMLElement>('[data-programme="upcoming"]');
+    if (section) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      let visible = 0;
+      section.querySelectorAll<HTMLElement>('.programme-item').forEach((item) => {
+        const iso = item.getAttribute('data-iso');
+        if (!iso) return;
+        const d = new Date(iso);
+        d.setHours(0, 0, 0, 0);
+        if (d < today) item.hidden = true;
+        else visible += 1;
+      });
+      if (visible === 0) section.hidden = true;
+    }
+  }
+
+  // Recent clamp: on the viewport-locked desktop layout, hide the timeline
+  // entries that overflow the column so the page never scrolls. The first
+  // entry always stays; "everything →" covers the rest.
+  {
+    const clip = document.querySelector<HTMLElement>('[data-recent-clamp]');
+    if (clip) {
+      const lock = window.matchMedia('(min-width: 960px) and (min-height: 620px)');
+      const items = Array.from(clip.querySelectorAll<HTMLElement>(':scope li'));
+      const apply = () => {
+        items.forEach((li) => (li.hidden = false));
+        if (!lock.matches) return;
+        const limit = clip.getBoundingClientRect().bottom;
+        let cut = false;
+        items.forEach((li, i) => {
+          if (i === 0) return;
+          if (!cut && li.getBoundingClientRect().bottom > limit + 1) cut = true;
+          if (cut) li.hidden = true;
+        });
+      };
+      apply();
+      lock.addEventListener('change', apply);
+      window.addEventListener('resize', () => requestAnimationFrame(apply));
+      document.fonts?.ready.then(apply);
+    }
+  }
+
+  // From the shelf: deal a random recommended inspiration entry (book or
+  // link) per visit. The newest is server-rendered as the no-JS fallback.
+  {
+    const data = document.querySelector<HTMLScriptElement>('[data-shelf-data]');
+    const card = document.querySelector<HTMLElement>('[data-shelf-card]');
+    if (data && card) {
+      try {
+        const { items } = JSON.parse(data.textContent || '{}') as {
+          items: Array<{
+            title: string;
+            byline: string;
+            cover: string | null;
+            rating: number | null;
+            summary: string;
+            href: string;
+            external: boolean;
+          }>;
+        };
+        if (Array.isArray(items) && items.length > 1) {
+          const pick = items[Math.floor(Math.random() * items.length)];
+          if (pick) {
+            const img = card.querySelector<HTMLImageElement>('[data-shelf-img]');
+            const glyph = card.querySelector<HTMLElement>('[data-shelf-glyph]');
+            const coverLink = card.querySelector<HTMLAnchorElement>('[data-shelf-cover]');
+            const link = card.querySelector<HTMLAnchorElement>('[data-shelf-link]');
+            const author = card.querySelector<HTMLElement>('[data-shelf-author]');
+            const summary = card.querySelector<HTMLElement>('[data-shelf-summary]');
+            const stars = card.querySelector<HTMLElement>('[data-shelf-stars]');
+            const setTarget = (a: HTMLAnchorElement | null) => {
+              if (!a) return;
+              a.href = pick.href;
+              if (pick.external) {
+                a.target = '_blank';
+                a.rel = 'noopener';
+              } else {
+                a.removeAttribute('target');
+                a.removeAttribute('rel');
+              }
+            };
+            if (img && glyph) {
+              if (pick.cover) {
+                img.src = pick.cover;
+                img.hidden = false;
+                glyph.hidden = true;
+              } else {
+                img.hidden = true;
+                glyph.hidden = false;
+              }
+            }
+            setTarget(coverLink);
+            setTarget(link);
+            if (link) link.textContent = pick.title;
+            if (author) author.textContent = pick.byline;
+            if (summary) summary.textContent = pick.summary;
+            if (stars) {
+              if (pick.rating) {
+                stars.textContent = '★'.repeat(pick.rating) + '☆'.repeat(5 - pick.rating);
+                stars.hidden = false;
+              } else {
+                stars.hidden = true;
+              }
+            }
+          }
+        }
+      } catch {
+        // malformed JSON → keep the server-rendered fallback
+      }
+    }
+  }
+</script>
+
+<style>
+  /* ════════════════════════════════════════════════════════════════
+     The journal cover spread. Desktop is a split screen: a full-height
+     identity rail on the left (banner crop, avatar, name, LinkedIn),
+     the three content sections on the right — locked to one viewport.
+     Mobile keeps the familiar stacked, scrolling flow.
+     ════════════════════════════════════════════════════════════════ */
+
+  [hidden] {
+    display: none !important;
+  }
+
+  /* ── Base (mobile-first, stacked) ───────────────────────────────── */
+
+  .cover-banner {
+    width: 100%;
+    aspect-ratio: 1400 / 360;
+    overflow: hidden;
+    border-bottom: 1px solid var(--rule);
+  }
+  .cover-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+  }
+  .cover-body {
+    padding: 0 var(--space-3);
+  }
+  .avatar {
+    width: 152px;
+    height: 152px;
+    margin-top: -60px;
+    border-radius: 50%;
+    border: 5px solid var(--bg-paper);
+    object-fit: cover;
+    background: var(--bg-paper);
+    display: block;
+  }
+  .display {
+    font-size: clamp(1.9rem, 4.5vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: var(--space-2) 0 0.25rem;
+    line-height: 1.08;
+  }
+  .flag {
+    display: inline-block;
+    margin-left: 0.15rem;
+    font-size: 1.1em;
+    vertical-align: -0.08em;
+  }
+  .role {
+    font-size: 1.1rem;
+    color: var(--ink);
+    margin: 0 0 0.3rem;
+  }
+  .location {
+    margin: var(--space-1) 0 0;
+    color: var(--green-primary);
+  }
+
+  /* "Elsewhere" callout — purely typographic, the workbench vocabulary:
+     mono eyebrow with a → glyph, serif headline, mono caption, and the
+     full link ledger (the homepage has no footer; it lives here). */
+  .elsewhere {
+    border-top: 1px solid var(--rule);
+    margin: var(--space-3) var(--space-3) 0;
+    padding: var(--space-2) 0 0;
+  }
+  .elsewhere-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    line-height: 1.1;
+    color: var(--ink);
+    border-bottom: none;
+  }
+  .elsewhere-main:hover {
+    background: transparent;
+    color: var(--ink);
+  }
+  .elsewhere-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--green-primary);
+  }
+  .elsewhere-headline {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 1.9rem);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1;
+    color: var(--ink);
+    transition: color 140ms ease;
+  }
+  .elsewhere-arrow {
+    display: inline-block;
+    margin-left: 0.18em;
+    font-size: 0.65em;
+    color: var(--orange-accent);
+    transition: transform 160ms ease, color 160ms ease;
+    vertical-align: 0.4em;
+  }
+  .elsewhere-handle {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink-muted);
+    letter-spacing: 0.01em;
+  }
+  .elsewhere-main:hover .elsewhere-headline {
+    color: var(--orange-accent);
+  }
+  .elsewhere-main:hover .elsewhere-arrow {
+    transform: translate(2px, -2px);
+    color: var(--orange-bright);
+  }
+  .elsewhere-main:hover .elsewhere-handle {
+    color: var(--ink);
+  }
+  .elsewhere-links {
+    list-style: none;
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--ink-muted);
+  }
+
+  /* ── Contents sections (stacked defaults) ───────────────────────── */
+
+  .contents {
+    /* `display: block` is load-bearing: the class name collides with Tailwind's
+       `.contents` utility (display: contents), which would erase this box and
+       drop its horizontal padding — leaving every section flush against the
+       screen edge on mobile. The desktop @media below sets display: flex, so
+       only mobile needs this; the Astro-scoped selector outranks the utility. */
+    display: block;
+    padding: 0 var(--space-3) var(--space-4);
+  }
+
+  .programme {
+    border-top: 2px solid var(--green-primary);
+    margin-top: var(--space-4);
+    padding-top: var(--space-3);
+  }
+  .programme-label {
+    color: var(--green-primary);
+    margin: 0 0 var(--space-3);
+  }
+  .programme-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .programme-item {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: flex-start;
+  }
+  .programme-item:first-child {
+    padding-top: 0;
+  }
+  .programme-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .cal-tile {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.6rem;
+    border: 1px solid var(--rule);
+    background: var(--bg-elevated);
+    padding: 0.45rem 0.7rem;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.05;
+    user-select: none;
+  }
+  .cal-mo {
+    font-size: 0.78rem;
+    color: var(--ink-muted);
+  }
+  .cal-day {
+    font-family: var(--font-display);
+    font-size: 1.7rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: var(--ink);
+  }
+  .cal-yr {
+    font-size: 0.7rem;
+    color: var(--ink-muted);
+    border-left: 1px dashed var(--rule);
+    padding-left: 0.6rem;
+  }
+
+  .programme-content {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .event {
+    margin: 0 0 0.4rem;
+    color: var(--green-primary);
+  }
+  .event-link {
+    border-bottom: none;
+    color: var(--green-primary);
+  }
+  .event-link:hover {
+    background: transparent;
+    color: var(--orange-accent);
+  }
+  .programme-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.2rem, 2.2vw, 1.5rem);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+    margin: 0 0 0.4rem;
+  }
+  .programme-title a {
+    border-bottom: none;
+    color: inherit;
+  }
+  .programme-title a:hover {
+    background: transparent;
+    color: var(--orange-accent);
+  }
+  .meta {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: 0;
+  }
+
+  /* ── Recent — the merged writing & talking stream ───────────────── */
+  .recent {
+    border-top: 1px solid var(--rule);
+    margin-top: var(--space-4);
+    padding-top: var(--space-3);
+  }
+  .recent-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-2);
+  }
+  .recent-label {
+    color: var(--ink-muted);
+    margin: 0;
+  }
+  .recent-all {
+    color: var(--green-primary);
+    border-bottom: 1.5px solid transparent;
+  }
+  .recent-all:hover {
+    background: transparent;
+    color: var(--orange-accent);
+    border-bottom-color: var(--orange-accent);
+  }
+
+  /* ── From the shelf — one dealt card ────────────────────────────── */
+  .shelf {
+    border-top: 2px solid var(--green-primary);
+    margin-top: var(--space-4);
+    padding-top: var(--space-3);
+  }
+  .shelf-card {
+    display: flex;
+    gap: var(--space-3);
+    align-items: flex-start;
+  }
+  .shelf-cover {
+    flex: 0 0 auto;
+    border: none;
+    display: block;
+  }
+  .shelf-cover:hover {
+    background: transparent;
+  }
+  .shelf-cover img,
+  .shelf-glyph {
+    width: 110px;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    display: block;
+    border: 1px solid var(--rule);
+    background: var(--bg-elevated);
+    box-shadow: 4px 5px 0 0 var(--rule);
+    transition: transform 160ms ease, box-shadow 160ms ease;
+  }
+  /* Placeholder plate for links without a thumbnail. */
+  .shelf-glyph {
+    display: grid;
+    place-items: center;
+    font-size: 2rem;
+    color: var(--green-primary);
+  }
+  .shelf-card:hover .shelf-cover img,
+  .shelf-card:hover .shelf-glyph {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 7px 0 0 var(--rule);
+  }
+  .shelf-meta {
+    min-width: 0;
+    max-width: var(--measure);
+  }
+  .shelf-stars {
+    color: var(--orange-accent);
+    letter-spacing: 0.08em;
+    margin: 0 0 0.4rem;
+  }
+  .shelf-title {
+    font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.12;
+    margin: 0 0 0.35rem;
+  }
+  .shelf-title a {
+    border-bottom: none;
+    color: inherit;
+  }
+  .shelf-title a:hover {
+    background: transparent;
+    color: var(--orange-accent);
+  }
+  .shelf-author {
+    font-style: italic;
+    color: var(--ink-muted);
+    margin: 0 0 var(--space-2);
+  }
+  .shelf-summary {
+    color: var(--ink-muted);
+    margin: 0 0 var(--space-2);
+  }
+
+  @media (max-width: 600px) {
+    .cover-banner {
+      aspect-ratio: 1400 / 420;
+    }
+    .avatar {
+      width: 132px;
+      height: 132px;
+      margin-top: -52px;
+      border-width: 4px;
+    }
+    .shelf-cover img,
+    .shelf-glyph {
+      width: 96px;
+    }
+  }
+
+  /* ════════════════════════════════════════════════════════════════
+     Split screen (desktop). The rail is the cover; the right side is
+     the table of contents. Vertical rules carry the ledger grammar.
+     ════════════════════════════════════════════════════════════════ */
+  @media (min-width: 960px) {
+    .home {
+      display: grid;
+      grid-template-columns: clamp(280px, 28vw, 380px) minmax(0, 1fr);
+      align-items: stretch;
+      width: 100%;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    /* Cover rail */
+    .cover {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: var(--bg-elevated);
+      border-right: 1px solid var(--rule);
+    }
+    /* The banner is a composed image (a meme, not a texture) — show it
+       whole at rail width instead of cropping an arbitrary slice. */
+    .cover-banner {
+      flex: 0 0 auto;
+      aspect-ratio: 1400 / 350;
+      height: auto;
+    }
+    .cover-body {
+      padding: 0 var(--space-4);
+    }
+    .avatar {
+      width: clamp(104px, 16vh, 144px);
+      height: clamp(104px, 16vh, 144px);
+      margin-top: calc(clamp(104px, 16vh, 144px) / -2.4);
+    }
+    .display {
+      font-size: clamp(1.7rem, 2.3vw, 2.4rem);
+      margin-top: var(--space-2);
+    }
+    .role {
+      font-size: clamp(0.98rem, 1.1vw, 1.1rem);
+    }
+    .elsewhere {
+      margin: auto var(--space-4) 0;
+      border-top: 1px dashed var(--rule);
+      padding: var(--space-3) 0 var(--space-4);
+    }
+
+    /* Contents column */
+    .contents {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+    }
+
+    .programme {
+      flex: 0 0 auto;
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: var(--space-3);
+    }
+    .programme-label {
+      margin-bottom: var(--space-2);
+    }
+    /* Upcoming talks sit side by side to spend width, not height. */
+    .programme-list {
+      display: flex;
+      gap: var(--space-4);
+    }
+    .programme-item {
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 0;
+      border-bottom: none;
+    }
+    .programme-item + .programme-item {
+      border-left: 1px dashed var(--rule);
+      padding-left: var(--space-4);
+    }
+
+    .lower {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+      gap: var(--space-4);
+    }
+
+    .recent {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
+    .recent-clip {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+    }
+    /* Tighten the shared timeline for the narrow column. */
+    .recent-clip :global(.timeline) {
+      --spine-x: 4.6rem;
+    }
+    .recent-clip :global(.timeline-compact .entry .title) {
+      font-size: 1.1rem;
+    }
+
+    .shelf {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+      border-left: 1px solid var(--rule);
+      padding-left: var(--space-4);
+    }
+    .shelf-cover img,
+    .shelf-glyph {
+      width: clamp(90px, 8vw, 124px);
+    }
+    .shelf-summary {
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  }
+
+  /* ── Viewport lock: chrome + spread = exactly one screen ────────── */
+  @media (min-width: 960px) and (min-height: 620px) {
+    :global(body.full-viewport) {
+      height: 100dvh;
+      overflow: hidden;
+    }
+    :global(body.full-viewport main) {
+      display: flex;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+    .home {
+      height: 100%;
+    }
+  }
+
+  /* ── Page-load reveal: one staggered rise, then stillness ───────── */
+  @media (prefers-reduced-motion: no-preference) {
+    .cover-body,
+    .elsewhere,
+    .programme,
+    .recent,
+    .shelf {
+      animation: home-rise 480ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+    }
+    .cover-body { animation-delay: 40ms; }
+    .programme { animation-delay: 120ms; }
+    .recent { animation-delay: 200ms; }
+    .shelf { animation-delay: 280ms; }
+    .elsewhere { animation-delay: 360ms; }
+  }
+  @keyframes home-rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>

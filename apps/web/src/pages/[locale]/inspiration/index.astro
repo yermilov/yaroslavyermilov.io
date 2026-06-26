@@ -1,0 +1,61 @@
+---
+export const prerender = true;
+import { LOCALES, t, type Locale } from '@lib/i18n';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import Timeline from '@components/Timeline.astro';
+import { getInspirationTimeline, getBacklogTimeline } from '@lib/content';
+
+export async function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+
+const locale = Astro.params.locale as Locale;
+const strings = t(locale);
+const [stamped, backlog] = await Promise.all([
+  getInspirationTimeline(locale),
+  getBacklogTimeline(locale),
+]);
+---
+
+<BaseLayout locale={locale} title={strings.sections.inspiration.title} alternatePath="inspiration" ogImage={`/og/inspiration-${locale}.png`}>
+  <section class="page-frame index">
+    <h1 class="sr-only">{strings.sections.inspiration.title}</h1>
+
+    {stamped.length === 0 && backlog.length === 0 ? (
+      <p class="empty">{strings.empty.inspiration}</p>
+    ) : (
+      <>
+        {backlog.length > 0 && (
+          <section class="sub" aria-label={strings.books.backlog}>
+            <p class="workbench sub-label">/ {strings.books.backlog}</p>
+            <Timeline locale={locale} entries={backlog} undated />
+          </section>
+        )}
+
+        {stamped.length > 0 && (
+          <section class="sub" aria-label={strings.books.stamped}>
+            <p class="workbench sub-label">/ {strings.books.stamped}</p>
+            <Timeline locale={locale} entries={stamped} />
+          </section>
+        )}
+      </>
+    )}
+  </section>
+</BaseLayout>
+
+<style>
+  .index {
+    padding: var(--space-4) var(--space-3) var(--space-6);
+  }
+  .sub + .sub {
+    margin-top: var(--space-6);
+  }
+  .sub-label {
+    color: var(--ink-muted);
+    margin: 0 0 var(--space-3);
+  }
+  .empty {
+    color: var(--ink-muted);
+    font-style: italic;
+  }
+</style>

@@ -9,12 +9,13 @@
   },
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "dev": "pnpm --filter site dev",
-    "build": "pnpm build:games && pnpm --filter site build && pnpm --filter site postbuild",
-    "preview": "pnpm --filter site preview",
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm build:games && pnpm --filter web build && pnpm --filter web postbuild",
+    "preview": "pnpm --filter web preview",
+    "start": "pnpm --filter web start",
     "build:games": "tsx scripts/build-games.ts",
-    "lint": "pnpm --filter site lint",
-    "typecheck": "pnpm --filter site typecheck"
+    "lint": "pnpm --filter web lint",
+    "typecheck": "pnpm --filter web typecheck"
   },
   "devDependencies": {
     "tsx": "^4.19.2",

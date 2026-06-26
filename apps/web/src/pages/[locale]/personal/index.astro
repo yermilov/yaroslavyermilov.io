@@ -1,0 +1,36 @@
+---
+export const prerender = true;
+import { LOCALES, t, type Locale } from '@lib/i18n';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import Timeline from '@components/Timeline.astro';
+import { getPersonalTimeline } from '@lib/content';
+
+export async function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+
+const locale = Astro.params.locale as Locale;
+const strings = t(locale);
+const entries = await getPersonalTimeline();
+---
+
+<BaseLayout locale={locale} title={strings.sections.personal.title} alternatePath="personal" ogImage={`/og/personal-${locale}.png`}>
+  <section class="page-frame index">
+    <h1 class="sr-only">{strings.sections.personal.title}</h1>
+    {entries.length === 0 ? (
+      <p class="empty">{strings.empty.personal}</p>
+    ) : (
+      <Timeline locale={locale} entries={entries} />
+    )}
+  </section>
+</BaseLayout>
+
+<style>
+  .index {
+    padding: var(--space-4) var(--space-3) var(--space-6);
+  }
+  .empty {
+    color: var(--ink-muted);
+    font-style: italic;
+  }
+</style>
