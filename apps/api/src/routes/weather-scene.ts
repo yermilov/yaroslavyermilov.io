@@ -126,6 +126,41 @@ async function fetchCurrentWeather(lat: number, lon: number): Promise<CurrentWea
 }
 
 function extractImageData(response: unknown): string | null {
+  const visited = new Set<unknown>();
+
+  function findNestedImage(value: unknown): string | null {
+    if (!value || typeof value !== 'object' || visited.has(value)) return null;
+    visited.add(value);
+
+    const record = value as Record<string, unknown>;
+    const mimeType = typeof record.mime_type === 'string'
+      ? record.mime_type
+      : typeof record.mimeType === 'string'
+        ? record.mimeType
+        : undefined;
+    if (
+      mimeType?.startsWith('image/') &&
+      typeof record.data === 'string' &&
+      record.data.length > 100
+    ) {
+      return `data:${mimeType};base64,${record.data}`;
+    }
+
+    if (
+      record.type === 'image' &&
+      typeof record.data === 'string' &&
+      record.data.length > 100
+    ) {
+      return `data:image/jpeg;base64,${record.data}`;
+    }
+
+    for (const nested of Object.values(record)) {
+      const image = findNestedImage(nested);
+      if (image) return image;
+    }
+    return null;
+  }
+
   const typedResponse = response as {
     output_image?: { data?: string; mime_type?: string };
     outputImage?: { data?: string; mimeType?: string };
@@ -155,7 +190,7 @@ function extractImageData(response: unknown): string | null {
       }
     }
   }
-  return null;
+  return findNestedImage(response);
 }
 
 function clientKey(c: Context<AppBindings>) {
@@ -277,14 +312,9 @@ export function weatherSceneRoutes(args: {
       return c.json({ error: 'weather scene generation failed' }, 502);
     }
 
-    const geminiBody = await res.json();
-    const image = extractImageData(geminiBody);
+    const image = extractImageData(await res.json());
     if (!image) {
-      c.var.logger.warn({
-        event: 'weather_scene.no_image',
-        model: args.model,
-        responseBody: JSON.stringify(geminiBody).slice(0, 1200),
-      });
+      c.var.logger.warn({ event: 'weather_scene.no_image', model: args.model });
       return c.json({ error: 'weather scene generation returned no image' }, 502);
     }
 
