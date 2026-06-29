@@ -4,6 +4,7 @@ import { HTTPException } from 'hono/http-exception';
 import type { Logger } from './logger';
 import { logMiddleware } from './middleware/log';
 import { healthRoutes } from './routes/health';
+import { weatherSceneRoutes } from './routes/weather-scene';
 import type { AppBindings } from './types';
 
 export type CreateAppArgs = {
@@ -13,11 +14,15 @@ export type CreateAppArgs = {
   // Whether a database is wired (surfaced by /healthz). The skeleton has no
   // db-backed routes yet.
   hasDb?: boolean;
+  gemini?: {
+    apiKey?: string;
+    model: string;
+  };
 };
 
 // Composition root for the Hono app. Built separately from index.ts so tests can
 // construct it without booting a server. Add routers to `api` as features land.
-export function createApp({ logger, corsOrigins = [], hasDb = false }: CreateAppArgs) {
+export function createApp({ logger, corsOrigins = [], hasDb = false, gemini }: CreateAppArgs) {
   const app = new Hono<AppBindings>();
 
   app.use('*', logMiddleware(logger));
@@ -40,6 +45,14 @@ export function createApp({ logger, corsOrigins = [], hasDb = false }: CreateApp
 
   const api = new Hono<AppBindings>();
   api.route('/healthz', healthRoutes(hasDb));
+  api.route(
+    '/weather-scene',
+    weatherSceneRoutes({
+      apiKey: gemini?.apiKey,
+      model: gemini?.model ?? 'gemini-2.5-flash-image-preview',
+      allowedOrigins: corsOrigins,
+    }),
+  );
   app.route('/api', api);
 
   return app;

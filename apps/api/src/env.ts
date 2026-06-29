@@ -17,6 +17,8 @@ const envSchema = z.object({
   WEB_ORIGIN: z
     .string()
     .default('https://yaroslavyermilov.io,http://localhost:4321'),
+  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().default('gemini-2.5-flash-image-preview'),
 });
 
 export type Env = z.infer<typeof envSchema>;

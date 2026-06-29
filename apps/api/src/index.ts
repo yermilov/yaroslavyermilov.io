@@ -14,7 +14,12 @@ const corsOrigins = env.WEB_ORIGIN.split(',')
   .map((o) => o.trim())
   .filter(Boolean);
 
-const app = createApp({ logger, corsOrigins, hasDb: !!db });
+const app = createApp({
+  logger,
+  corsOrigins,
+  hasDb: !!db,
+  gemini: { apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL },
+});
 
 logger.info({ event: 'server.boot', host: env.HOST, port: env.PORT, db: !!db });
 
