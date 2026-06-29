@@ -103,8 +103,14 @@ async function fetchCurrentWeather(lat: number, lon: number): Promise<CurrentWea
   const url =
     `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
     '&current=temperature_2m,weather_code,is_day&timezone=auto';
-  const res = await fetch(url);
-  if (!res.ok) return null;
+  let res: Response | null = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    res = await fetch(url, {
+      headers: { 'user-agent': 'yaroslavyermilov.io weather lab' },
+    });
+    if (res.ok) break;
+  }
+  if (!res?.ok) return null;
 
   const current = (await res.json())?.current ?? {};
   const tempC = Number(current.temperature_2m);
