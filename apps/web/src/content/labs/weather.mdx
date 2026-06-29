@@ -1,0 +1,18 @@
+---
+title: 'Weather'
+slug: 'weather'
+publishedAt: 2026-06-29
+language: 'en'
+summary: 'Live local weather, pulled keyless from Open-Meteo — the first of a few small things I tinker with.'
+islandComponent: 'WeatherWidget'
+---
+
+import WeatherWidget from '@components/lab/WeatherWidget.tsx';
+
+A tiny live-weather widget. It asks your browser for your location and pulls the
+current conditions straight from [Open-Meteo](https://open-meteo.com) — no API key,
+no backend. It's a trimmed port of the weather panel from my old assistant, plun.
+
+<WeatherWidget client:load />
+
+Next up: an AI-painted scene of the sky above you, generated from these same conditions.

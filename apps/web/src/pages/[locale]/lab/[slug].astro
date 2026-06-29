@@ -10,13 +10,13 @@ export async function getStaticPaths() {
   for (const entry of all) {
     const locale = entry.data.language;
     const counterpart = all.find(
-      (other) => other.data.slug === entry.data.slug && other.data.language !== locale,
+      (other) => other.slug === entry.slug && other.data.language !== locale,
     );
     paths.push({
-      params: { locale, slug: entry.data.slug },
+      params: { locale, slug: entry.slug },
       props: {
         entry,
-        alternatePath: counterpart ? `lab/${counterpart.data.slug}` : undefined,
+        alternatePath: counterpart ? `lab/${counterpart.slug}` : undefined,
         alternateMissing: !counterpart,
       },
     });

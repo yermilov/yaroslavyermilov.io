@@ -72,9 +72,13 @@ const talks = defineCollection({
 
 const labs = defineCollection({
   type: 'content',
+  // `slug` is NOT in the schema: for `type: 'content'` Astro reserves the
+  // frontmatter `slug` as the entry-slug override (exposed as `entry.slug`, not
+  // `entry.data.slug`), so a schema `slug` field can never validate. Consumers
+  // read `entry.slug` (the filename, e.g. "weather"), matching the other
+  // collections in lib/content.ts.
   schema: z.object({
     title: z.string(),
-    slug: z.string(),
     publishedAt: z.coerce.date(),
     language: localeEnum,
     summary: z.string(),

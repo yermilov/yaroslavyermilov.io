@@ -88,7 +88,7 @@ export async function getGamesByLocale(locale: Locale): Promise<GameEntry[]> {
 
 export async function getLabBySlug(slug: string, locale: Locale): Promise<LabEntry | undefined> {
   const all = await getCollection('labs');
-  return all.find((l) => l.data.slug === slug && l.data.language === locale);
+  return all.find((l) => l.slug === slug && l.data.language === locale);
 }
 
 export async function getGameBySlug(slug: string, locale: Locale): Promise<GameEntry | undefined> {

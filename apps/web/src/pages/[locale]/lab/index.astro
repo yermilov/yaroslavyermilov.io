@@ -27,7 +27,7 @@ const fmt = new Intl.DateTimeFormat(bcp47Locale(locale), { dateStyle: 'medium' }
         <ul class="lab-list" role="list">
           {labs.map((lab) => (
             <li>
-              <a href={localePath(locale, `lab/${lab.data.slug}`)}>
+              <a href={localePath(locale, `lab/${lab.slug}`)}>
                 <p class="workbench"><time datetime={lab.data.publishedAt.toISOString()}>{fmt.format(lab.data.publishedAt)}</time></p>
                 <h3>{lab.data.title}</h3>
                 <p class="summary">{lab.data.summary}</p>
