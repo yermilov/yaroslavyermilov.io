@@ -271,9 +271,14 @@ export function weatherSceneRoutes(args: {
       return c.json({ error: 'weather scene generation failed' }, 502);
     }
 
-    const image = extractImageData(await res.json());
+    const geminiBody = await res.json();
+    const image = extractImageData(geminiBody);
     if (!image) {
-      c.var.logger.warn({ event: 'weather_scene.no_image', model: args.model });
+      c.var.logger.warn({
+        event: 'weather_scene.no_image',
+        model: args.model,
+        responseBody: JSON.stringify(geminiBody).slice(0, 1200),
+      });
       return c.json({ error: 'weather scene generation returned no image' }, 502);
     }
 
