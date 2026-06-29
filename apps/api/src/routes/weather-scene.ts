@@ -256,19 +256,17 @@ export function weatherSceneRoutes(args: {
         input: [{ type: 'text', text: prompt }],
         response_format: {
           type: 'image',
-          mime_type: 'image/png',
+          mime_type: 'image/jpeg',
           aspect_ratio: '1:1',
         },
       }),
     });
 
     if (!res.ok) {
-      const errorBody = (await res.text()).slice(0, 1200);
       c.var.logger.warn({
         event: 'weather_scene.gemini_error',
         status: res.status,
         model: args.model,
-        errorBody,
       });
       return c.json({ error: 'weather scene generation failed' }, 502);
     }
