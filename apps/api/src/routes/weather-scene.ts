@@ -120,6 +120,21 @@ async function fetchCurrentWeather(lat: number, lon: number): Promise<CurrentWea
 }
 
 function extractImageData(response: unknown): string | null {
+  const typedResponse = response as {
+    output_image?: { data?: string; mime_type?: string };
+    outputImage?: { data?: string; mimeType?: string };
+  };
+  if (typedResponse.output_image?.data) {
+    const mimeType = typedResponse.output_image.mime_type ?? 'image/png';
+    return `data:${mimeType};base64,${typedResponse.output_image.data}`;
+  }
+
+  const outputImage = typedResponse.outputImage;
+  if (outputImage?.data) {
+    const mimeType = outputImage.mimeType ?? 'image/png';
+    return `data:${mimeType ?? 'image/png'};base64,${outputImage.data}`;
+  }
+
   const candidates =
     (response as { candidates?: Array<{ content?: { parts?: Array<Record<string, unknown>> } }> })
       .candidates ?? [];
@@ -228,17 +243,21 @@ export function weatherSceneRoutes(args: {
     }
 
     const prompt = buildPrompt(input, weather);
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-      args.model,
-    )}:generateContent?key=${encodeURIComponent(args.apiKey)}`;
+    const url = 'https://generativelanguage.googleapis.com/v1beta/interactions';
 
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        'x-goog-api-key': args.apiKey,
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          responseModalities: ['TEXT', 'IMAGE'],
+        model: args.model,
+        input: [{ type: 'text', text: prompt }],
+        response_format: {
+          type: 'image',
+          mime_type: 'image/png',
+          aspect_ratio: '1:1',
         },
       }),
     });
