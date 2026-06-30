@@ -55,16 +55,23 @@
   }
 }
 
-:where(.theme-lab) {
-  --bg-paper: #0a120d;
-  --bg-elevated: #111a13;
-  --ink: #ecf6ee;
-  --ink-muted: #9bb6a3;
-  --rule: #1d2a21;
+/* The lab/game surface follows the OS colour scheme like the rest of the site:
+   light by day (it inherits the :root light tokens — no override here), and only
+   when the OS prefers dark does it take this louder, deeper-than-default dark
+   palette. (Previously this block was unconditional, so labs were dark even in
+   daytime light mode.) */
+@media (prefers-color-scheme: dark) {
+  :where(.theme-lab) {
+    --bg-paper: #0a120d;
+    --bg-elevated: #111a13;
+    --ink: #ecf6ee;
+    --ink-muted: #9bb6a3;
+    --rule: #1d2a21;
 
-  --green-primary: #7af0a3;
-  --green-deep: #c5ffd5;
+    --green-primary: #7af0a3;
+    --green-deep: #c5ffd5;
 
-  --orange-accent: #ff9248;
-  --orange-bright: #ffc28a;
+    --orange-accent: #ff9248;
+    --orange-bright: #ffc28a;
+  }
 }

@@ -177,8 +177,10 @@ blockquote {
   padding: 0 var(--space-3);
 }
 
-/* ── Lab / game theme inversion ─────────────────────────────────── */
-
+/* ── Lab / game surface ─────────────────────────────────────────── */
+/* Follows the OS colour scheme like the rest of the site (light by day, dark
+   when the OS prefers dark); the louder dark palette lives in @yermilov/shared-tokens
+   behind a prefers-color-scheme:dark query. This just binds the body to the tokens. */
 body.theme-lab {
   background: var(--bg-paper);
   color: var(--ink);
