@@ -179,7 +179,7 @@ export default function WeatherWidget() {
             </div>
           </div>
           <div className="border-t border-rule md:border-l md:border-t-0">
-            <div className="flex aspect-square min-h-64 items-center justify-center bg-coal/35">
+            <div className="flex aspect-[4/5] min-h-64 items-center justify-center bg-coal/35">
               {scene.status === 'ready' ? (
                 <img
                   src={scene.image}
