@@ -1,0 +1,17 @@
+---
+title: 'Погода'
+canonicalSlug: 'weather'
+publishedAt: 2026-06-29
+language: 'ua'
+summary: 'Жива місцева погода з Open-Meteo і намальована Gemini сцена поточних умов.'
+islandComponent: 'WeatherWidget'
+cover: '/lab/weather-cover.jpg'
+---
+
+import WeatherWidget from '@components/lab/WeatherWidget.tsx';
+
+Крихітний живий погодний віджет. Він питає в браузера вашу локацію, тягне поточні
+умови з [Open-Meteo](https://open-meteo.com), а тоді малює кешовану Gemini-сцену за
+тими ж умовами. Це урізаний порт погодної панелі з мого старого асистента plun.
+
+<WeatherWidget client:load />

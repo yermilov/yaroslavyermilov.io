@@ -72,18 +72,21 @@ const talks = defineCollection({
 
 const labs = defineCollection({
   type: 'content',
-  // `slug` is NOT in the schema: for `type: 'content'` Astro reserves the
-  // frontmatter `slug` as the entry-slug override (exposed as `entry.slug`, not
-  // `entry.data.slug`), so a schema `slug` field can never validate. Consumers
-  // read `entry.slug` (the filename, e.g. "weather"), matching the other
-  // collections in lib/content.ts.
+  // Labs live under content/labs/{en,ua}/<slug>.mdx (like posts/books), so Astro
+  // derives entry.slug as e.g. "en/weather" — unique per file. The URL slug is
+  // labSlug(entry) (the trailing segment) and `canonicalSlug` joins translations.
   schema: z.object({
     title: z.string(),
+    /** joins the EN + UA versions of one lab; also the URL slug segment. */
+    canonicalSlug: z.string(),
     publishedAt: z.coerce.date(),
     language: localeEnum,
     summary: z.string(),
     /** path under src/components/lab/, e.g. "ColorClock" */
     islandComponent: z.string(),
+    /** optional card image for the Pinterest-style index, path under public/,
+     * e.g. "/lab/weather-cover.jpg". Falls back to a rendered preview if absent. */
+    cover: z.string().optional(),
   }),
 });
 

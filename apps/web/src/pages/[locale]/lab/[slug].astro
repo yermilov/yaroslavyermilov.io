@@ -2,26 +2,46 @@
 export const prerender = true;
 import { getCollection } from 'astro:content';
 import { LOCALES, type Locale } from '@lib/i18n';
+import { labSlug } from '@lib/content';
 import LabLayout from '@layouts/LabLayout.astro';
 
 export async function getStaticPaths() {
+  // Pre-render every (locale × canonicalSlug) pair so the locale switcher always
+  // lands on a real URL; a lab with only one language falls back to that language.
   const all = await getCollection('labs');
-  const paths: Array<{ params: { locale: Locale; slug: string }; props: { entry: (typeof all)[number]; alternatePath: string | undefined; alternateMissing: boolean } }> = [];
-  for (const entry of all) {
-    const locale = entry.data.language;
-    const counterpart = all.find(
-      (other) => other.slug === entry.slug && other.data.language !== locale,
-    );
-    paths.push({
-      params: { locale, slug: entry.slug },
-      props: {
-        entry,
-        alternatePath: counterpart ? `lab/${counterpart.slug}` : undefined,
-        alternateMissing: !counterpart,
-      },
-    });
+  const byCanonical = new Map<string, typeof all>();
+  for (const lab of all) {
+    const list = byCanonical.get(lab.data.canonicalSlug) ?? [];
+    list.push(lab);
+    byCanonical.set(lab.data.canonicalSlug, list);
   }
-  void LOCALES;
+  const paths: Array<{
+    params: { locale: Locale; slug: string };
+    props: {
+      entry: (typeof all)[number];
+      alternatePath: string | undefined;
+      alternateMissing: boolean;
+    };
+  }> = [];
+  for (const [canonical, group] of byCanonical) {
+    const byLocale = new Map<Locale, (typeof all)[number]>();
+    for (const l of group) byLocale.set(l.data.language, l);
+    for (const locale of LOCALES) {
+      const fallback = byLocale.get(locale) ?? group[0];
+      if (!fallback) continue;
+      const otherLocale: Locale = locale === 'en' ? 'ua' : 'en';
+      const otherEntry = byLocale.get(otherLocale);
+      paths.push({
+        params: { locale, slug: labSlug(fallback) },
+        props: {
+          entry: fallback,
+          alternatePath: otherEntry ? `lab/${labSlug(otherEntry)}` : undefined,
+          alternateMissing: !otherEntry,
+        },
+      });
+    }
+    void canonical;
+  }
   return paths;
 }
 

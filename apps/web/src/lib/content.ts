@@ -72,11 +72,31 @@ export async function getTalks(): Promise<TalkEntry[]> {
   return all.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 }
 
+/**
+ * URL slug for a lab. Labs live under content/labs/{en,ua}/<slug>.mdx, so Astro
+ * derives entry.slug as e.g. "en/weather"; the URL uses just the trailing segment.
+ */
+export function labSlug(entry: LabEntry): string {
+  return entry.slug.split('/').pop() ?? entry.slug;
+}
+
+/**
+ * Labs for one locale's index: one entry per canonicalSlug, preferring the active
+ * locale and falling back to the other language so a lab still appears (in its
+ * original language) before it's been translated.
+ */
 export async function getLabsByLocale(locale: Locale): Promise<LabEntry[]> {
   const all = await getCollection('labs');
-  return all
-    .filter((l) => l.data.language === locale)
-    .sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime());
+  const byCanonical = new Map<string, LabEntry>();
+  for (const lab of all) {
+    const existing = byCanonical.get(lab.data.canonicalSlug);
+    if (!existing || (lab.data.language === locale && existing.data.language !== locale)) {
+      byCanonical.set(lab.data.canonicalSlug, lab);
+    }
+  }
+  return [...byCanonical.values()].sort(
+    (a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime(),
+  );
 }
 
 export async function getGamesByLocale(locale: Locale): Promise<GameEntry[]> {
@@ -86,9 +106,15 @@ export async function getGamesByLocale(locale: Locale): Promise<GameEntry[]> {
     .sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime());
 }
 
-export async function getLabBySlug(slug: string, locale: Locale): Promise<LabEntry | undefined> {
+export async function getLabByCanonicalSlug(
+  canonicalSlug: string,
+  locale: Locale,
+): Promise<LabEntry | undefined> {
   const all = await getCollection('labs');
-  return all.find((l) => l.slug === slug && l.data.language === locale);
+  return (
+    all.find((l) => l.data.canonicalSlug === canonicalSlug && l.data.language === locale) ??
+    all.find((l) => l.data.canonicalSlug === canonicalSlug)
+  );
 }
 
 export async function getGameBySlug(slug: string, locale: Locale): Promise<GameEntry | undefined> {
