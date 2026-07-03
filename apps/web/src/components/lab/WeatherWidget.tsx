@@ -326,22 +326,15 @@ function Explainer({
   icon,
   scene,
   t,
-  onRepaint,
 }: {
   data: Current;
   label: string;
   icon: string;
   scene: SceneState;
   t: Strings;
-  onRepaint: () => void;
 }) {
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <p className="font-mono text-xs uppercase tracking-widest text-green">{t.how}</p>
-        <p className="mt-2 text-base leading-relaxed text-ink-muted">{t.intro}</p>
-      </div>
-
       <Step n="01" title={t.location}>
         <Field
           label={data.place}
@@ -395,21 +388,6 @@ function Explainer({
             {scene.status === 'loading' ? t.painting : t.promptWaiting}
           </p>
         )}
-      </Step>
-
-      <Step n="04" title={t.result}>
-        <p className="text-sm leading-relaxed text-ink-muted">{t.resultNote}</p>
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs text-ink-muted">
-          {scene.status === 'ready' && <span>{scene.cached ? t.cached : t.fresh}</span>}
-          <button
-            type="button"
-            onClick={onRepaint}
-            disabled={scene.status === 'loading'}
-            className="text-green underline-offset-2 hover:underline disabled:cursor-wait disabled:text-ink-muted"
-          >
-            {scene.status === 'loading' ? t.painting : t.repaint}
-          </button>
-        </div>
       </Step>
     </div>
   );
@@ -495,7 +473,7 @@ export default function WeatherWidget({ locale = 'en' }: { locale?: Locale }) {
           {/* LEFT — the painted scene */}
           <div className="flex flex-col items-center">
             <div className="w-full overflow-hidden rounded-2xl border border-rule bg-elevated">
-              <div className="relative mx-auto flex aspect-[4/5] w-full max-w-xl items-center justify-center overflow-hidden bg-coal/35 lg:max-w-none">
+              <div className="relative mx-auto flex aspect-[4/5] w-full max-w-xl items-center justify-center overflow-hidden bg-coal/35 lg:aspect-auto lg:h-[calc(100vh-9rem)] lg:max-w-none">
                 {scene.status === 'ready' ? (
                   <img
                     src={scene.image}
@@ -535,14 +513,7 @@ export default function WeatherWidget({ locale = 'en' }: { locale?: Locale }) {
           </div>
 
           {/* RIGHT — how it works, live */}
-          <Explainer
-            data={d}
-            label={label}
-            icon={icon}
-            scene={scene}
-            t={t}
-            onRepaint={() => loadScene(d)}
-          />
+          <Explainer data={d} label={label} icon={icon} scene={scene} t={t} />
         </div>
       </div>
     );
