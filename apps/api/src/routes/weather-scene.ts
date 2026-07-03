@@ -16,10 +16,19 @@ const requestSchema = z.object({
   lon: z.coerce.number().min(-180).max(180),
 });
 
+// A dynamic value the live weather/location data filled into the prompt template.
+// `value` is the exact substring that appears in `prompt`, so the lab's "how it
+// works" panel can locate and highlight it verbatim. `kind` names which slot it filled.
+type PromptSubstitution = {
+  kind: 'location' | 'time' | 'weather' | 'temperature' | 'atmosphere' | 'lighting';
+  value: string;
+};
+
 type Scene = {
   image: string;
   generatedAt: string;
   prompt: string;
+  substitutions: PromptSubstitution[];
 };
 
 type CurrentWeather = {
@@ -305,7 +314,10 @@ function getSettlementLabel(settlementType: SettlementType | undefined): string 
   }
 }
 
-function buildWeatherImagePrompt(context: WeatherPromptContext): string {
+function buildWeatherImagePrompt(context: WeatherPromptContext): {
+  prompt: string;
+  substitutions: PromptSubstitution[];
+} {
   const weather = getWeatherDescription(context.weatherCode);
   const weatherComposition = getWeatherComposition(context);
   const lighting = getLightingDescription(context.isDay, context.userHour);
@@ -326,6 +338,18 @@ function buildWeatherImagePrompt(context: WeatherPromptContext): string {
   const isRural = isRuralSettlement(context.settlementType);
   const settlementLabel = getSettlementLabel(context.settlementType);
 
+  // The dynamic values injected into the template below — each `value` is the exact
+  // substring that lands in the returned prompt, so the lab UI can highlight it. Only
+  // `location` differs between the rural/urban branches; the rest are shared.
+  const buildSubs = (locationDescription: string): PromptSubstitution[] => [
+    { kind: 'location', value: locationDescription },
+    { kind: 'time', value: timeOfDay },
+    { kind: 'weather', value: weather },
+    { kind: 'temperature', value: tempStr },
+    { kind: 'atmosphere', value: weatherComposition.elements },
+    { kind: 'lighting', value: lighting },
+  ];
+
   const backgroundStyle = context.isDay
     ? 'Use a warm, soft background - creamy off-white (#FAFAF9) with subtle warm orange-peach tones.'
     : 'Use a deep, atmospheric dark background - dark navy blue (#1A1A2E) with subtle purple undertones.';
@@ -343,7 +367,9 @@ function buildWeatherImagePrompt(context: WeatherPromptContext): string {
       ? `Show the natural landscape typical for this region of ${context.country} - fields, forests, meadows, orchards, rivers, or whatever terrain realistically exists at these coordinates. Use search to learn about the typical landscape around ${hasCity ? context.city : 'this area'} if unsure.`
       : `Show natural landscape elements typical for the coordinates - fields, forests, meadows, or whatever terrain realistically exists there.`;
 
-    return `Create a 45° top-down isometric miniature 3D cartoon scene depicting ${locationDescription}, ${timeOfDay}, in ${weather} weather conditions.
+    return {
+      substitutions: buildSubs(locationDescription),
+      prompt: `Create a 45° top-down isometric miniature 3D cartoon scene depicting ${locationDescription}, ${timeOfDay}, in ${weather} weather conditions.
 
 SCALE & COMPOSITION (CRITICAL FOR VILLAGE): Aerial view from 500m altitude at 45° isometric angle showing approximately 1km x 1km area. This is a RURAL scene with MIXED landscape:
 - 40% of the frame: Village/settlement with 20-50 small houses, a church or local landmark, dirt roads, and farm buildings
@@ -360,7 +386,8 @@ WEATHER (CRITICAL - ${tempStr}, ${weatherComposition.elements}):
 ${weatherComposition.instructions}
 Weather must be visible throughout the ENTIRE scene - over both village and nature areas.
 
-DO NOT include any text, labels, or UI elements. Pure rural landscape scene only. Aspect ratio: 4:5 vertical portrait.`;
+DO NOT include any text, labels, or UI elements. Pure rural landscape scene only. Aspect ratio: 4:5 vertical portrait.`,
+    };
   }
 
   let locationDescription: string;
@@ -400,7 +427,9 @@ DO NOT include any text, labels, or UI elements. Pure rural landscape scene only
     architectureStyle = `Use stylized retrofuturistic architecture with neon accents and chrome surfaces.`;
   }
 
-  return `Create a 45° top-down isometric miniature 3D cartoon scene depicting ${locationDescription}, ${timeOfDay}, in ${weather} weather conditions.
+  return {
+    substitutions: buildSubs(locationDescription),
+    prompt: `Create a 45° top-down isometric miniature 3D cartoon scene depicting ${locationDescription}, ${timeOfDay}, in ${weather} weather conditions.
 
 SCALE & COMPOSITION (CRITICAL): Aerial view from 500m altitude at 45° isometric angle. Show approximately 1km x 1km area with 100-200 tiny buildings (each 5-15 pixels tall). Buildings and streets must fill 90%+ of the frame - this is a bird's-eye view of an entire neighborhood, NOT a close-up of a few blocks.
 
@@ -414,7 +443,8 @@ WEATHER (CRITICAL - ${tempStr}, ${weatherComposition.elements}):
 ${weatherComposition.instructions}
 Weather must be visible throughout the ENTIRE scene, not just at edges.
 
-DO NOT include any text, labels, or UI elements. Pure architectural scene only. Aspect ratio: 4:5 vertical portrait.`;
+DO NOT include any text, labels, or UI elements. Pure architectural scene only. Aspect ratio: 4:5 vertical portrait.`,
+  };
 }
 
 function extractLocalTimeParts(time?: string) {
@@ -689,7 +719,7 @@ export function weatherSceneRoutes(args: {
     }
 
     const location = await fetchLocationContext(input.lat, input.lon);
-    const prompt = buildPrompt(input, weather, location);
+    const { prompt, substitutions } = buildPrompt(input, weather, location);
     const url = 'https://generativelanguage.googleapis.com/v1beta/interactions';
 
     const res = await fetch(url, {
@@ -724,10 +754,10 @@ export function weatherSceneRoutes(args: {
       return c.json({ error: 'weather scene generation returned no image' }, 502);
     }
 
-    // `prompt` is returned so the lab's "how it works" panel can show the actual
-    // text sent to Gemini (built from the real current conditions); cached so a
-    // cache-hit response still carries it.
-    const scene = { image, generatedAt: new Date(now).toISOString(), prompt };
+    // `prompt` + `substitutions` are returned so the lab's "how it works" panel can
+    // show the actual text sent to Gemini AND highlight the dynamic parts the live
+    // conditions filled in; cached so a cache-hit response still carries them.
+    const scene = { image, generatedAt: new Date(now).toISOString(), prompt, substitutions };
     cache.set(key, { scene, expiresAt: now + THREE_HOURS_MS });
     capSceneCache();
     return c.json({ ...scene, cached: false });

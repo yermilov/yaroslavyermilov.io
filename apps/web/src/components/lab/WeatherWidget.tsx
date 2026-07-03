@@ -59,8 +59,15 @@ const STR = {
     conditions: 'Live conditions',
     source: 'Open-Meteo',
     prompt: 'The prompt',
-    promptNote: 'Built from the conditions on the left and sent to Gemini to paint the scene.',
+    promptNote: 'The exact text sent to Gemini — highlighted parts are filled in live from your location and weather.',
     promptWaiting: 'Paint the scene to reveal the prompt.',
+    subsHint: 'Filled in live',
+    subLocation: 'location',
+    subTime: 'current time',
+    subWeather: 'condition',
+    subTemperature: 'temperature',
+    subAtmosphere: 'atmosphere',
+    subLighting: 'lighting',
     result: 'The scene',
     resultNote: 'Gemini renders a 45° top-down isometric 4:5 painting from that prompt.',
     temperature: 'temperature',
@@ -92,8 +99,15 @@ const STR = {
     conditions: 'Поточні умови',
     source: 'Open-Meteo',
     prompt: 'Промпт',
-    promptNote: 'Складається з умов ліворуч і надсилається у Gemini, щоб намалювати сцену.',
+    promptNote: 'Точний текст, надісланий у Gemini — підсвічені частини підставлені наживо з вашої локації та погоди.',
     promptWaiting: 'Намалюйте сцену, щоб побачити промпт.',
+    subsHint: 'Підставлено наживо',
+    subLocation: 'локація',
+    subTime: 'поточний час',
+    subWeather: 'умови',
+    subTemperature: 'температура',
+    subAtmosphere: 'атмосфера',
+    subLighting: 'освітлення',
     result: 'Сцена',
     resultNote: 'Gemini малює ізометричну сцену 45° згори у форматі 4:5 за цим промптом.',
     temperature: 'температура',
@@ -140,9 +154,14 @@ type Current = {
   fallback: boolean;
 };
 
+// A dynamic value the live weather/location filled into the prompt. `value` is the
+// exact substring in `prompt`, so we can locate and highlight it; `kind` names the slot.
+type SubKind = 'location' | 'time' | 'weather' | 'temperature' | 'atmosphere' | 'lighting';
+type Substitution = { kind: SubKind; value: string };
+
 type SceneState =
   | { status: 'idle' | 'loading' }
-  | { status: 'ready'; image: string; cached: boolean; prompt?: string }
+  | { status: 'ready'; image: string; cached: boolean; prompt?: string; substitutions?: Substitution[] }
   | { status: 'error' };
 
 type State =
@@ -299,108 +318,90 @@ function ForecastBar({ forecast }: { forecast: ForecastHour[] }) {
   );
 }
 
-// One "input" row in the how-it-works panel: a mono label + its live value.
-function Field({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-rule/60 py-1.5 last:border-b-0">
-      <span className="font-mono text-xs uppercase tracking-wide text-ink-muted">{label}</span>
-      <span className="text-right font-mono text-sm text-ink">{value}</span>
-    </div>
-  );
+const SUB_LABEL: Record<SubKind, keyof Strings> = {
+  location: 'subLocation',
+  time: 'subTime',
+  weather: 'subWeather',
+  temperature: 'subTemperature',
+  atmosphere: 'subAtmosphere',
+  lighting: 'subLighting',
+};
+
+// Render the prompt with every dynamically-substituted value wrapped in a green
+// highlight (its `title` names which slot it filled). Values are the exact substrings
+// the template injected, so they match verbatim; occurrences are collected, sorted, and
+// de-overlapped so a longer span always wins over a shorter one nested inside it.
+function highlightPrompt(prompt: string, subs: Substitution[], t: Strings): React.ReactNode[] {
+  const matches: { start: number; end: number; kind: SubKind }[] = [];
+  for (const s of subs) {
+    if (!s.value) continue;
+    for (let from = 0; ; ) {
+      const idx = prompt.indexOf(s.value, from);
+      if (idx === -1) break;
+      matches.push({ start: idx, end: idx + s.value.length, kind: s.kind });
+      from = idx + s.value.length;
+    }
+  }
+  // Earliest first; on a tie the longer span wins so we don't split a nested match.
+  matches.sort((a, b) => a.start - b.start || b.end - a.end);
+
+  const out: React.ReactNode[] = [];
+  let cursor = 0;
+  let key = 0;
+  for (const m of matches) {
+    if (m.start < cursor) continue; // already inside an accepted (longer) span
+    if (m.start > cursor) out.push(prompt.slice(cursor, m.start));
+    out.push(
+      <mark
+        key={key++}
+        title={t[SUB_LABEL[m.kind]]}
+        className="rounded-[3px] bg-green/15 px-0.5 text-ink ring-1 ring-inset ring-green/40"
+      >
+        {prompt.slice(m.start, m.end)}
+      </mark>,
+    );
+    cursor = m.end;
+  }
+  if (cursor < prompt.length) out.push(prompt.slice(cursor));
+  return out;
 }
 
-// One numbered step in the pipeline (location → conditions → prompt → scene).
-function Step({
-  n,
-  title,
-  children,
-}: {
-  n: string;
-  title: string;
-  children: React.ReactNode;
-}) {
+// The right-hand panel: just the exact prompt sent to Gemini, with the parts filled in
+// live from the real conditions highlighted — and a key naming each one.
+function Explainer({ scene, t }: { scene: SceneState; t: Strings }) {
+  const ready = scene.status === 'ready' && scene.prompt;
+  const subs = (scene.status === 'ready' && scene.substitutions) || [];
+
   return (
-    <section className="border-t border-rule pt-4">
-      <h3 className="mb-2 flex items-baseline gap-2 text-sm font-semibold text-ink">
-        <span className="font-mono text-xs text-green">{n}</span>
-        <span className="uppercase tracking-wide">{title}</span>
-      </h3>
-      {children}
-    </section>
-  );
-}
-
-// The right-hand "how it works" panel: the real pipeline, live, with the actual
-// Open-Meteo inputs and the exact prompt those inputs built for Gemini.
-function Explainer({
-  data,
-  label,
-  icon,
-  scene,
-  t,
-}: {
-  data: Current;
-  label: string;
-  icon: string;
-  scene: SceneState;
-  t: Strings;
-}) {
-  return (
-    <div className="flex flex-col gap-5">
-      <Step n="01" title={t.location}>
-        <Field
-          label={data.place}
-          value={
-            <span className="text-ink-muted">
-              {data.lat.toFixed(3)}, {data.lon.toFixed(3)}
-            </span>
-          }
-        />
-      </Step>
-
-      <Step n="02" title={`${t.conditions} · ${t.source}`}>
-        <div>
-          <Field
-            label={t.temperature}
-            value={
-              <>
-                {formatTemp(data.tempC)}
-                {data.apparentTempC != null && data.apparentTempC !== data.tempC && (
-                  <span className="text-ink-muted">
-                    {' '}
-                    · {t.feelsLike} {formatTemp(data.apparentTempC)}
-                  </span>
-                )}
-              </>
-            }
-          />
-          <Field
-            label={t.condition}
-            value={
-              <span>
-                <span aria-hidden>{icon}</span> {label}{' '}
-                <span className="text-ink-muted">· WMO {data.code}</span>
-              </span>
-            }
-          />
-          {data.humidity != null && <Field label={t.humidity} value={`${Math.round(data.humidity)}%`} />}
-          {data.wind != null && <Field label={t.wind} value={`${Math.round(data.wind)} km/h`} />}
-          <Field label={t.daylight} value={data.isDay ? t.day : t.night} />
-        </div>
-      </Step>
-
-      <Step n="03" title={t.prompt}>
-        <p className="mb-2 text-sm leading-relaxed text-ink-muted">{t.promptNote}</p>
-        {scene.status === 'ready' && scene.prompt ? (
-          <pre className="max-h-56 overflow-auto rounded-lg border border-rule bg-coal/40 p-3 font-mono text-xs leading-relaxed text-ink/90 whitespace-pre-wrap">
-            {scene.prompt}
+    <div className="flex flex-col gap-4">
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-ink">{t.prompt}</h3>
+      <p className="text-sm leading-relaxed text-ink-muted">{t.promptNote}</p>
+      {ready ? (
+        <>
+          <pre className="max-h-[50vh] overflow-auto rounded-lg border border-rule bg-coal/40 p-3 font-mono text-xs leading-relaxed text-ink/90 whitespace-pre-wrap">
+            {subs.length > 0 ? highlightPrompt(scene.prompt!, subs, t) : scene.prompt}
           </pre>
-        ) : (
-          <p className="rounded-lg border border-dashed border-rule px-3 py-4 text-center font-mono text-xs text-ink-muted">
-            {scene.status === 'loading' ? t.painting : t.promptWaiting}
-          </p>
-        )}
-      </Step>
+          {subs.length > 0 && (
+            <dl className="flex flex-col gap-1.5">
+              <span className="font-mono text-[11px] uppercase tracking-wide text-ink-muted">
+                {t.subsHint}
+              </span>
+              {subs.map((s) => (
+                <div key={s.kind} className="flex items-baseline gap-2 border-t border-rule/60 pt-1.5">
+                  <dt className="min-w-24 shrink-0 font-mono text-[11px] uppercase tracking-wide text-ink-muted">
+                    {t[SUB_LABEL[s.kind]]}
+                  </dt>
+                  <dd className="font-mono text-xs leading-relaxed text-green">{s.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </>
+      ) : (
+        <p className="rounded-lg border border-dashed border-rule px-3 py-4 text-center font-mono text-xs text-ink-muted">
+          {scene.status === 'loading' ? t.painting : t.promptWaiting}
+        </p>
+      )}
     </div>
   );
 }
@@ -448,7 +449,12 @@ export default function WeatherWidget({ locale = 'en' }: { locale?: Locale }) {
     })
       .then(async (res) => {
         if (!res.ok) throw new Error(`scene ${res.status}`);
-        return (await res.json()) as { image: string; cached?: boolean; prompt?: string };
+        return (await res.json()) as {
+          image: string;
+          cached?: boolean;
+          prompt?: string;
+          substitutions?: Substitution[];
+        };
       })
       .then((payload) => {
         if (requestId !== sceneRequest.current) return;
@@ -457,6 +463,7 @@ export default function WeatherWidget({ locale = 'en' }: { locale?: Locale }) {
           image: payload.image,
           cached: !!payload.cached,
           prompt: payload.prompt,
+          substitutions: payload.substitutions,
         });
       })
       .catch(() => {
@@ -476,7 +483,7 @@ export default function WeatherWidget({ locale = 'en' }: { locale?: Locale }) {
 
   if (state.status === 'ready') {
     const d = state.data;
-    const { label, icon } = describe(d.code);
+    const { label } = describe(d.code);
 
     return (
       <div className="not-prose">
@@ -524,8 +531,8 @@ export default function WeatherWidget({ locale = 'en' }: { locale?: Locale }) {
             )}
           </div>
 
-          {/* RIGHT — how it works, live */}
-          <Explainer data={d} label={label} icon={icon} scene={scene} t={t} />
+          {/* RIGHT — the exact prompt, with live-substituted parts highlighted */}
+          <Explainer scene={scene} t={t} />
         </div>
       </div>
     );
