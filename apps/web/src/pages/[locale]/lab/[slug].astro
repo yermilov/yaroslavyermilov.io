@@ -57,6 +57,7 @@ const { Content } = await entry.render();
   publishedAt={entry.data.publishedAt}
   alternatePath={alternatePath}
   alternateMissing={alternateMissing}
+  layout={entry.data.fullBleed ? 'full' : 'default'}
 >
   <Content />
 </LabLayout>

@@ -6,13 +6,9 @@ language: 'en'
 summary: 'Live local weather from Open-Meteo with a Gemini-painted current-conditions scene.'
 islandComponent: 'WeatherWidget'
 cover: '/lab/weather-cover.jpg'
+fullBleed: true
 ---
 
 import WeatherWidget from '@components/lab/WeatherWidget.tsx';
 
-A tiny live-weather widget. It asks your browser for your location, pulls current
-conditions from [Open-Meteo](https://open-meteo.com), then paints a cached Gemini
-scene from those same conditions. It's a trimmed port of the weather panel from my
-old assistant, plun.
-
-<WeatherWidget client:load />
+<WeatherWidget client:load locale="en" />

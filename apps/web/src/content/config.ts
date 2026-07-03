@@ -87,6 +87,10 @@ const labs = defineCollection({
     /** optional card image for the Pinterest-style index, path under public/,
      * e.g. "/lab/weather-cover.jpg". Falls back to a rendered preview if absent. */
     cover: z.string().optional(),
+    /** true drops the prose header + max-width so the island runs edge-to-edge
+     * (a full-screen two-column experience); default keeps the reading column.
+     * NB: don't name this `layout` — Astro MDX reserves that frontmatter key. */
+    fullBleed: z.boolean().optional(),
   }),
 });
 

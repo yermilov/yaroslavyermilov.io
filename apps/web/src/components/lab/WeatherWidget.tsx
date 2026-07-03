@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 
 // A small live-weather lab island (Tier 2): on mount it asks for your location,
 // pulls the current conditions from Open-Meteo (free, no API key), and asks the
-// API to paint a cached Gemini scene from the same current conditions.
+// API to paint a cached Gemini scene from the same current conditions. On desktop
+// it runs full-screen as two columns — the painted scene on the left, and a live
+// "how it works" panel on the right that shows the real inputs (the Open-Meteo
+// conditions) and the actual prompt those conditions built for Gemini.
+
+type Locale = 'en' | 'ua';
 
 const WMO: Record<number, { label: string; icon: string }> = {
   0: { label: 'clear sky', icon: '☀️' },
@@ -42,6 +47,79 @@ const WEATHER_GLASS =
 const WEATHER_GLASS_STRONG =
   'border border-white/10 bg-black/40 shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-2xl';
 
+// UI strings — the lab index is bilingual, so the widget follows the page locale
+// (the .mdx passes locale="en" | "ua"). Meteorological condition labels stay in
+// English because the prompt itself (shown verbatim on the right) is English.
+const STR = {
+  en: {
+    intro:
+      'Your browser location → current conditions from Open-Meteo → a Gemini-painted scene of exactly that weather, right now.',
+    how: 'How it works',
+    location: 'Your location',
+    conditions: 'Live conditions',
+    source: 'Open-Meteo',
+    prompt: 'The prompt',
+    promptNote: 'Built from the conditions on the left and sent to Gemini to paint the scene.',
+    promptWaiting: 'Paint the scene to reveal the prompt.',
+    result: 'The scene',
+    resultNote: 'Gemini renders a 45° top-down isometric 4:5 painting from that prompt.',
+    temperature: 'temperature',
+    feelsLike: 'feels like',
+    condition: 'condition',
+    humidity: 'humidity',
+    wind: 'wind',
+    daylight: 'daylight',
+    day: 'daytime',
+    night: 'nighttime',
+    coords: 'coordinates',
+    repaint: 'repaint scene',
+    painting: 'painting scene…',
+    retryScene: 'retry scene',
+    paint: 'paint current sky',
+    useLocation: 'use my location',
+    cached: 'cached scene',
+    fresh: 'fresh scene',
+    locating: 'finding your location…',
+    loading: 'loading weather…',
+    failed: 'couldn’t load weather',
+    retry: 'retry',
+  },
+  ua: {
+    intro:
+      'Локація вашого браузера → поточні умови з Open-Meteo → намальована Gemini сцена саме такої погоди, просто зараз.',
+    how: 'Як це працює',
+    location: 'Ваше місцезнаходження',
+    conditions: 'Поточні умови',
+    source: 'Open-Meteo',
+    prompt: 'Промпт',
+    promptNote: 'Складається з умов ліворуч і надсилається у Gemini, щоб намалювати сцену.',
+    promptWaiting: 'Намалюйте сцену, щоб побачити промпт.',
+    result: 'Сцена',
+    resultNote: 'Gemini малює ізометричну сцену 45° згори у форматі 4:5 за цим промптом.',
+    temperature: 'температура',
+    feelsLike: 'відчувається як',
+    condition: 'умови',
+    humidity: 'вологість',
+    wind: 'вітер',
+    daylight: 'час доби',
+    day: 'день',
+    night: 'ніч',
+    coords: 'координати',
+    repaint: 'перемалювати',
+    painting: 'малюю сцену…',
+    retryScene: 'спробувати ще',
+    paint: 'намалювати небо',
+    useLocation: 'моє місцезнаходження',
+    cached: 'сцена з кешу',
+    fresh: 'свіжа сцена',
+    locating: 'визначаю місцезнаходження…',
+    loading: 'завантажую погоду…',
+    failed: 'не вдалося завантажити погоду',
+    retry: 'ще раз',
+  },
+} satisfies Record<Locale, Record<string, string>>;
+type Strings = (typeof STR)[Locale];
+
 type ForecastHour = {
   time: string;
   tempC: number;
@@ -64,7 +142,7 @@ type Current = {
 
 type SceneState =
   | { status: 'idle' | 'loading' }
-  | { status: 'ready'; image: string; cached: boolean }
+  | { status: 'ready'; image: string; cached: boolean; prompt?: string }
   | { status: 'error' };
 
 type State =
@@ -209,7 +287,136 @@ function ForecastBar({ forecast }: { forecast: ForecastHour[] }) {
   );
 }
 
-export default function WeatherWidget() {
+// One "input" row in the how-it-works panel: a mono label + its live value.
+function Field({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 border-b border-rule/60 py-1.5 last:border-b-0">
+      <span className="font-mono text-xs uppercase tracking-wide text-ink-muted">{label}</span>
+      <span className="text-right font-mono text-sm text-ink">{value}</span>
+    </div>
+  );
+}
+
+// One numbered step in the pipeline (location → conditions → prompt → scene).
+function Step({
+  n,
+  title,
+  children,
+}: {
+  n: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="border-t border-rule pt-4">
+      <h3 className="mb-2 flex items-baseline gap-2 text-sm font-semibold text-ink">
+        <span className="font-mono text-xs text-green">{n}</span>
+        <span className="uppercase tracking-wide">{title}</span>
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+// The right-hand "how it works" panel: the real pipeline, live, with the actual
+// Open-Meteo inputs and the exact prompt those inputs built for Gemini.
+function Explainer({
+  data,
+  label,
+  icon,
+  scene,
+  t,
+  onRepaint,
+}: {
+  data: Current;
+  label: string;
+  icon: string;
+  scene: SceneState;
+  t: Strings;
+  onRepaint: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-5">
+      <div>
+        <p className="font-mono text-xs uppercase tracking-widest text-green">{t.how}</p>
+        <p className="mt-2 text-base leading-relaxed text-ink-muted">{t.intro}</p>
+      </div>
+
+      <Step n="01" title={t.location}>
+        <Field
+          label={data.place}
+          value={
+            <span className="text-ink-muted">
+              {data.lat.toFixed(3)}, {data.lon.toFixed(3)}
+            </span>
+          }
+        />
+      </Step>
+
+      <Step n="02" title={`${t.conditions} · ${t.source}`}>
+        <div>
+          <Field
+            label={t.temperature}
+            value={
+              <>
+                {formatTemp(data.tempC)}
+                {data.apparentTempC != null && data.apparentTempC !== data.tempC && (
+                  <span className="text-ink-muted">
+                    {' '}
+                    · {t.feelsLike} {formatTemp(data.apparentTempC)}
+                  </span>
+                )}
+              </>
+            }
+          />
+          <Field
+            label={t.condition}
+            value={
+              <span>
+                <span aria-hidden>{icon}</span> {label}{' '}
+                <span className="text-ink-muted">· WMO {data.code}</span>
+              </span>
+            }
+          />
+          {data.humidity != null && <Field label={t.humidity} value={`${Math.round(data.humidity)}%`} />}
+          {data.wind != null && <Field label={t.wind} value={`${Math.round(data.wind)} km/h`} />}
+          <Field label={t.daylight} value={data.isDay ? t.day : t.night} />
+        </div>
+      </Step>
+
+      <Step n="03" title={t.prompt}>
+        <p className="mb-2 text-sm leading-relaxed text-ink-muted">{t.promptNote}</p>
+        {scene.status === 'ready' && scene.prompt ? (
+          <pre className="max-h-56 overflow-auto rounded-lg border border-rule bg-coal/40 p-3 font-mono text-xs leading-relaxed text-ink/90 whitespace-pre-wrap">
+            {scene.prompt}
+          </pre>
+        ) : (
+          <p className="rounded-lg border border-dashed border-rule px-3 py-4 text-center font-mono text-xs text-ink-muted">
+            {scene.status === 'loading' ? t.painting : t.promptWaiting}
+          </p>
+        )}
+      </Step>
+
+      <Step n="04" title={t.result}>
+        <p className="text-sm leading-relaxed text-ink-muted">{t.resultNote}</p>
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs text-ink-muted">
+          {scene.status === 'ready' && <span>{scene.cached ? t.cached : t.fresh}</span>}
+          <button
+            type="button"
+            onClick={onRepaint}
+            disabled={scene.status === 'loading'}
+            className="text-green underline-offset-2 hover:underline disabled:cursor-wait disabled:text-ink-muted"
+          >
+            {scene.status === 'loading' ? t.painting : t.repaint}
+          </button>
+        </div>
+      </Step>
+    </div>
+  );
+}
+
+export default function WeatherWidget({ locale = 'en' }: { locale?: Locale }) {
+  const t = STR[locale] ?? STR.en;
   const [state, setState] = useState<State>({ status: 'locating' });
   const [scene, setScene] = useState<SceneState>({ status: 'idle' });
   const sceneRequest = useRef(0);
@@ -251,11 +458,16 @@ export default function WeatherWidget() {
     })
       .then(async (res) => {
         if (!res.ok) throw new Error(`scene ${res.status}`);
-        return (await res.json()) as { image: string; cached?: boolean };
+        return (await res.json()) as { image: string; cached?: boolean; prompt?: string };
       })
       .then((payload) => {
         if (requestId !== sceneRequest.current) return;
-        setScene({ status: 'ready', image: payload.image, cached: !!payload.cached });
+        setScene({
+          status: 'ready',
+          image: payload.image,
+          cached: !!payload.cached,
+          prompt: payload.prompt,
+        });
       })
       .catch(() => {
         if (requestId === sceneRequest.current) setScene({ status: 'error' });
@@ -277,56 +489,60 @@ export default function WeatherWidget() {
     const { label, icon } = describe(d.code);
 
     return (
-      <div className="not-prose my-6 overflow-hidden rounded-2xl border border-rule bg-elevated">
-        <div className="relative mx-auto flex aspect-[4/5] min-h-[420px] w-full max-w-2xl items-center justify-center overflow-hidden bg-coal/35">
-          {scene.status === 'ready' ? (
-            <img
-              src={scene.image}
-              alt={`Generated isometric ${label} weather scene for ${d.place}`}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-coal via-elevated to-rule" />
-          )}
-          {scene.status !== 'ready' && (
-            <button
-              type="button"
-              onClick={() => loadScene(d)}
-              disabled={scene.status === 'loading'}
-              className={`${WEATHER_GLASS} relative z-10 mx-6 rounded-xl px-4 py-2 font-mono text-sm text-white/90 hover:text-green disabled:cursor-wait disabled:text-white/60`}
-            >
-              {scene.status === 'loading'
-                ? 'painting scene...'
-                : scene.status === 'error'
-                  ? 'retry scene'
-                  : 'paint current sky'}
-            </button>
-          )}
-          <TemperatureOverlay data={d} label={label} />
-          <ForecastBar forecast={d.forecast} />
-        </div>
-        <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-rule px-6 py-3 font-mono text-sm text-ink-muted">
-          <span>
-            {icon} {label} · <span className="text-ink">{d.place}</span>
-          </span>
-          {d.apparentTempC != null && d.apparentTempC !== d.tempC && (
-            <span>feels like {formatTemp(d.apparentTempC)}</span>
-          )}
-          {d.humidity != null && <span>humidity {Math.round(d.humidity)}%</span>}
-          {d.wind != null && <span>wind {Math.round(d.wind)} km/h</span>}
-          <span>{d.isDay ? 'daytime' : 'nighttime'}</span>
-          {scene.status === 'ready' && (
-            <span>{scene.cached ? 'cached scene' : 'fresh scene'}</span>
-          )}
-          {d.fallback && (
-            <button
-              type="button"
-              onClick={locate}
-              className="ml-auto text-green underline-offset-2 hover:underline"
-            >
-              use my location
-            </button>
-          )}
+      <div className="not-prose">
+        {/* Desktop: full-screen two columns (scene | how-it-works). Mobile: stacked. */}
+        <div className="grid gap-6 lg:min-h-[calc(100vh-9rem)] lg:grid-cols-2 lg:items-center lg:gap-10">
+          {/* LEFT — the painted scene */}
+          <div className="flex flex-col items-center">
+            <div className="w-full overflow-hidden rounded-2xl border border-rule bg-elevated">
+              <div className="relative mx-auto flex aspect-[4/5] w-full max-w-xl items-center justify-center overflow-hidden bg-coal/35 lg:max-w-none">
+                {scene.status === 'ready' ? (
+                  <img
+                    src={scene.image}
+                    alt={`Generated isometric ${label} weather scene for ${d.place}`}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-coal via-elevated to-rule" />
+                )}
+                {scene.status !== 'ready' && (
+                  <button
+                    type="button"
+                    onClick={() => loadScene(d)}
+                    disabled={scene.status === 'loading'}
+                    className={`${WEATHER_GLASS} relative z-10 mx-6 rounded-xl px-4 py-2 font-mono text-sm text-white/90 hover:text-green disabled:cursor-wait disabled:text-white/60`}
+                  >
+                    {scene.status === 'loading'
+                      ? t.painting
+                      : scene.status === 'error'
+                        ? t.retryScene
+                        : t.paint}
+                  </button>
+                )}
+                <TemperatureOverlay data={d} label={label} />
+                <ForecastBar forecast={d.forecast} />
+              </div>
+            </div>
+            {d.fallback && (
+              <button
+                type="button"
+                onClick={locate}
+                className="mt-3 font-mono text-sm text-green underline-offset-2 hover:underline"
+              >
+                {t.useLocation}
+              </button>
+            )}
+          </div>
+
+          {/* RIGHT — how it works, live */}
+          <Explainer
+            data={d}
+            label={label}
+            icon={icon}
+            scene={scene}
+            t={t}
+            onRepaint={() => loadScene(d)}
+          />
         </div>
       </div>
     );
@@ -336,17 +552,19 @@ export default function WeatherWidget() {
     <div className="not-prose my-6 rounded-2xl border border-rule bg-elevated p-6 font-mono text-sm text-ink-muted">
       {state.status === 'error' ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <span>couldn’t load weather — {state.message}</span>
+          <span>
+            {t.failed} — {state.message}
+          </span>
           <button
             type="button"
             onClick={locate}
             className="rounded-lg border border-rule px-3 py-1 text-ink hover:text-green"
           >
-            retry
+            {t.retry}
           </button>
         </div>
       ) : (
-        <span>{state.status === 'locating' ? 'finding your location…' : 'loading weather…'}</span>
+        <span>{state.status === 'locating' ? t.locating : t.loading}</span>
       )}
     </div>
   );

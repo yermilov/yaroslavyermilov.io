@@ -19,6 +19,7 @@ const requestSchema = z.object({
 type Scene = {
   image: string;
   generatedAt: string;
+  prompt: string;
 };
 
 type CurrentWeather = {
@@ -723,7 +724,10 @@ export function weatherSceneRoutes(args: {
       return c.json({ error: 'weather scene generation returned no image' }, 502);
     }
 
-    const scene = { image, generatedAt: new Date(now).toISOString() };
+    // `prompt` is returned so the lab's "how it works" panel can show the actual
+    // text sent to Gemini (built from the real current conditions); cached so a
+    // cache-hit response still carries it.
+    const scene = { image, generatedAt: new Date(now).toISOString(), prompt };
     cache.set(key, { scene, expiresAt: now + THREE_HOURS_MS });
     capSceneCache();
     return c.json({ ...scene, cached: false });

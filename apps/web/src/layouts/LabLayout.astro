@@ -9,6 +9,9 @@ interface Props {
   publishedAt: Date;
   alternatePath?: string | undefined;
   alternateMissing?: boolean;
+  /** 'full' runs the island edge-to-edge (no prose header / max-width) for a
+   * full-screen lab; 'default' keeps the reading column + LAB header. */
+  layout?: 'default' | 'full';
 }
 
 const {
@@ -18,7 +21,9 @@ const {
   publishedAt,
   alternatePath,
   alternateMissing = false,
+  layout = 'default',
 } = Astro.props;
+const full = layout === 'full';
 
 const fmt = new Intl.DateTimeFormat(bcp47Locale(locale), { dateStyle: 'long' });
 ---
@@ -31,13 +36,19 @@ const fmt = new Intl.DateTimeFormat(bcp47Locale(locale), { dateStyle: 'long' });
   alternateMissing={alternateMissing}
   themeLab
 >
-  <article class="page-frame lab" data-pagefind-body>
-    <header class="lab-header prose-column">
-      <p class="workbench"><time datetime={publishedAt.toISOString()}>{fmt.format(publishedAt)}</time> · LAB</p>
-      <h1>{title}</h1>
-      {description && <p class="lede">{description}</p>}
-    </header>
-    <div class="lab-body">
+  <article class:list={['page-frame', 'lab', { 'lab--full': full }]} data-pagefind-body>
+    {
+      !full && (
+        <header class="lab-header prose-column">
+          <p class="workbench">
+            <time datetime={publishedAt.toISOString()}>{fmt.format(publishedAt)}</time> · LAB
+          </p>
+          <h1>{title}</h1>
+          {description && <p class="lede">{description}</p>}
+        </header>
+      )
+    }
+    <div class:list={['lab-body', { 'lab-body--full': full }]}>
       <slot />
     </div>
   </article>
@@ -58,5 +69,14 @@ const fmt = new Intl.DateTimeFormat(bcp47Locale(locale), { dateStyle: 'long' });
     /* Lab content is allowed to break the prose column for full-bleed visualizations. */
     max-width: 80rem;
     margin-inline: auto;
+  }
+  /* Full-screen labs: no reading-column constraint, minimal padding, and enough
+     height for the island to fill the viewport below the site header. */
+  .lab--full {
+    padding: var(--space-3) var(--space-3) var(--space-4);
+  }
+  .lab-body--full {
+    max-width: none;
+    margin-inline: 0;
   }
 </style>
