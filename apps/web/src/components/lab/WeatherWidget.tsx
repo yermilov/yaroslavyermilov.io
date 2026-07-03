@@ -174,6 +174,16 @@ function describeWind(wind: number | null) {
   return null;
 }
 
+// Collapse consecutive forecast hours whose condition + temperature are identical
+// to the hour before — plun.me hid these repeats so the strip shows only the hours
+// where something actually changes.
+function dedupeForecast(hours: ForecastHour[]): ForecastHour[] {
+  return hours.filter((h, i) => {
+    const prev = hours[i - 1];
+    return !prev || prev.code !== h.code || prev.tempC !== h.tempC;
+  });
+}
+
 async function fetchWeather(
   lat: number,
   lon: number,
@@ -190,14 +200,16 @@ async function fetchWeather(
   const times = Array.isArray(hourly.time) ? hourly.time : [];
   const temps = Array.isArray(hourly.temperature_2m) ? hourly.temperature_2m : [];
   const codes = Array.isArray(hourly.weather_code) ? hourly.weather_code : [];
-  const forecast = times
-    .map((time: unknown, i: number) => ({
-      time: String(time),
-      tempC: Math.round(Number(temps[i])),
-      code: Number(codes[i] ?? 0),
-    }))
-    .filter((hour: ForecastHour) => hour.time && Number.isFinite(hour.tempC))
-    .slice(1, 9);
+  const forecast = dedupeForecast(
+    times
+      .map((time: unknown, i: number) => ({
+        time: String(time),
+        tempC: Math.round(Number(temps[i])),
+        code: Number(codes[i] ?? 0),
+      }))
+      .filter((hour: ForecastHour) => hour.time && Number.isFinite(hour.tempC))
+      .slice(1, 9),
+  );
 
   return {
     tempC: Math.round(Number(c.temperature_2m)),
