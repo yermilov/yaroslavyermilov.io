@@ -59,9 +59,9 @@ const STR = {
     conditions: 'Live conditions',
     source: 'Open-Meteo',
     prompt: 'The prompt',
-    promptNote: 'The exact text sent to Gemini — highlighted parts are filled in live from your location and weather.',
+    promptNote:
+      'The exact text sent to Gemini — highlighted parts are filled in live from your location and weather. Click one to see what it is.',
     promptWaiting: 'Paint the scene to reveal the prompt.',
-    subsHint: 'Filled in live',
     subLocation: 'location',
     subTime: 'current time',
     subWeather: 'condition',
@@ -99,9 +99,9 @@ const STR = {
     conditions: 'Поточні умови',
     source: 'Open-Meteo',
     prompt: 'Промпт',
-    promptNote: 'Точний текст, надісланий у Gemini — підсвічені частини підставлені наживо з вашої локації та погоди.',
+    promptNote:
+      'Точний текст, надісланий у Gemini — підсвічені частини підставлені наживо з вашої локації та погоди. Клікніть на підсвічене, щоб побачити, що це.',
     promptWaiting: 'Намалюйте сцену, щоб побачити промпт.',
-    subsHint: 'Підставлено наживо',
     subLocation: 'локація',
     subTime: 'поточний час',
     subWeather: 'умови',
@@ -328,10 +328,22 @@ const SUB_LABEL: Record<SubKind, keyof Strings> = {
 };
 
 // Render the prompt with every dynamically-substituted value wrapped in a green
-// highlight (its `title` names which slot it filled). Values are the exact substrings
-// the template injected, so they match verbatim; occurrences are collected, sorted, and
-// de-overlapped so a longer span always wins over a shorter one nested inside it.
-function highlightPrompt(prompt: string, subs: Substitution[], t: Strings): React.ReactNode[] {
+// highlight. Values are the exact substrings the template injected, so they match
+// verbatim; occurrences are collected, sorted, and de-overlapped so a longer span
+// always wins over a shorter one nested inside it. Clicking a highlight toggles an
+// in-flow hint chip right after the token naming the slot it filled (one open at a
+// time — replaces the old separate "Filled in live" key list).
+function HighlightedPrompt({
+  prompt,
+  subs,
+  t,
+}: {
+  prompt: string;
+  subs: Substitution[];
+  t: Strings;
+}) {
+  const [active, setActive] = useState<number | null>(null);
+
   const matches: { start: number; end: number; kind: SubKind }[] = [];
   for (const s of subs) {
     if (!s.value) continue;
@@ -351,19 +363,35 @@ function highlightPrompt(prompt: string, subs: Substitution[], t: Strings): Reac
   for (const m of matches) {
     if (m.start < cursor) continue; // already inside an accepted (longer) span
     if (m.start > cursor) out.push(prompt.slice(cursor, m.start));
+    const idx = key++;
+    const open = active === idx;
     out.push(
-      <mark
-        key={key++}
-        title={t[SUB_LABEL[m.kind]]}
-        className="rounded-[3px] bg-green/15 px-0.5 text-ink ring-1 ring-inset ring-green/40"
+      <button
+        key={`t${idx}`}
+        type="button"
+        onClick={() => setActive(open ? null : idx)}
+        aria-expanded={open}
+        className={`cursor-pointer rounded-[3px] border-0 p-0 px-0.5 font-[inherit] text-[length:inherit] leading-[inherit] text-ink ring-1 ring-inset transition-colors ${
+          open ? 'bg-green/30 ring-green/70' : 'bg-green/15 ring-green/40 hover:bg-green/25'
+        }`}
       >
         {prompt.slice(m.start, m.end)}
-      </mark>,
+      </button>,
     );
+    if (open) {
+      out.push(
+        <span
+          key={`h${idx}`}
+          className="mx-1 inline-block whitespace-nowrap rounded-[3px] border border-green/50 bg-coal px-1.5 py-px align-baseline font-mono text-[10px] uppercase tracking-wide text-green"
+        >
+          ← {t[SUB_LABEL[m.kind]]}
+        </span>,
+      );
+    }
     cursor = m.end;
   }
   if (cursor < prompt.length) out.push(prompt.slice(cursor));
-  return out;
+  return <>{out}</>;
 }
 
 // The right-hand panel: just the exact prompt sent to Gemini, with the parts filled in
@@ -377,26 +405,13 @@ function Explainer({ scene, t }: { scene: SceneState; t: Strings }) {
       <h3 className="text-sm font-semibold uppercase tracking-wide text-ink">{t.prompt}</h3>
       <p className="text-sm leading-relaxed text-ink-muted">{t.promptNote}</p>
       {ready ? (
-        <>
-          <pre className="max-h-[50vh] overflow-auto rounded-lg border border-rule bg-coal/40 p-3 font-mono text-xs leading-relaxed text-ink/90 whitespace-pre-wrap">
-            {subs.length > 0 ? highlightPrompt(scene.prompt!, subs, t) : scene.prompt}
-          </pre>
-          {subs.length > 0 && (
-            <dl className="flex flex-col gap-1.5">
-              <span className="font-mono text-[11px] uppercase tracking-wide text-ink-muted">
-                {t.subsHint}
-              </span>
-              {subs.map((s) => (
-                <div key={s.kind} className="flex items-baseline gap-2 border-t border-rule/60 pt-1.5">
-                  <dt className="min-w-24 shrink-0 font-mono text-[11px] uppercase tracking-wide text-ink-muted">
-                    {t[SUB_LABEL[s.kind]]}
-                  </dt>
-                  <dd className="font-mono text-xs leading-relaxed text-green">{s.value}</dd>
-                </div>
-              ))}
-            </dl>
+        <pre className="max-h-[50vh] overflow-auto rounded-lg border border-rule bg-coal/40 p-3 font-mono text-xs leading-relaxed text-ink/90 whitespace-pre-wrap">
+          {subs.length > 0 ? (
+            <HighlightedPrompt prompt={scene.prompt!} subs={subs} t={t} />
+          ) : (
+            scene.prompt
           )}
-        </>
+        </pre>
       ) : (
         <p className="rounded-lg border border-dashed border-rule px-3 py-4 text-center font-mono text-xs text-ink-muted">
           {scene.status === 'loading' ? t.painting : t.promptWaiting}
