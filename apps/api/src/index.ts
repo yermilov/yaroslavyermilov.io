@@ -17,8 +17,9 @@ const corsOrigins = env.WEB_ORIGIN.split(',')
 const app = createApp({
   logger,
   corsOrigins,
-  hasDb: !!db,
+  db,
   gemini: { apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL },
+  weatherSceneDailyBudget: env.WEATHER_SCENE_DAILY_BUDGET,
 });
 
 logger.info({ event: 'server.boot', host: env.HOST, port: env.PORT, db: !!db });

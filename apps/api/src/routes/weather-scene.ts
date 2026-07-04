@@ -1,5 +1,8 @@
+import { weatherSceneCache, weatherSceneDay } from '@yermilov/db-schema';
+import { and, eq, gt, lte, sql } from 'drizzle-orm';
 import { Hono, type Context } from 'hono';
 import { z } from 'zod';
+import type { Database } from '../db';
 import type { AppBindings } from '../types';
 
 const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
@@ -672,10 +675,170 @@ function takeGenerationSlot(client: string, now: number) {
   return { allowed: true, retryAfterMs: 0 };
 }
 
+// The UTC calendar day the budget counter is keyed on. A new day is a fresh
+// row, so the budget auto-resets at 00:00 UTC. `date` columns are strings.
+function utcDayKey(now: number): string {
+  return new Date(now).toISOString().slice(0, 10);
+}
+
+// L2 persistent cache read (survives redeploys). Returns a non-expired scene
+// together with the row's own expiry so L1 can be hydrated with the REMAINING
+// lifetime, not a fresh 3h — otherwise a nearly-expired persisted scene would be
+// served for almost another full TTL. Any DB error degrades to a miss — a
+// database hiccup must never break the endpoint (L1 + fresh generation still work).
+async function readPersistedScene(
+  db: Database | null,
+  key: string,
+  now: number,
+  c: Context<AppBindings>,
+): Promise<{ scene: Scene; expiresAt: number } | null> {
+  if (!db) return null;
+  try {
+    const rows = await db
+      .select({ payload: weatherSceneCache.payload, expiresAt: weatherSceneCache.expiresAt })
+      .from(weatherSceneCache)
+      .where(and(eq(weatherSceneCache.cacheKey, key), gt(weatherSceneCache.expiresAt, new Date(now))))
+      .limit(1);
+    const row = rows[0];
+    if (!row) return null;
+    return { scene: row.payload as Scene, expiresAt: new Date(row.expiresAt).getTime() };
+  } catch (err) {
+    c.var.logger.warn({ event: 'weather_scene.l2_read_error', err });
+    return null;
+  }
+}
+
+// Where a budget slot was reserved, so the matching release undoes the right
+// counter. 'db' = the persistent Postgres counter; 'memory' = the in-process
+// fallback used when there's no DB or the DB reserve failed.
+type ReservationStore = 'db' | 'memory';
+
+// In-process daily counter — the fallback budget so the hard cap NEVER silently
+// vanishes when the DB is unavailable (missing table before the migration, or an
+// outage). Per-instance and reset on restart (that's what the Postgres counter
+// fixes), but during a DB problem it still bounds spend to the budget instead of
+// falling back to the much looser rate limit. Keyed on the UTC day; a new day
+// resets it.
+let inMemoryBudget = { day: '', count: 0 };
+
+function reserveInMemorySlot(now: number, budget: number): boolean {
+  const day = utcDayKey(now);
+  if (inMemoryBudget.day !== day) inMemoryBudget = { day, count: 0 };
+  if (inMemoryBudget.count >= budget) return false;
+  inMemoryBudget.count += 1;
+  return true;
+}
+
+function releaseInMemorySlot(now: number): void {
+  if (inMemoryBudget.day === utcDayKey(now) && inMemoryBudget.count > 0) {
+    inMemoryBudget.count -= 1;
+  }
+}
+
+// Reserve one generation against today's hard daily budget (cost control B),
+// ATOMICALLY and CONDITIONALLY. The increment only happens when the day is still
+// under budget (the `setWhere count < budget` guard), all in one statement — so
+// a burst of concurrent cache misses can't all read the same sub-cap count and
+// each generate (the viral-spike overshoot this feature prevents), AND a request
+// that's already over budget does NOT bump the counter (no phantom counts to
+// leave the day stuck over-budget). A returned row means a slot was granted;
+// none means the cap is spent. WHICH store held it is returned so the caller
+// releases the right one on failure.
+//
+// Fallback: no DB, or a DB error (outage, or the table missing pre-migration) →
+// the in-process counter. The cap is thus NEVER silently disabled — it degrades
+// to a per-instance cap, not to the much looser rate limit. Deliberate trade-off
+// over failing closed: on a single-instance site keeping the widget alive during
+// a DB blip (and across the pre-migration window) is worth a bounded worst case
+// — if the DB fails mid-day AFTER it already recorded generations, this instance
+// can grant up to another `budget` before the day rolls over. Bounded and rare;
+// failing closed would instead break the widget on every DB hiccup.
+async function reserveDailySlot(
+  db: Database | null,
+  now: number,
+  budget: number,
+  c: Context<AppBindings>,
+): Promise<{ allowed: boolean; via: ReservationStore }> {
+  if (!db) return { allowed: reserveInMemorySlot(now, budget), via: 'memory' };
+  try {
+    const rows = await db
+      .insert(weatherSceneDay)
+      .values({ day: utcDayKey(now), count: 1 })
+      .onConflictDoUpdate({
+        target: weatherSceneDay.day,
+        set: { count: sql`${weatherSceneDay.count} + 1` },
+        setWhere: sql`${weatherSceneDay.count} < ${budget}`,
+      })
+      .returning({ count: weatherSceneDay.count });
+    // A row back = granted (fresh-day insert, or an under-budget increment). No
+    // row = the conditional update didn't fire = the cap is spent (no increment).
+    return { allowed: rows.length > 0, via: 'db' };
+  } catch (err) {
+    c.var.logger.warn({ event: 'weather_scene.reserve_error', err });
+    return { allowed: reserveInMemorySlot(now, budget), via: 'memory' };
+  }
+}
+
+// Give a reserved slot back when the generation it was reserved for fails, so a
+// flaky Gemini can't silently erode the day's budget (only real, billable scenes
+// should count). Releases the same store the reservation used. Best-effort.
+async function releaseDailySlot(
+  db: Database | null,
+  now: number,
+  via: ReservationStore,
+  c: Context<AppBindings>,
+): Promise<void> {
+  if (via === 'memory') {
+    releaseInMemorySlot(now);
+    return;
+  }
+  if (!db) return;
+  try {
+    await db
+      .update(weatherSceneDay)
+      .set({ count: sql`GREATEST(${weatherSceneDay.count} - 1, 0)` })
+      .where(eq(weatherSceneDay.day, utcDayKey(now)));
+  } catch (err) {
+    c.var.logger.warn({ event: 'weather_scene.release_error', err });
+  }
+}
+
+// After a successful generation: persist the scene to L2 and opportunistically
+// prune expired rows. The daily counter is NOT bumped here — it was already
+// reserved atomically before generation (reserveDailySlot). Best-effort: a
+// failure here must not fail the response the user already has.
+async function persistSceneCache(
+  db: Database | null,
+  key: string,
+  scene: Scene,
+  now: number,
+  c: Context<AppBindings>,
+): Promise<void> {
+  if (!db) return;
+  const expiresAt = new Date(now + THREE_HOURS_MS);
+  try {
+    await db
+      .insert(weatherSceneCache)
+      .values({ cacheKey: key, payload: scene, expiresAt })
+      .onConflictDoUpdate({
+        target: weatherSceneCache.cacheKey,
+        set: { payload: scene, expiresAt, createdAt: sql`now()` },
+      });
+    await db.delete(weatherSceneCache).where(lte(weatherSceneCache.expiresAt, new Date(now)));
+  } catch (err) {
+    c.var.logger.warn({ event: 'weather_scene.persist_error', err });
+  }
+}
+
 export function weatherSceneRoutes(args: {
   apiKey?: string;
   model: string;
   allowedOrigins: string[];
+  // The Drizzle db, or null when DATABASE_URL is unset → in-memory-only (no L2
+  // cache, no daily budget enforcement). Matches the pre-persistence behaviour.
+  db: Database | null;
+  // Hard daily generation cap (cost control B).
+  dailyBudget: number;
 }) {
   return new Hono<AppBindings>().post('/', async (c) => {
     const origin = c.req.header('origin');
@@ -712,54 +875,90 @@ export function weatherSceneRoutes(args: {
       return c.json({ ...cached.scene, cached: true });
     }
 
+    // L2: persistent cache (survives redeploys). Hydrate L1 with the row's OWN
+    // remaining lifetime (not a fresh 3h) and serve it — a cache hit is free
+    // regardless of budget.
+    const persisted = await readPersistedScene(args.db, key, now, c);
+    if (persisted) {
+      cache.set(key, { scene: persisted.scene, expiresAt: persisted.expiresAt });
+      capSceneCache();
+      return c.json({ ...persisted.scene, cached: true });
+    }
+
+    // Rate-limit gate first (in-memory, cheap, no DB write to compensate).
     const slot = takeGenerationSlot(clientKey(c), now);
     if (!slot.allowed) {
       c.header('Retry-After', String(Math.ceil(slot.retryAfterMs / 1000)));
       return c.json({ error: 'weather scene generation is rate limited' }, 429);
     }
 
-    const location = await fetchLocationContext(input.lat, input.lon);
-    const { prompt, substitutions } = buildPrompt(input, weather, location);
-    const url = 'https://generativelanguage.googleapis.com/v1beta/interactions';
+    // Budget gate (cost control B): reaching here means a full cache miss that
+    // passed the rate limit, i.e. we would call Gemini. Reserve one slot against
+    // today's hard daily cap ATOMICALLY (increment-and-check in one statement) so
+    // a concurrent burst can't overshoot the cap. If the day is spent, refuse.
+    const reservation = await reserveDailySlot(args.db, now, args.dailyBudget, c);
+    if (!reservation.allowed) {
+      c.var.logger.warn({ event: 'weather_scene.daily_budget_reached', budget: args.dailyBudget });
+      return c.json({ error: 'daily scene budget reached' }, 429);
+    }
 
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-goog-api-key': args.apiKey,
-      },
-      body: JSON.stringify({
-        model: args.model,
-        input: [{ type: 'text', text: prompt }],
-        response_format: {
-          type: 'image',
-          mime_type: 'image/jpeg',
-          aspect_ratio: '4:5',
+    // From here we hold a reserved budget slot. Guarantee it's released on ANY
+    // path that doesn't produce a scene — the explicit 502s below AND a thrown
+    // fetch/JSON error (which would otherwise skip the release and leak the slot,
+    // falsely eroding the daily cap). The finally releases unless `generated`.
+    let generated = false;
+    try {
+      const location = await fetchLocationContext(input.lat, input.lon);
+      const { prompt, substitutions } = buildPrompt(input, weather, location);
+      const url = 'https://generativelanguage.googleapis.com/v1beta/interactions';
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-goog-api-key': args.apiKey,
         },
-      }),
-    });
-
-    if (!res.ok) {
-      c.var.logger.warn({
-        event: 'weather_scene.gemini_error',
-        status: res.status,
-        model: args.model,
+        body: JSON.stringify({
+          model: args.model,
+          input: [{ type: 'text', text: prompt }],
+          response_format: {
+            type: 'image',
+            mime_type: 'image/jpeg',
+            aspect_ratio: '4:5',
+          },
+        }),
       });
-      return c.json({ error: 'weather scene generation failed' }, 502);
-    }
 
-    const image = extractImageData(await res.json());
-    if (!image) {
-      c.var.logger.warn({ event: 'weather_scene.no_image', model: args.model });
-      return c.json({ error: 'weather scene generation returned no image' }, 502);
-    }
+      if (!res.ok) {
+        c.var.logger.warn({
+          event: 'weather_scene.gemini_error',
+          status: res.status,
+          model: args.model,
+        });
+        return c.json({ error: 'weather scene generation failed' }, 502);
+      }
 
-    // `prompt` + `substitutions` are returned so the lab's "how it works" panel can
-    // show the actual text sent to Gemini AND highlight the dynamic parts the live
-    // conditions filled in; cached so a cache-hit response still carries them.
-    const scene = { image, generatedAt: new Date(now).toISOString(), prompt, substitutions };
-    cache.set(key, { scene, expiresAt: now + THREE_HOURS_MS });
-    capSceneCache();
-    return c.json({ ...scene, cached: false });
+      const image = extractImageData(await res.json());
+      if (!image) {
+        c.var.logger.warn({ event: 'weather_scene.no_image', model: args.model });
+        return c.json({ error: 'weather scene generation returned no image' }, 502);
+      }
+
+      // `prompt` + `substitutions` are returned so the lab's "how it works" panel can
+      // show the actual text sent to Gemini AND highlight the dynamic parts the live
+      // conditions filled in; cached so a cache-hit response still carries them.
+      const scene = { image, generatedAt: new Date(now).toISOString(), prompt, substitutions };
+      cache.set(key, { scene, expiresAt: now + THREE_HOURS_MS });
+      capSceneCache();
+      // Persist to L2 (best-effort). The daily counter was already reserved before
+      // generation, so it is NOT bumped again here.
+      await persistSceneCache(args.db, key, scene, now, c);
+      generated = true;
+      return c.json({ ...scene, cached: false });
+    } finally {
+      // Reserved but no scene produced (502, or a thrown error propagating to the
+      // app error handler) → give the slot back so failures don't spend budget.
+      if (!generated) await releaseDailySlot(args.db, now, reservation.via, c);
+    }
   });
 }

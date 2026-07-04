@@ -19,6 +19,11 @@ const envSchema = z.object({
     .default('https://yaroslavyermilov.io,http://localhost:4321'),
   GEMINI_API_KEY: z.string().optional(),
   GEMINI_MODEL: z.string().default('gemini-3.1-flash-image'),
+  // Hard daily kill-switch for weather-scene image generation (cost control B):
+  // once this many scenes have been generated in a UTC day, the endpoint stops
+  // calling Gemini (serves cache if present, else 429) until the next day. Caps
+  // absolute daily spend regardless of rate.
+  WEATHER_SCENE_DAILY_BUDGET: z.coerce.number().int().positive().default(200),
 });
 
 export type Env = z.infer<typeof envSchema>;
