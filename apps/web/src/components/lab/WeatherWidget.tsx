@@ -82,6 +82,12 @@ const STR = {
     repaint: 'repaint scene',
     painting: 'painting scene…',
     retryScene: 'retry scene',
+    throttledTitle: 'generator busy',
+    throttledRate: 'Too many scenes just now — the sky painter is catching its breath.',
+    throttledBudget: "Today's scene budget is spent. Fresh scenes return after midnight UTC.",
+    throttledProvider: 'The image generator hit its daily limit. Back later.',
+    throttledTryAgain: 'try again',
+    throttledWait: 'try again in',
     paint: 'paint current sky',
     useLocation: 'use my location',
     cached: 'cached scene',
@@ -122,6 +128,12 @@ const STR = {
     repaint: 'перемалювати',
     painting: 'малюю сцену…',
     retryScene: 'спробувати ще',
+    throttledTitle: 'генератор зайнятий',
+    throttledRate: 'Забагато сцен одразу — художник неба переводить подих.',
+    throttledBudget: 'Денний ліміт сцен вичерпано. Нові сцени — після опівночі UTC.',
+    throttledProvider: 'Генератор зображень досяг денного ліміту. Спробуйте пізніше.',
+    throttledTryAgain: 'спробувати ще',
+    throttledWait: 'спробувати через',
     paint: 'намалювати небо',
     useLocation: 'моє місцезнаходження',
     cached: 'сцена з кешу',
@@ -159,9 +171,17 @@ type Current = {
 type SubKind = 'location' | 'time' | 'weather' | 'temperature' | 'atmosphere' | 'lighting';
 type Substitution = { kind: SubKind; value: string };
 
+// A throttle is distinct from a generic error: the scene generator is
+// intentionally rate/budget-limited (cost control), so we show a calm
+// "busy / back later" state and a cooldown instead of an eager retry.
+//   rate    — per-client/global short-window limit (has a Retry-After cooldown)
+//   budget  — the daily cap is spent for everyone until UTC midnight
+//   provider— the upstream Gemini quota (the independent backstop) is exhausted
+type ThrottleReason = 'rate' | 'budget' | 'provider';
 type SceneState =
   | { status: 'idle' | 'loading' }
   | { status: 'ready'; image: string; cached: boolean; prompt?: string; substitutions?: Substitution[] }
+  | { status: 'throttled'; reason: ThrottleReason; retryAt: number | null }
   | { status: 'error' };
 
 type State =
@@ -394,6 +414,57 @@ function HighlightedPrompt({
   return <>{out}</>;
 }
 
+// The scene generator is intentionally cost-limited, so a throttle gets its own
+// calm panel over the placeholder — not the generic retry button. A rate limit
+// ticks down its Retry-After cooldown and then offers a retry; the daily/provider
+// caps won't clear until reset, so they show the message alone (no eager retry
+// that would just re-hit the limit).
+function ThrottledScene({
+  reason,
+  retryAt,
+  t,
+  onRetry,
+}: {
+  reason: ThrottleReason;
+  retryAt: number | null;
+  t: Strings;
+  onRetry: () => void;
+}) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!retryAt) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [retryAt]);
+  const remainingMs = retryAt ? Math.max(0, retryAt - now) : 0;
+  const message =
+    reason === 'budget' ? t.throttledBudget : reason === 'provider' ? t.throttledProvider : t.throttledRate;
+  const canRetry = reason === 'rate' && remainingMs === 0;
+  return (
+    <div
+      className={`${WEATHER_GLASS} relative z-10 mx-6 flex max-w-sm flex-col items-center gap-2 rounded-xl px-5 py-4 text-center`}
+      role="status"
+    >
+      <span className="font-mono text-xs uppercase tracking-widest text-white/60">{t.throttledTitle}</span>
+      <p className="font-mono text-sm leading-relaxed text-white/90">{message}</p>
+      {reason === 'rate' && remainingMs > 0 && (
+        <span className="font-mono text-xs text-white/60">
+          {t.throttledWait} {Math.ceil(remainingMs / 1000)}s
+        </span>
+      )}
+      {canRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="font-mono text-sm text-green underline-offset-2 hover:underline"
+        >
+          {t.throttledTryAgain}
+        </button>
+      )}
+    </div>
+  );
+}
+
 // The right-hand panel: just the exact prompt sent to Gemini, with the parts filled in
 // live from the real conditions highlighted — and a key naming each one.
 function Explainer({ scene, t }: { scene: SceneState; t: Strings }) {
@@ -463,6 +534,24 @@ export default function WeatherWidget({ locale = 'en' }: { locale?: Locale }) {
       body: JSON.stringify({ lat: d.lat, lon: d.lon }),
     })
       .then(async (res) => {
+        // A 429 is an intentional throttle, not a failure — surface it as its own
+        // state (with the reason + a cooldown from Retry-After) so the UI can show
+        // a calm "busy / back later" panel instead of an eager retry that just
+        // re-hits the limit. `code` distinguishes rate vs daily-budget vs provider.
+        if (res.status === 429) {
+          const body = (await res.json().catch(() => null)) as { code?: string } | null;
+          const reason: ThrottleReason =
+            body?.code === 'daily_budget'
+              ? 'budget'
+              : body?.code === 'provider_quota'
+                ? 'provider'
+                : 'rate';
+          const retryAfterSec = Number(res.headers.get('Retry-After'));
+          const retryAt =
+            Number.isFinite(retryAfterSec) && retryAfterSec > 0 ? Date.now() + retryAfterSec * 1000 : null;
+          if (requestId === sceneRequest.current) setScene({ status: 'throttled', reason, retryAt });
+          return null;
+        }
         if (!res.ok) throw new Error(`scene ${res.status}`);
         return (await res.json()) as {
           image: string;
@@ -472,7 +561,7 @@ export default function WeatherWidget({ locale = 'en' }: { locale?: Locale }) {
         };
       })
       .then((payload) => {
-        if (requestId !== sceneRequest.current) return;
+        if (!payload || requestId !== sceneRequest.current) return;
         setScene({
           status: 'ready',
           image: payload.image,
@@ -500,6 +589,12 @@ export default function WeatherWidget({ locale = 'en' }: { locale?: Locale }) {
     const d = state.data;
     const { label } = describe(d.code);
 
+    // Throttled overlay: a calm "busy / back later" panel instead of the generic
+    // retry button. For a rate limit we count the Retry-After cooldown down and
+    // only then offer a retry; for the daily/provider caps a retry won't help
+    // until the reset, so we show the message alone.
+    const throttled = scene.status === 'throttled' ? scene : null;
+
     return (
       <div className="not-prose">
         {/* Desktop: full-screen two columns (scene | how-it-works). Mobile: stacked. */}
@@ -517,7 +612,9 @@ export default function WeatherWidget({ locale = 'en' }: { locale?: Locale }) {
                 ) : (
                   <div className="absolute inset-0 bg-gradient-to-br from-coal via-elevated to-rule" />
                 )}
-                {scene.status !== 'ready' && (
+                {throttled ? (
+                  <ThrottledScene reason={throttled.reason} retryAt={throttled.retryAt} t={t} onRetry={() => loadScene(d)} />
+                ) : scene.status !== 'ready' ? (
                   <button
                     type="button"
                     onClick={() => loadScene(d)}
@@ -530,7 +627,7 @@ export default function WeatherWidget({ locale = 'en' }: { locale?: Locale }) {
                         ? t.retryScene
                         : t.paint}
                   </button>
-                )}
+                ) : null}
                 <TemperatureOverlay data={d} label={label} />
                 <ForecastBar forecast={d.forecast} />
               </div>

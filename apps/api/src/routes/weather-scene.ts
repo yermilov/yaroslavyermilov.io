@@ -889,7 +889,9 @@ export function weatherSceneRoutes(args: {
     const slot = takeGenerationSlot(clientKey(c), now);
     if (!slot.allowed) {
       c.header('Retry-After', String(Math.ceil(slot.retryAfterMs / 1000)));
-      return c.json({ error: 'weather scene generation is rate limited' }, 429);
+      // `code` is a stable machine-readable signal the frontend branches on to
+      // show a tailored throttled state (vs string-matching `error`).
+      return c.json({ error: 'weather scene generation is rate limited', code: 'rate_limited' }, 429);
     }
 
     // Budget gate (cost control B): reaching here means a full cache miss that
@@ -899,7 +901,9 @@ export function weatherSceneRoutes(args: {
     const reservation = await reserveDailySlot(args.db, now, args.dailyBudget, c);
     if (!reservation.allowed) {
       c.var.logger.warn({ event: 'weather_scene.daily_budget_reached', budget: args.dailyBudget });
-      return c.json({ error: 'daily scene budget reached' }, 429);
+      // Distinct code: the daily budget is spent for everyone until UTC midnight,
+      // so the UI shows a "back tomorrow" message rather than a short cooldown.
+      return c.json({ error: 'daily scene budget reached', code: 'daily_budget' }, 429);
     }
 
     // From here we hold a reserved budget slot. Guarantee it's released on ANY
@@ -935,6 +939,12 @@ export function weatherSceneRoutes(args: {
           status: res.status,
           model: args.model,
         });
+        // A provider-side 429 (the Google AI Studio per-project daily quota — the
+        // independent backstop) is a throttle, not a generic failure: surface it
+        // as our own 429 so the frontend shows the throttled state, not "retry".
+        if (res.status === 429) {
+          return c.json({ error: 'weather scene generation is throttled', code: 'provider_quota' }, 429);
+        }
         return c.json({ error: 'weather scene generation failed' }, 502);
       }
 
