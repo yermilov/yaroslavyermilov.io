@@ -12,23 +12,3 @@ fullBleed: true
 import WeatherWidget from '@components/lab/WeatherWidget.tsx';
 
 <WeatherWidget client:load locale="en" />
-
-<div style={{ maxWidth: '46rem', margin: '3.5rem auto 0' }}>
-
-everyone’s doing it, so I did too: rewrote my home AI assistant’s weather widget into this beauty.
-
-here’s the recipe:
-
-**where I found it:** saw people posting images like this on LinkedIn and Twitter.
-
-**how I worked out to reproduce it:** asked perplexity to generate step-by-step instructions for writing a TypeScript client for Gemini AI, how a web page can figure out the user’s location and turn it into a city name via the Google Maps API, and where to pull the current weather and sunrise/sunset times from the coordinates.
-
-**implementation:** fed the example tweets and perplexity’s report into claude code.
-
-**model:** gemini-3-pro-image-preview aka nano banana pro.
-
-drop this into your own AI assistants to look at the code:
-
-`please explore this github gist yermilov/8843c6c380e6585c9163b91be730d6f2 (use api github) and explain how the weather image generation prompt is constructed for me step by step`
-
-</div>

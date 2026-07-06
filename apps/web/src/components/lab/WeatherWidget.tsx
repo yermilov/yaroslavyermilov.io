@@ -60,7 +60,9 @@ const STR = {
     source: 'Open-Meteo',
     prompt: 'The prompt',
     promptNote:
-      'The exact text sent to Gemini — highlighted parts are filled in live from your location and weather. Click one to see what it is.',
+      'everyone’s doing it, so I did too — here’s the recipe: grab the user’s location and the forecast from Open-Meteo, build the prompt dynamically, and send it to gemini-3-pro-image-preview aka nano banana pro (more details in the ',
+    promptNoteLink: 'github gist',
+    promptNoteAfter: ').',
     promptWaiting: 'Paint the scene to reveal the prompt.',
     subLocation: 'location',
     subTime: 'current time',
@@ -106,7 +108,9 @@ const STR = {
     source: 'Open-Meteo',
     prompt: 'Промпт',
     promptNote:
-      'Точний текст, надісланий у Gemini — підсвічені частини підставлені наживо з вашої локації та погоди. Клікніть на підсвічене, щоб побачити, що це.',
+      'всі роблять і я зробив, записуйте рецепт: витягаємо локацію користувача і прогноз погоди через Open-Meteo, формуємо динамічно промпт і відправляємо на gemini-3-pro-image-preview ака nano banana pro (додаткові деталі у ',
+    promptNoteLink: 'github gist',
+    promptNoteAfter: ').',
     promptWaiting: 'Намалюйте сцену, щоб побачити промпт.',
     subLocation: 'локація',
     subTime: 'поточний час',
@@ -465,6 +469,9 @@ function ThrottledScene({
   );
 }
 
+// Where the making-of recipe points readers for the full source.
+const GIST_URL = 'https://gist.github.com/yermilov/8843c6c380e6585c9163b91be730d6f2';
+
 // The right-hand panel: just the exact prompt sent to Gemini, with the parts filled in
 // live from the real conditions highlighted — and a key naming each one.
 function Explainer({ scene, t }: { scene: SceneState; t: Strings }) {
@@ -472,11 +479,24 @@ function Explainer({ scene, t }: { scene: SceneState; t: Strings }) {
   const subs = (scene.status === 'ready' && scene.substitutions) || [];
 
   return (
-    <div className="flex flex-col gap-4">
+    // On desktop the panel matches the scene column's height, so the prompt
+    // scrolls inside the viewport instead of stretching the page below it.
+    <div className="flex flex-col gap-4 lg:h-[calc(100vh-9rem)] lg:min-h-0">
       <h3 className="text-sm font-semibold uppercase tracking-wide text-ink">{t.prompt}</h3>
-      <p className="text-sm leading-relaxed text-ink-muted">{t.promptNote}</p>
+      <p className="max-w-prose text-sm leading-relaxed text-ink-muted">
+        {t.promptNote}
+        <a
+          href={GIST_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-green underline-offset-2 hover:underline"
+        >
+          {t.promptNoteLink}
+        </a>
+        {t.promptNoteAfter}
+      </p>
       {ready ? (
-        <pre className="max-h-[50vh] overflow-auto rounded-lg border border-rule bg-coal/40 p-3 font-mono text-xs leading-relaxed text-ink/90 whitespace-pre-wrap">
+        <pre className="max-h-[50vh] overflow-auto rounded-lg border border-rule bg-coal/40 p-4 font-mono text-xs leading-relaxed text-ink/90 whitespace-pre-wrap lg:max-h-none lg:min-h-0 lg:flex-1">
           {subs.length > 0 ? (
             <HighlightedPrompt prompt={scene.prompt!} subs={subs} t={t} />
           ) : (
@@ -484,7 +504,7 @@ function Explainer({ scene, t }: { scene: SceneState; t: Strings }) {
           )}
         </pre>
       ) : (
-        <p className="rounded-lg border border-dashed border-rule px-3 py-4 text-center font-mono text-xs text-ink-muted">
+        <p className="flex items-center justify-center rounded-lg border border-dashed border-rule px-3 py-10 text-center font-mono text-xs text-ink-muted lg:min-h-0 lg:flex-1">
           {scene.status === 'loading' ? t.painting : t.promptWaiting}
         </p>
       )}
