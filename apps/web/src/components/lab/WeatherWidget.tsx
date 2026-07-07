@@ -402,7 +402,7 @@ function HighlightedPrompt({
         type="button"
         onClick={() => setActive(open ? null : idx)}
         aria-expanded={open}
-        className={`box-decoration-clone cursor-pointer rounded-[3px] border border-green/35 px-[0.14em] py-[0.02em] font-[inherit] text-[length:inherit] leading-[inherit] text-green-deep underline decoration-green decoration-1 underline-offset-[3px] transition-colors whitespace-normal break-words ${
+        className={`inline appearance-none box-decoration-clone cursor-pointer rounded-[3px] border border-green/35 px-[0.14em] py-[0.02em] align-baseline font-[inherit] text-[length:inherit] leading-[inherit] text-left text-green-deep underline decoration-green decoration-1 underline-offset-[3px] transition-colors whitespace-normal break-normal ${
           open
             ? 'bg-green/25 decoration-solid'
             : 'bg-green/15 decoration-dotted hover:bg-green/25 hover:decoration-solid'
