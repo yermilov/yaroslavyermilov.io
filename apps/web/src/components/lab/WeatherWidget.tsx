@@ -387,26 +387,35 @@ function HighlightedPrompt({
   for (const m of matches) {
     if (m.start < cursor) continue; // already inside an accepted (longer) span
     if (m.start > cursor) out.push(prompt.slice(cursor, m.start));
+    // Underline only the words, leaving the template's own indentation / line
+    // breaks unstyled — so a multi-line value reads as a tidy marked token instead
+    // of one big filled block. The green dotted underline signals "live + clickable".
+    const raw = prompt.slice(m.start, m.end);
+    const lead = raw.match(/^\s*/)?.[0] ?? '';
+    const trail = raw.match(/\s*$/)?.[0] ?? '';
+    const core = raw.slice(lead.length, raw.length - trail.length);
     const idx = key++;
     const open = active === idx;
+    if (lead) out.push(lead);
     out.push(
       <button
         key={`t${idx}`}
         type="button"
         onClick={() => setActive(open ? null : idx)}
         aria-expanded={open}
-        className={`cursor-pointer rounded-[3px] border-0 p-0 px-0.5 font-[inherit] text-[length:inherit] leading-[inherit] text-ink ring-1 ring-inset transition-colors ${
-          open ? 'bg-green/30 ring-green/70' : 'bg-green/15 ring-green/40 hover:bg-green/25'
+        className={`cursor-pointer border-0 bg-transparent p-0 font-[inherit] text-[length:inherit] leading-[inherit] text-green underline decoration-dotted decoration-1 underline-offset-[3px] transition-colors ${
+          open ? 'decoration-green decoration-solid' : 'decoration-green/50 hover:decoration-green'
         }`}
       >
-        {prompt.slice(m.start, m.end)}
+        {core}
       </button>,
     );
+    if (trail) out.push(trail);
     if (open) {
       out.push(
         <span
           key={`h${idx}`}
-          className="mx-1 inline-block whitespace-nowrap rounded-[3px] border border-green/50 bg-coal px-1.5 py-px align-baseline font-mono text-[10px] uppercase tracking-wide text-green"
+          className="mx-1 inline-block whitespace-nowrap rounded-[3px] border border-green/40 bg-green/10 px-1.5 py-px align-baseline font-mono text-[10px] uppercase tracking-wide text-green"
         >
           ← {t[SUB_LABEL[m.kind]]}
         </span>,
@@ -482,8 +491,7 @@ function Explainer({ scene, t }: { scene: SceneState; t: Strings }) {
     // On desktop the panel matches the scene column's height, so the prompt
     // scrolls inside the viewport instead of stretching the page below it.
     <div className="flex flex-col gap-4 lg:h-[calc(100vh-9rem)] lg:min-h-0">
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-ink">{t.prompt}</h3>
-      <p className="max-w-prose text-sm leading-relaxed text-ink-muted">
+      <p className="max-w-prose leading-relaxed text-ink">
         {t.promptNote}
         <a
           href={GIST_URL}
