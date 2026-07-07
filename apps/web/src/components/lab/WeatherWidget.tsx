@@ -387,13 +387,12 @@ function HighlightedPrompt({
   for (const m of matches) {
     if (m.start < cursor) continue; // already inside an accepted (longer) span
     if (m.start > cursor) out.push(prompt.slice(cursor, m.start));
-    // Underline only the words, leaving the template's own indentation / line
-    // breaks unstyled — so a multi-line value reads as a tidy marked token instead
-    // of one big filled block. The green dotted underline signals "live + clickable".
+    // Collapse whitespace inside substitutions so they wrap like ordinary prose
+    // inside the prompt instead of preserving incidental template indentation.
     const raw = prompt.slice(m.start, m.end);
     const lead = raw.match(/^\s*/)?.[0] ?? '';
     const trail = raw.match(/\s*$/)?.[0] ?? '';
-    const core = raw.slice(lead.length, raw.length - trail.length);
+    const core = raw.slice(lead.length, raw.length - trail.length).replace(/\s+/g, ' ');
     const idx = key++;
     const open = active === idx;
     if (lead) out.push(lead);
@@ -403,8 +402,10 @@ function HighlightedPrompt({
         type="button"
         onClick={() => setActive(open ? null : idx)}
         aria-expanded={open}
-        className={`cursor-pointer border-0 bg-transparent p-0 font-[inherit] text-[length:inherit] leading-[inherit] text-green underline decoration-dotted decoration-1 underline-offset-[3px] transition-colors ${
-          open ? 'decoration-green decoration-solid' : 'decoration-green/50 hover:decoration-green'
+        className={`box-decoration-clone cursor-pointer rounded-[3px] border border-green/35 px-[0.14em] py-[0.02em] font-[inherit] text-[length:inherit] leading-[inherit] text-green-deep underline decoration-green decoration-1 underline-offset-[3px] transition-colors whitespace-normal break-words ${
+          open
+            ? 'bg-green/25 decoration-solid'
+            : 'bg-green/15 decoration-dotted hover:bg-green/25 hover:decoration-solid'
         }`}
       >
         {core}
@@ -504,7 +505,7 @@ function Explainer({ scene, t }: { scene: SceneState; t: Strings }) {
         {t.promptNoteAfter}
       </p>
       {ready ? (
-        <pre className="max-h-[50vh] overflow-auto rounded-lg border border-rule bg-coal/40 p-4 font-mono text-xs leading-relaxed text-ink/90 whitespace-pre-wrap lg:max-h-none lg:min-h-0 lg:flex-1">
+        <pre className="max-h-[50vh] overflow-auto rounded-lg border border-rule bg-coal/40 p-4 font-mono text-xs leading-relaxed text-ink/90 whitespace-pre-line lg:max-h-none lg:min-h-0 lg:flex-1">
           {subs.length > 0 ? (
             <HighlightedPrompt prompt={scene.prompt!} subs={subs} t={t} />
           ) : (
