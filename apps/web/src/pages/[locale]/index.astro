@@ -143,11 +143,7 @@ function calMonth(date: Date): string {
                 </div>
                 <div class="programme-content">
                   <p class="workbench event">
-                    ▸ {talk.data.eventUrl ? (
-                      <a class="event-link" href={talk.data.eventUrl} rel="noopener">{talk.data.event}</a>
-                    ) : (
-                      <span>{talk.data.event}</span>
-                    )}
+                    ▸ <span>{talk.data.event}</span>
                   </p>
                   <h2 class="programme-title">
                     <a href={detailHref}>{talk.data.title}</a>
@@ -164,6 +160,17 @@ function calMonth(date: Date): string {
                       <>
                         <span aria-hidden="true">·</span>
                         <span>{languageBadge(talk.data.language)}</span>
+                      </>
+                    )}
+                    {talk.data.videoUrl && (
+                      <>
+                        <span aria-hidden="true">·</span>
+                        <span class="youtube-glyph" aria-label={strings.labels.video} title={strings.labels.video}>
+                          <svg viewBox="0 0 24 16" aria-hidden="true" focusable="false">
+                            <path d="M23.5 2.5c-.3-1.1-1.1-1.9-2.2-2.2C19.4 0 12 0 12 0S4.6 0 2.7.3C1.6.6.8 1.4.5 2.5.2 4.4.2 8 .2 8s0 3.6.3 5.5c.3 1.1 1.1 1.9 2.2 2.2 1.9.3 9.3.3 9.3.3s7.4 0 9.3-.3c1.1-.3 1.9-1.1 2.2-2.2.3-1.9.3-5.5.3-5.5s0-3.6-.3-5.5Z" />
+                            <path class="youtube-glyph-triangle" d="M9.7 11.4V4.6L15.8 8l-6.1 3.4Z" />
+                          </svg>
+                        </span>
                       </>
                     )}
                   </p>
@@ -569,6 +576,21 @@ function calMonth(date: Date): string {
   .event-link:hover {
     background: transparent;
     color: var(--orange-accent);
+  }
+  .youtube-glyph {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: -0.08em;
+    color: var(--orange-accent);
+  }
+  .youtube-glyph svg {
+    width: 1.22rem;
+    height: 0.82rem;
+    display: block;
+    fill: currentColor;
+  }
+  .youtube-glyph-triangle {
+    fill: var(--bg-paper);
   }
   .programme-title {
     font-family: var(--font-display);
