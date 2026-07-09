@@ -19,12 +19,14 @@ interface Props {
   entries: TimelineEntry[];
   /** Homepage variant: no year milestones, tighter rows, no abstracts/photos. */
   compact?: boolean;
+  /** Keep upcoming talks in the DOM but hidden until the client date check reveals them. */
+  hideUpcoming?: boolean;
   /** Backlog variant: full anatomy, but undated — no milestones, no date
    *  stamps, hollow "pending" nodes. */
   undated?: boolean;
 }
 
-const { locale, entries, compact = false, undated = false } = Astro.props;
+const { locale, entries, compact = false, hideUpcoming = false, undated = false } = Astro.props;
 const strings = t(locale);
 
 const monthFmt = new Intl.DateTimeFormat(bcp47Locale(locale), { month: 'short' });
@@ -167,6 +169,7 @@ function kindLabel(kind: KindLabelKey): string {
           class:list={['entry', 'entry-talk', { 'is-upcoming': upcoming }]}
           data-iso={entry.date.toISOString()}
           data-upcomable
+          hidden={hideUpcoming && upcoming}
         >
           {stamp}
           <article class="body">

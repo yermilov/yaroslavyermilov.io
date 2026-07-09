@@ -26,13 +26,17 @@ const upcoming = allTalks
   .filter((talk) => atMidnight(talk.data.date) >= today)
   .reverse(); // soonest first
 
-/* Recent stream: the merged writing & talking timeline, minus the future
- * talks already shown in "Catch me at". We render a generous batch; on
- * desktop a clamp script hides whatever doesn't fit the viewport. */
+/* Recent stream: render the merged writing & talking timeline plus hidden
+ * upcoming-talk candidates. Static builds can go stale overnight: the
+ * programme block already hides passed talks client-side, so the recent list
+ * needs those same talks in the DOM to reveal them once they become past.
+ * On desktop a clamp script hides whatever doesn't fit the viewport. */
 const RECENT_COUNT = 8;
-const recent = (await getWritingTalkingTimeline(locale))
-  .filter((e) => !(e.kind === 'talk' && atMidnight(e.date) >= today))
-  .slice(0, RECENT_COUNT);
+const timeline = await getWritingTalkingTimeline(locale);
+const recent = [
+  ...timeline.filter((e) => e.kind === 'talk' && atMidnight(e.date) >= today),
+  ...timeline.filter((e) => !(e.kind === 'talk' && atMidnight(e.date) >= today)).slice(0, RECENT_COUNT),
+].sort((a, b) => b.date.getTime() - a.date.getTime());
 
 /* From the shelf: promote any inspiration entry worth recommending — books
  * and links alike, gated at 4–5 stars. Newest server-rendered; the whole
@@ -189,8 +193,8 @@ function calMonth(date: Date): string {
               {strings.home.everything}
             </a>
           </div>
-          <div class="recent-clip" data-recent-clamp>
-            <Timeline locale={locale} entries={recent} compact />
+          <div class="recent-clip" data-recent-clamp data-recent-max={RECENT_COUNT}>
+            <Timeline locale={locale} entries={recent} compact hideUpcoming />
           </div>
         </section>
 
@@ -254,21 +258,45 @@ function calMonth(date: Date): string {
     }
   }
 
-  // Recent clamp: on the viewport-locked desktop layout, hide the timeline
-  // entries that overflow the column so the page never scrolls. The first
-  // entry always stays; "everything →" covers the rest.
+  // Recent self-correction + clamp. Keep static builds fresh overnight: talks
+  // rendered as hidden upcoming candidates become recent once their date is in
+  // the past. Then cap to the newest visible items and, on viewport-locked
+  // desktop, hide rows that still overflow the column.
   {
     const clip = document.querySelector<HTMLElement>('[data-recent-clamp]');
     if (clip) {
       const lock = window.matchMedia('(min-width: 960px) and (min-height: 620px)');
       const items = Array.from(clip.querySelectorAll<HTMLElement>(':scope li'));
+      const maxVisible = Number(clip.dataset.recentMax ?? '8');
       const apply = () => {
         items.forEach((li) => (li.hidden = false));
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let visible = 0;
+        items.forEach((li) => {
+          const iso = li.getAttribute('data-iso');
+          const isUpcomingTalk = li.hasAttribute('data-upcomable');
+          if (iso && isUpcomingTalk) {
+            const d = new Date(iso);
+            d.setHours(0, 0, 0, 0);
+            if (d >= today) {
+              li.hidden = true;
+              return;
+            }
+          }
+          visible += 1;
+          if (visible > maxVisible) li.hidden = true;
+        });
         if (!lock.matches) return;
         const limit = clip.getBoundingClientRect().bottom;
         let cut = false;
-        items.forEach((li, i) => {
-          if (i === 0) return;
+        let keptFirst = false;
+        items.forEach((li) => {
+          if (li.hidden) return;
+          if (!keptFirst) {
+            keptFirst = true;
+            return;
+          }
           if (!cut && li.getBoundingClientRect().bottom > limit + 1) cut = true;
           if (cut) li.hidden = true;
         });
