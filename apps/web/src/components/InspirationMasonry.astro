@@ -64,6 +64,7 @@ const stars = (r: number) => '★'.repeat(r) + '☆'.repeat(5 - r);
           return (
             <li class="pin pin-tweet">
               <TweetCard
+                embedded
                 url={l.data.url}
                 author={author}
                 handle={l.data.handle}
@@ -221,9 +222,25 @@ const stars = (r: number) => '★'.repeat(r) + '☆'.repeat(5 - r);
     letter-spacing: 0.01em;
     color: var(--ink);
   }
-  /* A tweet pin: the TweetCard is self-framed; the author's take sits beneath it. */
+  /* A tweet pin is ONE flat bordered card like the book pins beside it: the
+     embedded TweetCard renders frameless inside this border, and the author's take
+     sits within the same card (not floating outside it). No shadow — Field Journal
+     depth is tonal + rule. */
+  .pin-tweet {
+    overflow: hidden;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    background: var(--bg-elevated);
+    transition:
+      border-color 0.18s ease,
+      background-color 0.18s ease;
+  }
+  .pin-tweet:hover {
+    border-color: var(--green-primary);
+  }
   .tweet-take {
-    margin: 0.55rem 0.1rem 0;
+    margin: 0;
+    padding: 0 var(--space-2) var(--space-2);
   }
   @media (max-width: 34rem) {
     .masonry {

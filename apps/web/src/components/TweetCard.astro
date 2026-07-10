@@ -22,11 +22,18 @@ interface Props {
   media?: string | undefined;
   /** Render a play affordance over the media (the tweet links to the video). */
   hasVideo?: boolean | undefined;
+  /**
+   * Embedded variant: drop the card's own frame (border, radius, offset shadow,
+   * outer padding) so a surrounding element supplies the card. Used in the
+   * inspiration masonry, where the tweet must read as one flat bordered pin like
+   * the book pins beside it. Standalone (e.g. the Timeline) keeps the full frame.
+   */
+  embedded?: boolean | undefined;
 }
-const { url, author, handle, date, avatar, replyTo, media, hasVideo } = Astro.props;
+const { url, author, handle, date, avatar, replyTo, media, hasVideo, embedded } = Astro.props;
 ---
 
-<figure class="tweet">
+<figure class:list={['tweet', { embedded }]}>
   <div class="tweet-head">
     {avatar && <img class="tweet-avatar" src={avatar} alt="" loading="lazy" />}
     <span class="tweet-id">
@@ -64,6 +71,19 @@ const { url, author, handle, date, avatar, replyTo, media, hasVideo } = Astro.pr
     background: var(--bg-elevated);
     padding: var(--space-3);
     box-shadow: 4px 6px 0 0 var(--rule);
+  }
+
+  /* Embedded in a surrounding card (the inspiration masonry pin): drop this
+     component's own frame so the parent's flat 1px rule border is the only card
+     edge — matching the book pins on the same wall. No offset shadow (the pin is
+     flat, Field-Journal style); the parent supplies border + background. */
+  .tweet.embedded {
+    max-width: none;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: var(--space-2);
   }
 
   .tweet-head {
