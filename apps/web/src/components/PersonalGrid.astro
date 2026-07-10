@@ -1,0 +1,140 @@
+---
+/**
+ * Personal moments as an Instagram-style grid — the platform's LAYOUT (a tight, square
+ * photo grid) reinterpreted in the site's Field Journal aesthetic: 1px rule borders,
+ * paper/ink tones, NO drop shadows or rounded "card" chrome. Photo-moments are flattened
+ * to individual square tiles (one photo per cell) so every shot shows in the feed; each
+ * tile slides up a paper caption band (serif caption + mono location · date) on hover.
+ * Pure CSS grid — no JS.
+ */
+import type { TimelineEntry } from '@lib/content';
+import type { Locale } from '@lib/i18n';
+
+interface Props {
+  locale: Locale;
+  entries: TimelineEntry[];
+}
+const { locale, entries } = Astro.props;
+
+type Tile = { src: string; caption: string | undefined; location: string | undefined; date: Date };
+const tiles: Tile[] = [];
+for (const entry of entries) {
+  if (entry.kind !== 'photos') continue;
+  for (const src of entry.photos) {
+    tiles.push({ src, caption: entry.caption, location: entry.location, date: entry.date });
+  }
+}
+
+const monthFmt = new Intl.DateTimeFormat(locale === 'ua' ? 'uk-UA' : 'en', {
+  year: 'numeric',
+  month: 'short',
+});
+const metaText = (tile: Tile) => [tile.location, monthFmt.format(tile.date)].filter(Boolean).join(' · ');
+const viewLabel = locale === 'ua' ? 'Відкрити фото' : 'Open photo';
+const tileLabel = (tile: Tile) => [tile.caption, metaText(tile)].filter(Boolean).join(' · ') || viewLabel;
+---
+
+<ul class="grid" role="list">
+  {
+    tiles.map((tile) => (
+      <li class="cell">
+        {/* Each tile is a focusable link to the full-size photo — so the caption is
+            reachable by keyboard (:focus-visible), not hover-only, and tapping opens the
+            shot (the platform's tile-opens-the-post affordance). */}
+        <a class="frame" href={tile.src} target="_blank" rel="noopener" aria-label={tileLabel(tile)}>
+          <img class="photo" src={tile.src} alt={tile.caption ?? ''} loading="lazy" />
+          <span class="cap">
+            {tile.caption ? <span class="cap-title">{tile.caption}</span> : null}
+            <span class="cap-meta">{metaText(tile)}</span>
+          </span>
+        </a>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  /* Tight square grid — the platform's signature. Column count is fixed (like the
+     profile grid), not fluid, so the squares stay a clean 3-up / 2-up. */
+  .grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-1);
+  }
+  .cell {
+    margin: 0;
+  }
+  .frame {
+    position: relative;
+    display: block;
+    margin: 0;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border: 1px solid var(--rule);
+    background: var(--bg-elevated);
+  }
+  .frame:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+  .photo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Field Journal depth is tonal + rule, never shadow — a slow zoom is the only motion. */
+    transition: transform 0.5s ease;
+  }
+  .frame:hover .photo,
+  .frame:focus .photo {
+    transform: scale(1.04);
+  }
+  /* Caption is a PAPER band that slides up over the photo on hover — not an Instagram
+     dark scrim: keeps the page on-aesthetic (ink on paper, mono meta), theme-aware, no
+     shadow. The photo stays the hero until you hover. */
+  .cap {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: var(--space-2);
+    background: color-mix(in oklab, var(--bg-paper) 90%, transparent);
+    border-top: 1px solid var(--rule);
+    transform: translateY(101%);
+    transition: transform 0.22s ease;
+  }
+  .frame:hover .cap,
+  .frame:focus .cap {
+    transform: translateY(0);
+  }
+  /* Touch devices can't hover — keep the caption visible so its info isn't locked away. */
+  @media (hover: none) {
+    .cap {
+      transform: translateY(0);
+    }
+  }
+  .cap-title {
+    font-family: var(--font-display);
+    font-size: 0.98rem;
+    line-height: 1.2;
+    color: var(--ink);
+  }
+  .cap-meta {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+  @media (max-width: 34rem) {
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
