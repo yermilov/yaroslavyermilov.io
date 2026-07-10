@@ -8,6 +8,7 @@
  */
 import { bookSlug, type TimelineEntry } from '@lib/content';
 import { localePath, localized, t, type Locale } from '@lib/i18n';
+import TweetCard from '@components/TweetCard.astro';
 
 interface Props {
   locale: Locale;
@@ -48,6 +49,49 @@ const stars = (r: number) => '★'.repeat(r) + '☆'.repeat(5 - r);
       if (entry.kind === 'link') {
         const l = entry.link;
         const summary = l.data.summary ?? null;
+        // A tweet renders as a pseudo-screenshot (the native TweetCard: avatar,
+        // @handle, verbatim body, "View on X"), with Yarik's rating + verdict kept
+        // below it as his take.
+        if (l.data.kind === 'tweet' && l.data.handle && l.data.body) {
+          const author = l.data.source.split('·')[0]?.trim() || l.data.source;
+          const dateStr = l.data.postedAt
+            ? new Intl.DateTimeFormat(locale === 'ua' ? 'uk-UA' : 'en', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+              }).format(l.data.postedAt)
+            : '';
+          return (
+            <li class="pin pin-tweet">
+              <TweetCard
+                url={l.data.url}
+                author={author}
+                handle={l.data.handle}
+                date={dateStr}
+                avatar={l.data.avatar}
+                media={l.data.thumbnail}
+                hasVideo={l.data.hasVideo}
+              >
+                {l.data.body.split('\n').map((line, i) => (
+                  <Fragment>
+                    {i > 0 ? <br /> : null}
+                    {line}
+                  </Fragment>
+                ))}
+              </TweetCard>
+              {l.data.rating || l.data.verdict ? (
+                <p class="tweet-take">
+                  {l.data.rating ? (
+                    <span class="rating" aria-label={`${strings.books.rating}: ${l.data.rating}/5`}>
+                      {stars(l.data.rating)}
+                    </span>
+                  ) : null}
+                  {l.data.verdict ? <span class="verdict">{l.data.verdict}</span> : null}
+                </p>
+              ) : null}
+            </li>
+          );
+        }
         return (
           <li class="pin pin-quote">
             <a class="pin-link" href={l.data.url} rel="noopener">
@@ -176,6 +220,10 @@ const stars = (r: number) => '★'.repeat(r) + '☆'.repeat(5 - r);
     font-size: 0.7rem;
     letter-spacing: 0.01em;
     color: var(--ink);
+  }
+  /* A tweet pin: the TweetCard is self-framed; the author's take sits beneath it. */
+  .tweet-take {
+    margin: 0.55rem 0.1rem 0;
   }
   @media (max-width: 34rem) {
     .masonry {
