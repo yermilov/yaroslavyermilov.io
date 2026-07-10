@@ -2,10 +2,13 @@
 /**
  * Personal moments as an Instagram-style grid — the platform's LAYOUT (a tight, square
  * photo grid) reinterpreted in the site's Field Journal aesthetic: 1px rule borders,
- * paper/ink tones, NO drop shadows or rounded "card" chrome. Photo-moments are flattened
- * to individual square tiles (one photo per cell) so every shot shows in the feed; each
- * tile slides up a paper caption band (serif caption + mono location · date) on hover.
- * Pure CSS grid — no JS.
+ * paper/ink tones, NO drop shadows or rounded "card" chrome. Each moment is one square
+ * cell; a moment with a SINGLE photo is a plain tile, and a moment holding several photos
+ * (same day + caption + location — a burst of near-identical shots) collapses into ONE
+ * swipeable CAROUSEL cell — the platform's multi-photo post — instead of spilling across
+ * separate tiles. Swiping is native CSS scroll-snap (touch + trackpad), so there is no JS;
+ * a corner badge marks a carousel and shows the count. Each cell slides up a paper caption
+ * band (serif caption + mono location · date) on hover/focus.
  */
 import type { TimelineEntry } from '@lib/content';
 import type { Locale } from '@lib/i18n';
@@ -16,42 +19,119 @@ interface Props {
 }
 const { locale, entries } = Astro.props;
 
-type Tile = { src: string; caption: string | undefined; location: string | undefined; date: Date };
-const tiles: Tile[] = [];
-for (const entry of entries) {
-  if (entry.kind !== 'photos') continue;
-  for (const src of entry.photos) {
-    tiles.push({ src, caption: entry.caption, location: entry.location, date: entry.date });
-  }
-}
+type Moment = { photos: string[]; caption: string | undefined; location: string | undefined; date: Date };
+const moments: Moment[] = entries
+  .filter((e): e is Extract<TimelineEntry, { kind: 'photos' }> => e.kind === 'photos')
+  .map((e) => ({ photos: e.photos, caption: e.caption, location: e.location, date: e.date }));
 
 const monthFmt = new Intl.DateTimeFormat(locale === 'ua' ? 'uk-UA' : 'en', {
   year: 'numeric',
   month: 'short',
 });
-const metaText = (tile: Tile) => [tile.location, monthFmt.format(tile.date)].filter(Boolean).join(' · ');
+const metaText = (m: Moment) => [m.location, monthFmt.format(m.date)].filter(Boolean).join(' · ');
 const viewLabel = locale === 'ua' ? 'Відкрити фото' : 'Open photo';
-const tileLabel = (tile: Tile) => [tile.caption, metaText(tile)].filter(Boolean).join(' · ') || viewLabel;
+const momentLabel = (m: Moment) => [m.caption, metaText(m)].filter(Boolean).join(' · ') || viewLabel;
+// Instagram's carousel affordance: a "photo N of M" hint for assistive tech + a corner badge.
+const slideLabel = (m: Moment, i: number) =>
+  locale === 'ua'
+    ? `${momentLabel(m)} — фото ${i + 1} з ${m.photos.length}`
+    : `${momentLabel(m)} — photo ${i + 1} of ${m.photos.length}`;
 ---
 
 <ul class="grid" role="list">
   {
-    tiles.map((tile) => (
-      <li class="cell">
-        {/* Each tile is a focusable link to the full-size photo — so the caption is
-            reachable by keyboard (:focus-visible), not hover-only, and tapping opens the
-            shot (the platform's tile-opens-the-post affordance). */}
-        <a class="frame" href={tile.src} target="_blank" rel="noopener" aria-label={tileLabel(tile)}>
-          <img class="photo" src={tile.src} alt={tile.caption ?? ''} loading="lazy" />
-          <span class="cap">
-            {tile.caption ? <span class="cap-title">{tile.caption}</span> : null}
-            <span class="cap-meta">{metaText(tile)}</span>
-          </span>
-        </a>
-      </li>
-    ))
+    moments.map((m) =>
+      m.photos.length === 1 ? (
+        <li class="cell">
+          {/* Single-photo moment — a focusable link to the full-size shot (caption reachable
+              by keyboard via :focus-visible, and tapping opens the photo). */}
+          <a class="frame" href={m.photos[0]} target="_blank" rel="noopener" aria-label={momentLabel(m)}>
+            <img class="photo" src={m.photos[0]} alt={m.caption ?? ''} loading="lazy" />
+            <span class="cap">
+              {m.caption ? <span class="cap-title">{m.caption}</span> : null}
+              <span class="cap-meta">{metaText(m)}</span>
+            </span>
+          </a>
+        </li>
+      ) : (
+        <li class="cell">
+          {/* Multi-photo moment — one square cell holding a native scroll-snap carousel. The
+              track is a horizontal scroller (swipe on touch/trackpad); each slide links to its
+              full-size photo. A corner badge marks it as a carousel and shows the count. */}
+          <div class="carousel" role="group" aria-roledescription="carousel" aria-label={momentLabel(m)}>
+            <div class="track">
+              {m.photos.map((src, i) => (
+                <a class="frame slide" href={src} target="_blank" rel="noopener" aria-label={slideLabel(m, i)}>
+                  <img class="photo" src={src} alt={i === 0 ? (m.caption ?? '') : ''} loading="lazy" />
+                </a>
+              ))}
+            </div>
+            {/* Prev/next arrows — a progressive enhancement for pointer users (touch/trackpad
+                already swipe the native scroll-snap track). Hidden until JS wires them up, so a
+                no-JS visitor never sees dead controls. */}
+            <button class="nav prev" type="button" data-nav="prev" hidden aria-label={locale === 'ua' ? 'Попереднє фото' : 'Previous photo'}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </button>
+            <button class="nav next" type="button" data-nav="next" hidden aria-label={locale === 'ua' ? 'Наступне фото' : 'Next photo'}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </button>
+            <span class="count" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" aria-hidden="true">
+                <rect x="7.5" y="3.5" width="13" height="13" rx="2" stroke="currentColor" stroke-width="1.6" />
+                <rect
+                  x="3.5"
+                  y="7.5"
+                  width="13"
+                  height="13"
+                  rx="2"
+                  fill="var(--bg-paper)"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                />
+              </svg>
+              {m.photos.length}
+            </span>
+            {m.caption || m.location ? (
+              <span class="cap">
+                {m.caption ? <span class="cap-title">{m.caption}</span> : null}
+                <span class="cap-meta">{metaText(m)}</span>
+              </span>
+            ) : (
+              <span class="cap">
+                <span class="cap-meta">{metaText(m)}</span>
+              </span>
+            )}
+          </div>
+        </li>
+      ),
+    )
   }
 </ul>
+
+<script>
+  // Progressive enhancement: wire the carousel arrows to the native scroll-snap track. Touch
+  // and trackpad users already swipe the track directly; this gives pointer users the same
+  // reach. The buttons ship `hidden`, so a no-JS visitor never sees controls that do nothing.
+  for (const carousel of document.querySelectorAll<HTMLElement>('.carousel')) {
+    const track = carousel.querySelector<HTMLElement>('.track');
+    if (!track) continue;
+    const prev = carousel.querySelector<HTMLButtonElement>('[data-nav="prev"]');
+    const next = carousel.querySelector<HTMLButtonElement>('[data-nav="next"]');
+    const step = () => track.clientWidth;
+    const sync = () => {
+      const max = track.scrollWidth - track.clientWidth - 1;
+      if (prev) prev.disabled = track.scrollLeft <= 1;
+      if (next) next.disabled = track.scrollLeft >= max;
+    };
+    prev?.addEventListener('click', () => track.scrollBy({ left: -step(), behavior: 'smooth' }));
+    next?.addEventListener('click', () => track.scrollBy({ left: step(), behavior: 'smooth' }));
+    track.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('resize', sync, { passive: true });
+    prev?.removeAttribute('hidden');
+    next?.removeAttribute('hidden');
+    sync();
+  }
+</script>
 
 <style>
   /* Tight square grid — the platform's signature. Column count is fixed (like the
@@ -92,9 +172,112 @@ const tileLabel = (tile: Tile) => [tile.caption, metaText(tile)].filter(Boolean)
   .frame:focus .photo {
     transform: scale(1.04);
   }
-  /* Caption is a PAPER band that slides up over the photo on hover — not an Instagram
+
+  /* --- Carousel: a square cell wrapping a native horizontal scroll-snap track ------------ */
+  .carousel {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border: 1px solid var(--rule);
+    background: var(--bg-elevated);
+  }
+  .track {
+    display: flex;
+    height: 100%;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    /* Hide the scrollbar — the corner badge signals "swipe for more", Instagram-style. */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    overscroll-behavior-x: contain;
+  }
+  .track::-webkit-scrollbar {
+    display: none;
+  }
+  /* Each slide fills the square; the shared cell border already frames the group, so slides
+     drop their own border to avoid a double rule while scrolling. */
+  .slide {
+    flex: 0 0 100%;
+    aspect-ratio: auto;
+    height: 100%;
+    border: none;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+  }
+  /* Instagram's multi-photo badge — stacked squares + count, top-right, on a paper chip so it
+     stays legible over any photo without a shadow. */
+  .count {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28em;
+    padding: 0.12rem 0.4rem;
+    background: color-mix(in oklab, var(--bg-paper) 88%, transparent);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    line-height: 1;
+    pointer-events: none;
+  }
+  .count svg {
+    display: block;
+  }
+
+  /* Prev/next arrows — paper chips matching the count badge, revealed on hover/focus so they
+     never clutter the resting grid. Disabled (at a track end) fades them out, Instagram-style. */
+  .nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    padding: 0;
+    color: var(--ink);
+    background: color-mix(in oklab, var(--bg-paper) 88%, transparent);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+  }
+  .nav.prev {
+    left: var(--space-2);
+  }
+  .nav.next {
+    right: var(--space-2);
+  }
+  .carousel:hover .nav,
+  .carousel:focus-within .nav {
+    opacity: 1;
+  }
+  .nav:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+    opacity: 1;
+  }
+  .nav:disabled {
+    opacity: 0 !important;
+    pointer-events: none;
+  }
+  .nav svg {
+    display: block;
+  }
+  /* Touch devices swipe the track natively — hide the arrows there to keep the tile clean. */
+  @media (hover: none) {
+    .nav {
+      display: none;
+    }
+  }
+
+  /* Caption is a PAPER band that slides up over the photo on hover/focus — not an Instagram
      dark scrim: keeps the page on-aesthetic (ink on paper, mono meta), theme-aware, no
-     shadow. The photo stays the hero until you hover. */
+     shadow. The photo stays the hero until you hover. Shared by both tile + carousel. */
   .cap {
     position: absolute;
     left: 0;
@@ -108,9 +291,16 @@ const tileLabel = (tile: Tile) => [tile.caption, metaText(tile)].filter(Boolean)
     border-top: 1px solid var(--rule);
     transform: translateY(101%);
     transition: transform 0.22s ease;
+    /* Informational only — the whole tile/slide is the link. Stay transparent to pointer
+       events so a tap or swipe that lands on the caption still reaches the photo/track
+       beneath (matters on touch, where the carousel caption is a forced-visible sibling
+       overlay above the scroll track — otherwise it would swallow the gesture). */
+    pointer-events: none;
   }
   .frame:hover .cap,
-  .frame:focus .cap {
+  .frame:focus .cap,
+  .carousel:hover .cap,
+  .carousel:focus-within .cap {
     transform: translateY(0);
   }
   /* Touch devices can't hover — keep the caption visible so its info isn't locked away. */
