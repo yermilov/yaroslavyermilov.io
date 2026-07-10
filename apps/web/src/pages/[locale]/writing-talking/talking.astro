@@ -3,7 +3,7 @@ export const prerender = true;
 import { LOCALES, t, localePath, type Locale } from '@lib/i18n';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import SectionTabs from '@components/SectionTabs.astro';
-import Timeline from '@components/Timeline.astro';
+import SubstackList from '@components/SubstackList.astro';
 import { getWritingTalkingTimeline } from '@lib/content';
 
 export async function getStaticPaths() {
@@ -29,7 +29,7 @@ const tabs = [
     {entries.length === 0 ? (
       <p class="empty">{strings.empty.talking}</p>
     ) : (
-      <Timeline locale={locale} entries={entries} />
+      <SubstackList locale={locale} entries={entries} />
     )}
   </section>
 </BaseLayout>

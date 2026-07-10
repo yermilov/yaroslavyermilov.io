@@ -1,0 +1,241 @@
+---
+/**
+ * Writing & talking as a Substack-style publication feed — the platform's LAYOUT (a
+ * clean, text-forward list of article previews, each a title + dek + byline-ish meta,
+ * with an optional square thumbnail on the right) reinterpreted in the site's Field
+ * Journal aesthetic: 1px rule dividers between rows, paper/ink tones, serif titles + mono
+ * meta, NO drop shadows or rounded "card" chrome. Posts and talks share the row grammar;
+ * each row is one focusable link to the piece. Pure CSS — no JS.
+ */
+import { postSlug, type TimelineEntry } from '@lib/content';
+import { languageBadge, localePath, localized, t, type Locale } from '@lib/i18n';
+
+interface Props {
+  locale: Locale;
+  entries: TimelineEntry[];
+}
+const { locale, entries } = Astro.props;
+const strings = t(locale);
+
+const dateFmt = new Intl.DateTimeFormat(locale === 'ua' ? 'uk-UA' : 'en', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
+
+// Future-dated talks are "upcoming" (matches Timeline). Computed at build; a small script
+// below re-checks on load so a stale prerender stops flagging a talk once its date passes.
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+function isUpcoming(d: Date): boolean {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x >= today;
+}
+
+type Row = {
+  href: string;
+  kind: 'post' | 'talk';
+  kindLabel: string;
+  title: string;
+  dek: string;
+  metaExtra: string | undefined;
+  badge: string | undefined;
+  thumb: string | undefined;
+  date: Date;
+  iso: string;
+  upcoming: boolean;
+};
+
+const rows: Row[] = [];
+for (const entry of entries) {
+  if (entry.kind === 'post') {
+    const p = entry.post;
+    rows.push({
+      href: localePath(locale, `blog/${postSlug(p)}`),
+      kind: 'post',
+      kindLabel: strings.timeline.post,
+      title: p.data.title,
+      dek: p.data.summary,
+      metaExtra: undefined,
+      badge: languageBadge(p.data.language),
+      thumb: p.data.coverImage,
+      date: entry.date,
+      iso: entry.date.toISOString(),
+      upcoming: false,
+    });
+  } else if (entry.kind === 'talk') {
+    const tk = entry.talk;
+    const abstract = localized(locale, tk.data.abstract, tk.data.abstractUk);
+    rows.push({
+      href: localePath(locale, `talks/${tk.slug}`),
+      kind: 'talk',
+      kindLabel: strings.timeline.talk,
+      title: localized(locale, tk.data.title, tk.data.titleUk),
+      dek: abstract.split(/\n\n+/)[0] ?? '',
+      metaExtra: localized(locale, tk.data.event, tk.data.eventUk),
+      badge: tk.data.language ? languageBadge(tk.data.language) : undefined,
+      thumb: tk.data.photos?.[0],
+      date: entry.date,
+      iso: entry.date.toISOString(),
+      upcoming: isUpcoming(entry.date),
+    });
+  }
+}
+---
+
+<ul class="feed" role="list">
+  {
+    rows.map((row) => (
+      <li class="item" data-iso={row.iso} data-upcomable={row.upcoming ? '' : undefined}>
+        <a class={`row row-${row.kind}`} href={row.href}>
+          <span class="body">
+            <span class="meta">
+              <span class="kind">{row.kindLabel}</span>
+              {row.upcoming ? (
+                <span class="upcoming" data-upcoming-tag>{strings.timeline.upcoming}</span>
+              ) : null}
+              {row.metaExtra ? <span class="meta-part"> · {row.metaExtra}</span> : null}
+              <span class="meta-part"> · {dateFmt.format(row.date)}</span>
+              {row.badge ? <span class="badge">{row.badge}</span> : null}
+            </span>
+            <span class="title">{row.title}</span>
+            {row.dek ? <span class="dek">{row.dek}</span> : null}
+          </span>
+          {row.thumb ? (
+            <span class="thumb">
+              <img src={row.thumb} alt="" loading="lazy" />
+            </span>
+          ) : null}
+        </a>
+      </li>
+    ))
+  }
+</ul>
+
+<script>
+  // A static build's "today" goes stale between deploys — re-check upcoming talks on load
+  // so a talk whose date has passed loses its "upcoming" tag (mirrors Timeline).
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  document.querySelectorAll<HTMLElement>('[data-upcomable]').forEach((el) => {
+    const iso = el.dataset.iso;
+    if (!iso) return;
+    const d = new Date(iso);
+    d.setHours(0, 0, 0, 0);
+    if (d < today) el.querySelector('[data-upcoming-tag]')?.remove();
+  });
+</script>
+
+<style>
+  .feed {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: 46rem;
+  }
+  /* Rule dividers between entries — the feed reads as one column, no card chrome. */
+  .item {
+    border-top: 1px solid var(--rule);
+  }
+  .item:last-child {
+    border-bottom: 1px solid var(--rule);
+  }
+  .row {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-1);
+    color: inherit;
+    text-decoration: none;
+    /* Field Journal depth is tonal + rule, never shadow. */
+    transition: background-color 0.16s ease;
+  }
+  .row:hover {
+    background: var(--bg-elevated);
+  }
+  .row:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+  .body {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .meta {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+  }
+  .kind {
+    color: var(--green-primary);
+  }
+  /* Future-dated talk marker — orange, so a scheduled talk never reads as a past one. */
+  .upcoming {
+    margin-left: 0.5em;
+    color: var(--orange-accent);
+    font-weight: 600;
+  }
+  .badge {
+    margin-left: 0.5em;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 0 0.3em;
+    font-size: 0.9em;
+    color: var(--ink-muted);
+  }
+  .title {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    line-height: 1.2;
+    color: var(--ink);
+    transition: color 0.16s ease;
+  }
+  .row:hover .title {
+    color: var(--green-primary);
+  }
+  .dek {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--ink-muted);
+  }
+  /* Square thumbnail on the right — the platform's article-image slot, only when a piece
+     has one; text-only rows just run full width. */
+  .thumb {
+    flex: 0 0 auto;
+    width: 6.5rem;
+    height: 6.5rem;
+    overflow: hidden;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    background: var(--bg-elevated);
+  }
+  .thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  @media (max-width: 34rem) {
+    .row {
+      gap: var(--space-2);
+    }
+    .title {
+      font-size: 1.15rem;
+    }
+    .thumb {
+      width: 4.5rem;
+      height: 4.5rem;
+    }
+  }
+</style>
