@@ -2,7 +2,7 @@
 export const prerender = true;
 import { LOCALES, t, type Locale } from '@lib/i18n';
 import BaseLayout from '@layouts/BaseLayout.astro';
-import Timeline from '@components/Timeline.astro';
+import InspirationMasonry from '@components/InspirationMasonry.astro';
 import { getInspirationTimeline, getBacklogTimeline } from '@lib/content';
 
 export async function getStaticPaths() {
@@ -28,14 +28,14 @@ const [stamped, backlog] = await Promise.all([
         {backlog.length > 0 && (
           <section class="sub" aria-label={strings.books.backlog}>
             <p class="workbench sub-label">/ {strings.books.backlog}</p>
-            <Timeline locale={locale} entries={backlog} undated />
+            <InspirationMasonry locale={locale} entries={backlog} />
           </section>
         )}
 
         {stamped.length > 0 && (
           <section class="sub" aria-label={strings.books.stamped}>
             <p class="workbench sub-label">/ {strings.books.stamped}</p>
-            <Timeline locale={locale} entries={stamped} />
+            <InspirationMasonry locale={locale} entries={stamped} />
           </section>
         )}
       </>

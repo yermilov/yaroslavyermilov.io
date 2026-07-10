@@ -1,0 +1,189 @@
+---
+/**
+ * Inspiration as a Pinterest-style masonry — the platform's LAYOUT (a dense,
+ * ragged, image-led wall of pins) reinterpreted in the site's Field Journal
+ * aesthetic: paper-tone pins, 1px rule borders, NO drop shadows or rounded "card"
+ * chrome, serif titles + mono labels. Book covers lead each pin; text-only link
+ * entries become quiet quote-pins. Pure CSS `columns` — no JS.
+ */
+import { bookSlug, type TimelineEntry } from '@lib/content';
+import { localePath, localized, t, type Locale } from '@lib/i18n';
+
+interface Props {
+  locale: Locale;
+  entries: TimelineEntry[];
+}
+const { locale, entries } = Astro.props;
+const strings = t(locale);
+const stars = (r: number) => '★'.repeat(r) + '☆'.repeat(5 - r);
+---
+
+<ul class="masonry" role="list">
+  {
+    entries.map((entry) => {
+      if (entry.kind === 'book') {
+        const b = entry.book;
+        const href = localePath(locale, `books/${bookSlug(b)}`);
+        const summary = localized(locale, b.data.summary, b.data.summaryUk);
+        return (
+          <li class="pin">
+            <a class="pin-link" href={href}>
+              <span class="cover">
+                <img src={b.data.cover} alt="" loading="lazy" />
+              </span>
+              <span class="meta">
+                <span class="title">{b.data.title}</span>
+                <span class="byline">{b.data.author}</span>
+                {b.data.rating ? (
+                  <span class="rating" aria-label={`${strings.books.rating}: ${b.data.rating}/5`}>
+                    {stars(b.data.rating)}
+                  </span>
+                ) : null}
+                {summary ? <span class="summary">{summary}</span> : null}
+              </span>
+            </a>
+          </li>
+        );
+      }
+      if (entry.kind === 'link') {
+        const l = entry.link;
+        const summary = l.data.summary ?? null;
+        return (
+          <li class="pin pin-quote">
+            <a class="pin-link" href={l.data.url} rel="noopener">
+              {l.data.thumbnail ? (
+                <span class="cover">
+                  <img src={l.data.thumbnail} alt="" loading="lazy" />
+                </span>
+              ) : null}
+              <span class="meta">
+                <span class="source">{l.data.source}</span>
+                <span class="title">{l.data.title}</span>
+                {l.data.rating ? (
+                  <span class="rating" aria-label={`${strings.books.rating}: ${l.data.rating}/5`}>
+                    {stars(l.data.rating)}
+                  </span>
+                ) : null}
+                {l.data.verdict ? <span class="verdict">{l.data.verdict}</span> : null}
+                {summary ? <span class="summary">{summary}</span> : null}
+              </span>
+            </a>
+          </li>
+        );
+      }
+      return null;
+    })
+  }
+</ul>
+
+<style>
+  /* Ragged masonry wall via CSS columns (no JS, no layout thrash). Column count
+     follows width; pins avoid breaking across columns. */
+  .masonry {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    columns: 3 15rem;
+    column-gap: var(--space-2);
+  }
+  .pin {
+    break-inside: avoid;
+    margin: 0 0 var(--space-2);
+  }
+  .pin-link {
+    display: block;
+    overflow: hidden;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    background: var(--bg-elevated);
+    color: inherit;
+    text-decoration: none;
+    /* Field Journal depth is tonal + rule, never shadow. */
+    transition:
+      border-color 0.18s ease,
+      background-color 0.18s ease;
+  }
+  .pin-link:hover {
+    border-color: var(--green-primary);
+    background: var(--bg-paper);
+  }
+  .pin-link:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+  .cover {
+    display: block;
+    border-bottom: 1px solid var(--rule);
+  }
+  .cover img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .meta {
+    display: block;
+    padding: var(--space-2);
+  }
+  .title {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.02rem;
+    line-height: 1.25;
+    color: var(--ink);
+  }
+  .byline {
+    display: block;
+    margin-top: 0.15rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    color: var(--ink-muted);
+  }
+  .rating {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    color: var(--orange-accent);
+  }
+  .summary {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    overflow: hidden;
+    margin-top: 0.5rem;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: var(--ink-muted);
+  }
+  /* Link entries with no image read as quiet quote-pins — a mono kicker instead
+     of a cover, so the wall still scans as one system. */
+  .pin-quote .source {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--green-primary);
+    margin-bottom: 0.3rem;
+  }
+  /* Link verdict — the author's one-line take, kept as a quiet mono note. */
+  .verdict {
+    display: block;
+    margin-top: 0.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+  }
+  @media (max-width: 34rem) {
+    .masonry {
+      columns: 2 9rem;
+      column-gap: var(--space-1);
+    }
+    .pin {
+      margin-bottom: var(--space-1);
+    }
+  }
+</style>
