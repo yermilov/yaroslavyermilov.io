@@ -1,0 +1,24 @@
+---
+title: 'Skills marketplace'
+canonicalSlug: 'skills-marketplace'
+publishedAt: 2026-07-11
+language: 'en'
+summary: 'A public, installable marketplace of the skills I build for AI coding agents — browse the plugin and copy the install command for Claude Code or Codex.'
+islandComponent: 'SkillsMarketplace'
+---
+
+import SkillsMarketplace from '@components/lab/SkillsMarketplace.tsx';
+
+I keep a public, installable **marketplace of the skills I build for AI coding
+agents** — small, reusable operating procedures an agent loads on demand. It is
+plain files in a git repo: no build step, no server, the marketplace *is* the
+repository. One source serves both **Claude Code** and **Codex**, and the same
+`SKILL.md` files work in either.
+
+<SkillsMarketplace client:load locale="en" />
+
+Three kinds of skill live here: **knowledge** — a domain the agent reads to
+understand it better; **task** — a saved prompt plus the know-how to run it well;
+and **workflow** — a stepwise guide for something non-trivial. The marketplace is
+its own first showcase: the `meta` plugin above is the tooling for building and
+maintaining more, and every new skill I want to share lands here next.
