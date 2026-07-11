@@ -18,4 +18,6 @@ photos:
   - "/talks/panel-ai-javascript-fwdays-2026/06.jpg"
   - "/talks/panel-ai-javascript-fwdays-2026/07.jpg"
   - "/talks/panel-ai-javascript-fwdays-2026/08.jpg"
+photoBursts:
+  - ["/talks/panel-ai-javascript-fwdays-2026/02.jpg", "/talks/panel-ai-javascript-fwdays-2026/03.jpg", "/talks/panel-ai-javascript-fwdays-2026/04.jpg", "/talks/panel-ai-javascript-fwdays-2026/05.jpg", "/talks/panel-ai-javascript-fwdays-2026/06.jpg", "/talks/panel-ai-javascript-fwdays-2026/07.jpg", "/talks/panel-ai-javascript-fwdays-2026/08.jpg"]
 ---

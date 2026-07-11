@@ -14,5 +14,5 @@ photos:
   - "/talks/prompt-2026-berlin/04.jpg"
   - "/talks/prompt-2026-berlin/05.jpg"
 photoBursts:
-  - ["/talks/prompt-2026-berlin/03.jpg", "/talks/prompt-2026-berlin/04.jpg"]
+  - ["/talks/prompt-2026-berlin/01.jpg", "/talks/prompt-2026-berlin/02.jpg", "/talks/prompt-2026-berlin/03.jpg", "/talks/prompt-2026-berlin/04.jpg", "/talks/prompt-2026-berlin/05.jpg"]
 ---

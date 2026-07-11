@@ -36,7 +36,9 @@ photos:
   - "/talks/dou-day-2026/22.jpg"
   - "/talks/dou-day-2026/23.jpg"
 photoBursts:
-  - ["/talks/dou-day-2026/21.jpg", "/talks/dou-day-2026/22.jpg"]
+  - ["/talks/dou-day-2026/03.jpg", "/talks/dou-day-2026/05.jpg", "/talks/dou-day-2026/06.jpg", "/talks/dou-day-2026/07.jpg", "/talks/dou-day-2026/08.jpg", "/talks/dou-day-2026/12.jpg", "/talks/dou-day-2026/13.jpg", "/talks/dou-day-2026/17.jpg", "/talks/dou-day-2026/20.jpg"]
+  - ["/talks/dou-day-2026/01.jpg", "/talks/dou-day-2026/02.jpg", "/talks/dou-day-2026/04.jpg", "/talks/dou-day-2026/09.jpg", "/talks/dou-day-2026/10.jpg", "/talks/dou-day-2026/11.jpg", "/talks/dou-day-2026/14.jpg", "/talks/dou-day-2026/15.jpg", "/talks/dou-day-2026/16.jpg", "/talks/dou-day-2026/18.jpg", "/talks/dou-day-2026/19.jpg"]
+  - ["/talks/dou-day-2026/21.jpg", "/talks/dou-day-2026/22.jpg", "/talks/dou-day-2026/23.jpg"]
 feedback:
   - author: "Vadym Vlasenko"
     avatar: "/talks/dou-day-2026/feedback/vadym-vlasenko.jpg"
