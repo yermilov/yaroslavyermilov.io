@@ -263,9 +263,11 @@ export async function getBacklogTimeline(locale: Locale): Promise<TimelineEntry[
 
 /**
  * "Personal" interleaves standalone gallery shots with talk-event photos.
- * A gallery shot collapses into an Instagram-style carousel ONLY when it's
- * explicitly tagged as part of a near-identical `burst` (same id); every other
- * shot is its own tile. Talk photos stay grouped per event.
+ * Both follow the SAME rule: a photo collapses into an Instagram-style carousel
+ * ONLY when it's explicitly tagged as part of a near-identical burst — a gallery
+ * `burst` id, or a talk `photoBursts` group — and every other shot is its own
+ * tile. So a talk's photos are mostly individual moments, carouselled only where
+ * genuine near-dupes exist.
  */
 export async function getPersonalTimeline(): Promise<TimelineEntry[]> {
   const [standalone, talks] = await Promise.all([getCollection('gallery'), getTalks()]);
@@ -287,10 +289,26 @@ export async function getPersonalTimeline(): Promise<TimelineEntry[]> {
     addToKey(key, entry.data.date, [entry.data.src], entry.data.caption, entry.data.location);
   }
   for (const talk of talks) {
-    if (talk.data.photos.length > 0) {
-      const key = `talk:${talk.data.date.toISOString().slice(0, 10)}|${talk.data.event}`;
-      addToKey(key, talk.data.date, talk.data.photos, talk.data.event);
+    if (talk.data.photos.length === 0) continue;
+    // Each near-identical burst carousels into one tile; every other talk photo
+    // stands alone — mirroring the gallery `burst` rule for talk photo strips.
+    // Walk `photos` in order and expand a burst at its first photo, so the grid
+    // keeps the frontmatter sequence (a carousel sits where its lead shot would).
+    const burstOf = new Map<string, string[]>();
+    for (const group of talk.data.photoBursts) {
+      for (const src of group) burstOf.set(src, group);
     }
+    const emitted = new Set<string>();
+    talk.data.photos.forEach((src, i) => {
+      if (emitted.has(src)) return;
+      const group = burstOf.get(src);
+      if (group && group.length > 0) {
+        addToKey(`talk-burst:${talk.id}|${i}`, talk.data.date, group, talk.data.event);
+        for (const s of group) emitted.add(s);
+      } else {
+        addToKey(`talk-single:${talk.id}|${src}`, talk.data.date, [src], talk.data.event);
+      }
+    });
   }
 
   return [...moments.values()].sort(byDateDesc);

@@ -47,6 +47,13 @@ const talks = defineCollection({
     eventUrl: z.string().url().optional(),
     /** paths under apps/site/public/, e.g. "/talks/<slug>/01.jpg" */
     photos: z.array(z.string()).default([]),
+    /** Near-identical bursts among `photos` that collapse into ONE Instagram-style
+        carousel on /personal (the same rule as the gallery `burst` tag). Each inner
+        array lists the photo paths — verbatim strings from `photos` — that belong to
+        one burst; every photo NOT listed here stands on its own tile. Leave empty and
+        each talk photo is an individual moment. The talk detail page still shows the
+        full flat contact sheet regardless. */
+    photoBursts: z.array(z.array(z.string())).default([]),
     /**
      * Audience feedback quoted from LinkedIn. Each entry renders as a native
      * LinkedInCard (no third-party script). `excerpt` is the talk-related part

@@ -19,3 +19,6 @@ apps/site/public/pagefind
 .idea
 .claude/launch.json
 .claude/worktrees/
+
+# Impeccable hook cache — machine-specific, may appear in any content subdir
+**/.impeccable/
