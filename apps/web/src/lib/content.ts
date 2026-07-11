@@ -263,15 +263,15 @@ export async function getBacklogTimeline(locale: Locale): Promise<TimelineEntry[
 
 /**
  * "Personal" interleaves standalone gallery shots with talk-event photos.
- * Photos taken the same day under the same caption collapse into one
- * timeline moment.
+ * A gallery shot collapses into an Instagram-style carousel ONLY when it's
+ * explicitly tagged as part of a near-identical `burst` (same id); every other
+ * shot is its own tile. Talk photos stay grouped per event.
  */
 export async function getPersonalTimeline(): Promise<TimelineEntry[]> {
   const [standalone, talks] = await Promise.all([getCollection('gallery'), getTalks()]);
 
   const moments = new Map<string, Extract<TimelineEntry, { kind: 'photos' }>>();
-  function addPhotos(date: Date, photos: string[], caption?: string, location?: string): void {
-    const key = `${date.toISOString().slice(0, 10)}|${caption ?? ''}|${location ?? ''}`;
+  function addToKey(key: string, date: Date, photos: string[], caption?: string, location?: string): void {
     const existing = moments.get(key);
     if (existing) {
       existing.photos.push(...photos);
@@ -281,11 +281,15 @@ export async function getPersonalTimeline(): Promise<TimelineEntry[]> {
   }
 
   for (const entry of standalone) {
-    addPhotos(entry.data.date, [entry.data.src], entry.data.caption, entry.data.location);
+    // A `burst` id carousels near-identical shots together; without it, a per-entry key keeps
+    // each photo its own tile (so same-day-but-different shots no longer merge).
+    const key = entry.data.burst ? `burst:${entry.data.burst}` : `single:${entry.id}`;
+    addToKey(key, entry.data.date, [entry.data.src], entry.data.caption, entry.data.location);
   }
   for (const talk of talks) {
     if (talk.data.photos.length > 0) {
-      addPhotos(talk.data.date, talk.data.photos, talk.data.event);
+      const key = `talk:${talk.data.date.toISOString().slice(0, 10)}|${talk.data.event}`;
+      addToKey(key, talk.data.date, talk.data.photos, talk.data.event);
     }
   }
 

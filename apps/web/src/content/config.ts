@@ -117,6 +117,9 @@ const gallery = defineCollection({
     location: z.string().optional(),
     /** path under apps/site/public/, e.g. "/gallery/2018-08-15.jpg" */
     src: z.string(),
+    /** shots sharing a `burst` id are near-identical and collapse into one carousel;
+        omit it and the shot stands alone as its own tile. */
+    burst: z.string().optional(),
   }),
 });
 
