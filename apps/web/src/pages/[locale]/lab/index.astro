@@ -21,7 +21,11 @@ const labs = await getLabsByLocale(locale);
       <ul class="pins" role="list">
         {labs.map((lab) => (
           <li>
-            <a class="pin" href={localePath(locale, `lab/${labSlug(lab)}`)}>
+            <a
+              class="pin"
+              href={lab.data.externalUrl ?? localePath(locale, `lab/${labSlug(lab)}`)}
+              {...(lab.data.externalUrl ? { target: '_blank', rel: 'noreferrer' } : {})}
+            >
               <div class="pin-media">
                 {lab.data.cover ? (
                   <img src={lab.data.cover} alt={lab.data.title} loading="lazy" decoding="async" />

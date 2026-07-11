@@ -82,8 +82,11 @@ const labs = defineCollection({
     publishedAt: z.coerce.date(),
     language: localeEnum,
     summary: z.string(),
-    /** path under src/components/lab/, e.g. "ColorClock" */
-    islandComponent: z.string(),
+    /** path under src/components/lab/, e.g. "ColorClock". Omit for an externalUrl card. */
+    islandComponent: z.string().optional(),
+    /** when set, the index card links straight here (external) and NO detail page is
+     * generated — used for showcase entries that live elsewhere (e.g. a GitHub repo). */
+    externalUrl: z.string().url().optional(),
     /** optional card image for the Pinterest-style index, path under public/,
      * e.g. "/lab/weather-cover.jpg". Falls back to a rendered preview if absent. */
     cover: z.string().optional(),

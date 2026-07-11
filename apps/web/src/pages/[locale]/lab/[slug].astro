@@ -8,7 +8,8 @@ import LabLayout from '@layouts/LabLayout.astro';
 export async function getStaticPaths() {
   // Pre-render every (locale × canonicalSlug) pair so the locale switcher always
   // lands on a real URL; a lab with only one language falls back to that language.
-  const all = await getCollection('labs');
+  // externalUrl entries are index-only cards (they link elsewhere) — no detail page.
+  const all = (await getCollection('labs')).filter((l) => !l.data.externalUrl);
   const byCanonical = new Map<string, typeof all>();
   for (const lab of all) {
     const list = byCanonical.get(lab.data.canonicalSlug) ?? [];
