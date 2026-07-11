@@ -5,7 +5,7 @@ import { useState } from 'react';
 // stays editorial — hairline rules and the paper/elevated surfaces, green as the
 // structural voice, orange only for the copy tick and focus. Two interactive
 // bits: a host switcher over the install commands (with copy-to-clipboard) and the
-// meta plugin's skills laid out as rows. Bilingual via the `locale` prop the .mdx
+// plugins laid out with their skills. Bilingual via the `locale` prop the .mdx
 // passes down.
 
 type Locale = 'en' | 'ua';
@@ -46,36 +46,58 @@ const TARGETS = (s: (typeof STR)[Locale]): Target[] => [
   },
 ];
 
-const SKILLS: Array<{ name: string; en: string; ua: string }> = [
+type Skill = { name: string; en: string; ua: string };
+type Plugin = { name: string; en: string; ua: string; skills: Skill[] };
+
+const PLUGINS: Plugin[] = [
   {
-    name: 'plugin-dev',
-    en: 'How to build a great skills marketplace: repo layout, the Claude + Codex dual-manifest packaging, and the version discipline auto-update keys off.',
-    ua: 'Як побудувати якісний маркетплейс скілів: структура репозиторію, подвійні маніфести Claude + Codex і дисципліна версій, від якої залежить авто-оновлення.',
+    name: 'meta',
+    en: "The marketplace's own tooling — how to build and maintain a great skills marketplace.",
+    ua: 'Інструментарій самого маркетплейсу — як будувати й підтримувати якісний маркетплейс скілів.',
+    skills: [
+      {
+        name: 'plugin-dev',
+        en: 'Build a great marketplace: repo layout, the Claude + Codex dual-manifest packaging, and the version discipline auto-update keys off.',
+        ua: 'Побудувати якісний маркетплейс: структура репозиторію, подвійні маніфести Claude + Codex і дисципліна версій, від якої залежить авто-оновлення.',
+      },
+      {
+        name: 'skill-authoring',
+        en: 'Write, structure and review Agent Skills (SKILL.md) that trigger reliably and stay lean — portable across Claude Code and Codex.',
+        ua: 'Писати, структурувати й рецензувати Agent Skills (SKILL.md), що надійно спрацьовують і лишаються стислими — сумісні з Claude Code і Codex.',
+      },
+      {
+        name: 'marketplace-health',
+        en: 'Check that an installed marketplace is on the latest version and auto-updating, on either host.',
+        ua: 'Перевірити, що встановлений маркетплейс має найновішу версію й авто-оновлюється — на будь-якому хості.',
+      },
+      {
+        name: 'enable-autoupdate',
+        en: 'Turn on marketplace auto-update so your plugins stay current — Claude Code and Codex.',
+        ua: 'Увімкнути авто-оновлення маркетплейсу, щоб плагіни лишались актуальними — Claude Code і Codex.',
+      },
+      {
+        name: 'clone-marketplace',
+        en: "Bootstrap a new marketplace — or update an existing one's meta plugin — from this structure, fetched from GitHub at the latest version.",
+        ua: 'Створити новий маркетплейс — або оновити meta-плагін наявного — за цією структурою, взятою з GitHub найновішої версії.',
+      },
+      {
+        name: 'install-bun',
+        en: "Install the Bun runtime the marketplace's TypeScript scripts and session-start hook run on.",
+        ua: 'Встановити середовище Bun, на якому працюють TypeScript-скрипти маркетплейсу та хук на старті сесії.',
+      },
+    ],
   },
   {
-    name: 'skill-authoring',
-    en: 'Write, structure and review Agent Skills (SKILL.md) that trigger reliably and stay lean — portable across Claude Code and Codex.',
-    ua: 'Як писати, структурувати й рецензувати Agent Skills (SKILL.md), що надійно спрацьовують і лишаються стислими — сумісні з Claude Code і Codex.',
-  },
-  {
-    name: 'marketplace-health',
-    en: 'Check that an installed marketplace is on the latest version and auto-updating, on either host.',
-    ua: 'Перевірити, що встановлений маркетплейс має найновішу версію й авто-оновлюється — на будь-якому хості.',
-  },
-  {
-    name: 'enable-autoupdate',
-    en: 'Turn on marketplace auto-update so your plugins stay current — Claude Code and Codex.',
-    ua: 'Увімкнути авто-оновлення маркетплейсу, щоб плагіни лишались актуальними — Claude Code і Codex.',
-  },
-  {
-    name: 'clone-marketplace',
-    en: "Bootstrap a new marketplace — or update an existing one's meta plugin — from this structure, fetched from GitHub at the latest version.",
-    ua: 'Створити новий маркетплейс — або оновити meta-плагін наявного — за цією структурою, взятою з GitHub найновішої версії.',
-  },
-  {
-    name: 'install-bun',
-    en: "Install the Bun runtime the marketplace's TypeScript scripts and session-start hook run on.",
-    ua: 'Встановити середовище Bun, на якому працюють TypeScript-скрипти маркетплейсу та хук на старті сесії.',
+    name: 'home-it',
+    en: 'Practical playbooks for the tech in your home.',
+    ua: 'Практичні гайди для домашньої техніки.',
+    skills: [
+      {
+        name: 'check-network',
+        en: 'Diagnose a slow home network end-to-end and recommend the highest-leverage fix — wired backhaul first, a second wireless extender never.',
+        ua: 'Діагностувати повільну домашню мережу від початку до кінця й порадити найдієвіше виправлення — спершу дротовий backhaul, другий бездротовий екстендер — ніколи.',
+      },
+    ],
   },
 ];
 
@@ -86,16 +108,14 @@ const STR = {
     copy: 'Copy',
     copied: 'Copied',
     pluginTitle: 'What’s inside',
-    pluginLead: 'One plugin today —',
-    pluginMeta: 'meta',
-    pluginTail: '— the tooling for building the marketplace itself. Six skills:',
+    pluginLead: 'The plugins so far — each installs with /plugin install ‹name›@learn-yy-skills:',
     repoCta: 'Browse the source on GitHub',
     hostCowork: 'Cowork / Desktop',
     hostNpx: 'One skill (npx)',
     stepsCowork:
-      'Settings → Extensions / Plugins → Add marketplace, paste the repo below, then install meta from the Directory.',
+      'Settings → Extensions / Plugins → Add marketplace, paste the repo below, then install a plugin from the Directory.',
     stepsCodex:
-      'Add the repo below as a plugin marketplace (the exact command depends on your Codex version), then install meta.',
+      'Add the repo below as a plugin marketplace (the exact command depends on your Codex version), then install a plugin.',
   },
   ua: {
     installTitle: 'Встановлення',
@@ -103,16 +123,14 @@ const STR = {
     copy: 'Копіювати',
     copied: 'Скопійовано',
     pluginTitle: 'Що всередині',
-    pluginLead: 'Наразі один плагін —',
-    pluginMeta: 'meta',
-    pluginTail: '— інструментарій для побудови самого маркетплейсу. Шість скілів:',
+    pluginLead: 'Плагіни наразі — кожен ставиться через /plugin install ‹name›@learn-yy-skills:',
     repoCta: 'Переглянути код на GitHub',
     hostCowork: 'Cowork / Desktop',
     hostNpx: 'Один скіл (npx)',
     stepsCowork:
-      'Settings → Extensions / Plugins → Add marketplace, встав репозиторій нижче, потім встанови meta з Directory.',
+      'Settings → Extensions / Plugins → Add marketplace, встав репозиторій нижче, потім встанови плагін з Directory.',
     stepsCodex:
-      'Додай репозиторій нижче як plugin marketplace (точна команда залежить від версії Codex), потім встанови meta.',
+      'Додай репозиторій нижче як plugin marketplace (точна команда залежить від версії Codex), потім встанови плагін.',
   },
 } as const;
 
@@ -156,9 +174,7 @@ export default function SkillsMarketplace({ locale = 'en' }: { locale?: Locale }
                 aria-selected={on}
                 onClick={() => setActive(t.id)}
                 className={`rounded-[3px] px-2.5 py-1 font-mono text-xs transition-colors ${
-                  on
-                    ? 'bg-green/12 text-green-deep'
-                    : 'text-ink-muted hover:text-ink'
+                  on ? 'bg-green/10 text-green-deep' : 'text-ink-muted hover:text-ink'
                 }`}
                 style={on ? { boxShadow: 'inset 0 -2px 0 var(--green-primary)' } : undefined}
               >
@@ -178,11 +194,7 @@ export default function SkillsMarketplace({ locale = 'en' }: { locale?: Locale }
                 onClick={() => copy(current.command, current.id)}
                 className="absolute right-3 top-3 rounded-[3px] border border-rule bg-elevated px-2 py-1 font-mono text-[0.7rem] uppercase tracking-wide text-ink-muted transition-colors hover:text-ink"
               >
-                {copied === current.id ? (
-                  <span className="text-green">{s.copied}</span>
-                ) : (
-                  s.copy
-                )}
+                {copied === current.id ? <span className="text-green">{s.copied}</span> : s.copy}
               </button>
             </div>
           ) : (
@@ -197,11 +209,7 @@ export default function SkillsMarketplace({ locale = 'en' }: { locale?: Locale }
                     onClick={() => copy(current.handle as string, current.id)}
                     className="absolute right-3 top-3 rounded-[3px] border border-rule bg-elevated px-2 py-1 font-mono text-[0.7rem] uppercase tracking-wide text-ink-muted transition-colors hover:text-ink"
                   >
-                    {copied === current.id ? (
-                      <span className="text-green">{s.copied}</span>
-                    ) : (
-                      s.copy
-                    )}
+                    {copied === current.id ? <span className="text-green">{s.copied}</span> : s.copy}
                   </button>
                 </div>
               ) : null}
@@ -213,20 +221,29 @@ export default function SkillsMarketplace({ locale = 'en' }: { locale?: Locale }
       {/* What's inside */}
       <section>
         <h2 className="m-0 mb-2 text-lg font-semibold text-ink">{s.pluginTitle}</h2>
-        <p className="m-0 mb-5 max-w-[62ch] text-[0.98rem] leading-relaxed text-ink-muted">
-          {s.pluginLead}{' '}
-          <span className="font-mono text-green-deep">{s.pluginMeta}</span> {s.pluginTail}
+        <p className="m-0 mb-5 max-w-[64ch] text-[0.95rem] leading-relaxed text-ink-muted">
+          {s.pluginLead}
         </p>
-        <ul className="m-0 list-none divide-y divide-rule border-y border-rule p-0">
-          {SKILLS.map((sk) => (
-            <li key={sk.name} className="flex flex-col gap-1 py-3 sm:flex-row sm:gap-5">
-              <span className="shrink-0 font-mono text-sm text-green sm:w-44">{sk.name}</span>
-              <span className="text-[0.95rem] leading-snug text-ink-muted">
-                {locale === 'ua' ? sk.ua : sk.en}
-              </span>
-            </li>
+        <div className="flex flex-col gap-6">
+          {PLUGINS.map((p) => (
+            <div key={p.name}>
+              <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-3">
+                <span className="font-mono text-[0.95rem] font-medium text-green-deep">{p.name}</span>
+                <span className="text-sm text-ink-muted">{locale === 'ua' ? p.ua : p.en}</span>
+              </div>
+              <ul className="m-0 mt-2 list-none divide-y divide-rule border-y border-rule p-0">
+                {p.skills.map((sk) => (
+                  <li key={sk.name} className="flex flex-col gap-1 py-3 sm:flex-row sm:gap-5">
+                    <span className="shrink-0 font-mono text-sm text-green sm:w-44">{sk.name}</span>
+                    <span className="text-[0.95rem] leading-snug text-ink-muted">
+                      {locale === 'ua' ? sk.ua : sk.en}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       </section>
 
       <a
