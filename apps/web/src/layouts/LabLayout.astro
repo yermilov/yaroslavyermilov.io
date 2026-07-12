@@ -16,6 +16,9 @@ interface Props {
    * own hook and would just repeat the title back at the reader. (`layout: 'full'` also hides the
    * title, but it takes the date and the lede with it — this is the narrow lever.) */
   hideTitle?: boolean;
+  /** Drop the visible lede. `description` is still passed to BaseLayout for the meta description —
+   * this only stops it being printed above a body that already opens with the same thought. */
+  hideLede?: boolean;
 }
 
 const {
@@ -27,6 +30,7 @@ const {
   alternateMissing = false,
   layout = 'default',
   hideTitle = false,
+  hideLede = false,
 } = Astro.props;
 const full = layout === 'full';
 
@@ -49,7 +53,7 @@ const fmt = new Intl.DateTimeFormat(bcp47Locale(locale), { dateStyle: 'long' });
             <time datetime={publishedAt.toISOString()}>{fmt.format(publishedAt)}</time> · LAB
           </p>
           {!hideTitle && <h1>{title}</h1>}
-          {description && <p class="lede">{description}</p>}
+          {description && !hideLede && <p class="lede">{description}</p>}
         </header>
       )
     }

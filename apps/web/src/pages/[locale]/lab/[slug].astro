@@ -60,6 +60,7 @@ const { Content } = await entry.render();
   alternateMissing={alternateMissing}
   layout={entry.data.fullBleed ? 'full' : 'default'}
   hideTitle={entry.data.hideTitle ?? false}
+  hideLede={entry.data.hideLede ?? false}
 >
   <Content />
 </LabLayout>

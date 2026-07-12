@@ -112,6 +112,10 @@ const labs = defineCollection({
      * opens with its own hook and shouldn't repeat its title back at the reader. (fullBleed
      * hides the title too, but takes the date and lede with it.) */
     hideTitle: z.boolean().optional(),
+    /** drop the visible lede on the detail page. `summary` is still REQUIRED and still does its
+     * other two jobs — the card subtitle on the lab index and the page's meta description — this
+     * only stops it being printed above a body that already opens with the same thought. */
+    hideLede: z.boolean().optional(),
   }),
 });
 
