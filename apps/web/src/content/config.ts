@@ -116,6 +116,10 @@ const labs = defineCollection({
      * other two jobs — the card subtitle on the lab index and the page's meta description — this
      * only stops it being printed above a body that already opens with the same thought. */
     hideLede: z.boolean().optional(),
+    /** drop the subtitle under the card title on the lab index — for a card whose cover art and
+     * title already say the whole thing, so the summary underneath is just noise. `summary` stays
+     * REQUIRED and still serves as the page's meta description. */
+    hideCardSummary: z.boolean().optional(),
   }),
 });
 

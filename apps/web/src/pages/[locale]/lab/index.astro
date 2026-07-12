@@ -35,7 +35,7 @@ const labs = await getLabsByLocale(locale);
               </div>
               <div class="pin-caption">
                 <p class="pin-title">{lab.data.title}</p>
-                <p class="pin-summary">{lab.data.summary}</p>
+                {!lab.data.hideCardSummary && <p class="pin-summary">{lab.data.summary}</p>}
               </div>
             </a>
           </li>
