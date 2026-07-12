@@ -45,6 +45,13 @@ const talks = defineCollection({
     slidesUrl: z.string().url().optional(),
     repoUrl: z.string().url().optional(),
     eventUrl: z.string().url().optional(),
+    /**
+     * Card thumbnail for the writing-talking list, path under public/. Use this — NOT `photos` —
+     * for a promo still / key art / poster: `photos` are PHOTOS OF THE EVENT and every one of them
+     * also becomes a moment in the /personal timeline, where a piece of marketing artwork does not
+     * belong. Falls back to `photos[0]` so talks that only have real event shots still get a thumb.
+     */
+    cover: z.string().optional(),
     /** paths under apps/site/public/, e.g. "/talks/<slug>/01.jpg" */
     photos: z.array(z.string()).default([]),
     /** Near-identical bursts among `photos` that collapse into ONE Instagram-style

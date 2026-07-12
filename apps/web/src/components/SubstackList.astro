@@ -75,7 +75,9 @@ for (const entry of entries) {
       dek: abstract.split(/\n\n+/)[0] ?? '',
       metaExtra: localized(locale, tk.data.event, tk.data.eventUk),
       badge: tk.data.language ? languageBadge(tk.data.language) : undefined,
-      thumb: tk.data.photos?.[0],
+      // An explicit `cover` (promo still / key art) wins; otherwise borrow the first event photo,
+      // which is how every talk got its thumbnail before `cover` existed.
+      thumb: tk.data.cover ?? tk.data.photos?.[0],
       date: entry.date,
       iso: entry.date.toISOString(),
       upcoming: isUpcoming(entry.date),
