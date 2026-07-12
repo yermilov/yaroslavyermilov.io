@@ -208,7 +208,15 @@ export type TimelineEntry =
   | { kind: 'talk'; date: Date; talk: TalkEntry }
   | { kind: 'book'; date: Date; book: BookEntry; approx?: boolean }
   | { kind: 'link'; date: Date; link: LinkEntry; approx?: boolean }
-  | { kind: 'photos'; date: Date; caption?: string | undefined; location?: string | undefined; photos: string[] };
+  | {
+      kind: 'photos';
+      date: Date;
+      caption?: string | undefined;
+      location?: string | undefined;
+      photos: string[];
+      /** src -> CSS object-position, only for shots that opted out of the centred crop. */
+      focus?: Record<string, string> | undefined;
+    };
 
 function byDateDesc(a: TimelineEntry, b: TimelineEntry): number {
   return b.date.getTime() - a.date.getTime();
@@ -273,12 +281,20 @@ export async function getPersonalTimeline(): Promise<TimelineEntry[]> {
   const [standalone, talks] = await Promise.all([getCollection('gallery'), getTalks()]);
 
   const moments = new Map<string, Extract<TimelineEntry, { kind: 'photos' }>>();
-  function addToKey(key: string, date: Date, photos: string[], caption?: string, location?: string): void {
+  function addToKey(
+    key: string,
+    date: Date,
+    photos: string[],
+    caption?: string,
+    location?: string,
+    focus?: Record<string, string>,
+  ): void {
     const existing = moments.get(key);
     if (existing) {
       existing.photos.push(...photos);
+      if (focus) existing.focus = { ...existing.focus, ...focus };
     } else {
-      moments.set(key, { kind: 'photos', date, caption, location, photos: [...photos] });
+      moments.set(key, { kind: 'photos', date, caption, location, photos: [...photos], focus });
     }
   }
 
@@ -286,7 +302,9 @@ export async function getPersonalTimeline(): Promise<TimelineEntry[]> {
     // A `burst` id carousels near-identical shots together; without it, a per-entry key keeps
     // each photo its own tile (so same-day-but-different shots no longer merge).
     const key = entry.data.burst ? `burst:${entry.data.burst}` : `single:${entry.id}`;
-    addToKey(key, entry.data.date, [entry.data.src], entry.data.caption, entry.data.location);
+    // Only a shot that asked for it gets a non-centred crop anchor; see `focus` in the schema.
+    const focus = entry.data.focus ? { [entry.data.src]: `center ${entry.data.focus}` } : undefined;
+    addToKey(key, entry.data.date, [entry.data.src], entry.data.caption, entry.data.location, focus);
   }
   for (const talk of talks) {
     if (talk.data.photos.length === 0) continue;

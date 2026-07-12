@@ -19,10 +19,18 @@ interface Props {
 }
 const { locale, entries } = Astro.props;
 
-type Moment = { photos: string[]; caption: string | undefined; location: string | undefined; date: Date };
+type Moment = {
+  photos: string[];
+  caption: string | undefined;
+  location: string | undefined;
+  date: Date;
+  /** src -> CSS object-position, for shots that opted out of the centred crop (see the
+      gallery `focus` field: a centred square window beheads a tall standing portrait). */
+  focus: Record<string, string> | undefined;
+};
 const moments: Moment[] = entries
   .filter((e): e is Extract<TimelineEntry, { kind: 'photos' }> => e.kind === 'photos')
-  .map((e) => ({ photos: e.photos, caption: e.caption, location: e.location, date: e.date }));
+  .map((e) => ({ photos: e.photos, caption: e.caption, location: e.location, date: e.date, focus: e.focus }));
 
 const monthFmt = new Intl.DateTimeFormat(locale === 'ua' ? 'uk-UA' : 'en', {
   year: 'numeric',
@@ -46,7 +54,13 @@ const slideLabel = (m: Moment, i: number) =>
           {/* Single-photo moment — a focusable link to the full-size shot (caption reachable
               by keyboard via :focus-visible, and tapping opens the photo). */}
           <a class="frame" href={m.photos[0]} target="_blank" rel="noopener" aria-label={momentLabel(m)}>
-            <img class="photo" src={m.photos[0]} alt={m.caption ?? ''} loading="lazy" />
+            <img
+              class="photo"
+              src={m.photos[0]}
+              alt={m.caption ?? ''}
+              loading="lazy"
+              style={m.focus?.[m.photos[0]!] ? `object-position: ${m.focus[m.photos[0]!]}` : undefined}
+            />
             <span class="cap">
               {m.caption ? <span class="cap-title">{m.caption}</span> : null}
               <span class="cap-meta">{metaText(m)}</span>
@@ -62,7 +76,13 @@ const slideLabel = (m: Moment, i: number) =>
             <div class="track">
               {m.photos.map((src, i) => (
                 <a class="frame slide" href={src} target="_blank" rel="noopener" aria-label={slideLabel(m, i)}>
-                  <img class="photo" src={src} alt={i === 0 ? (m.caption ?? '') : ''} loading="lazy" />
+                  <img
+                    class="photo"
+                    src={src}
+                    alt={i === 0 ? (m.caption ?? '') : ''}
+                    loading="lazy"
+                    style={m.focus?.[src] ? `object-position: ${m.focus[src]}` : undefined}
+                  />
                 </a>
               ))}
             </div>

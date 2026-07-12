@@ -149,6 +149,14 @@ const gallery = defineCollection({
     /** shots sharing a `burst` id are near-identical and collapse into one carousel;
         omit it and the shot stands alone as its own tile. */
     burst: z.string().optional(),
+    /** where to anchor the crop in the square grid tile. The tiles are 1:1 with
+     * `object-fit: cover`, so a TALL photo gets cropped vertically — and the default
+     * centre anchor slices the head off a standing portrait (the subject's face sits in
+     * the top ~10% of the frame, while a centred square window only starts ~17% down).
+     * Set `top` on those. Left unset it stays centred, which is what the venue/stage shots
+     * want — they're even taller, and anchoring them to the top would fill the tile with
+     * ceiling. There is no single global value that suits both: hence per shot. */
+    focus: z.enum(['top', 'center', 'bottom']).optional(),
   }),
 });
 
