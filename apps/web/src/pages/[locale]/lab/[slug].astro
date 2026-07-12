@@ -59,6 +59,7 @@ const { Content } = await entry.render();
   alternatePath={alternatePath}
   alternateMissing={alternateMissing}
   layout={entry.data.fullBleed ? 'full' : 'default'}
+  hideTitle={entry.data.hideTitle ?? false}
 >
   <Content />
 </LabLayout>

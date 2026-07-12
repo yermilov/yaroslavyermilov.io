@@ -101,6 +101,10 @@ const labs = defineCollection({
      * (a full-screen two-column experience); default keeps the reading column.
      * NB: don't name this `layout` — Astro MDX reserves that frontmatter key. */
     fullBleed: z.boolean().optional(),
+    /** drop the <h1> on the detail page but KEEP the date line + lede — for a lab whose body
+     * opens with its own hook and shouldn't repeat its title back at the reader. (fullBleed
+     * hides the title too, but takes the date and lede with it.) */
+    hideTitle: z.boolean().optional(),
   }),
 });
 

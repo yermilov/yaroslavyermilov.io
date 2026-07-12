@@ -1,0 +1,114 @@
+---
+title: 'Where my gigabit went'
+canonicalSlug: 'check-network'
+publishedAt: 2026-07-12
+language: 'en'
+summary: 'The check-network skill: an agent spent nine days working out why my desk got 100 Mbps out of a gigabit plan. The fix was a cable I already owned.'
+cover: '/lab/check-network-cover-en.png'
+hideTitle: true
+---
+
+import TweetCard from '@components/TweetCard.astro';
+
+I saw this in May:
+
+<TweetCard
+  url="https://x.com/cjzafir/status/2056404142848135409"
+  author="CJ Zafir"
+  handle="cjzafir"
+  date="May 18, 2026"
+>
+  It was a simple /goal to make my internet network faster.<br />
+  &gt; Diagnosed the issue: ran speedtest-cli first.<br />
+  &gt; Checked DNS resolution times,<br />
+  &gt; Checked MTU, packet loss, Wi-Fi signal/interference.<br />
+  &gt; Found 3 issues.<br />
+  &gt; Removed stale network locations/profiles.<br />
+  &gt; Killed or throttled bandwidth-hogging background processes.<br />
+  &gt; Optimized mDNS.<br />
+  &gt; Ran before/after speed tests and latency checks.
+</TweetCard>
+
+So I dropped the link into my Claude Code and asked it to do the same for me.
+
+I pay for a gigabit. My laptop at the desk showed 100 Mbps. For two years I assumed that's just what Wi-Fi is.
+
+## The skill
+
+Those nine days turned into `check-network`. Measure before recommending: throughput, how much latency jumps under load, packet loss, what rate the Wi-Fi link actually negotiated. Then localize across four layers — ISP plan, router, Wi-Fi path, client. Then a ladder of fixes where a cable is always first and a second wireless extender is never.
+
+## Install
+
+Claude Code:
+
+```
+/plugin marketplace add yermilov/learn-yy-skills
+/plugin install home-it@learn-yy-skills
+```
+
+Codex reads the same repo as a marketplace — add `yermilov/learn-yy-skills` and install `home-it` from its Directory.
+
+Or take the single skill into any agent, no marketplace ([`npx skills`](https://github.com/vercel-labs/skills) supports Claude Code, Codex, Cursor and 60+ others):
+
+```bash
+npx skills add yermilov/learn-yy-skills --skill check-network
+```
+
+Then just say "make my home network faster". Works on macOS, Windows and Linux — different tools, same four measurements.
+
+## What it found
+
+<figure>
+  <svg viewBox="0 0 680 268" role="img" aria-labelledby="netchart-title-en" style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
+    <title id="netchart-title-en">
+      Download speed of the same laptop: at the desk through a wireless extender 75–190 Mbps
+      (5% packet loss), next to the router 624 Mbps (0% loss), at the desk on a cable into the
+      extender 492 Mbps (0% loss).
+    </title>
+
+    <line x1="190" y1="28" x2="190" y2="208" style={{ stroke: 'currentColor', strokeOpacity: 0.25 }} />
+
+    {/* Inline styles, not presentation attributes: the prose CSS outranks fontSize="…" and would
+        blow the labels up over the bars. */}
+    <text x="182" y="48" style={{ fontSize: '13px', fill: 'currentColor', textAnchor: 'end' }}>Desk, Wi-Fi</text>
+    <text x="182" y="64" style={{ fontSize: '11px', fill: 'currentColor', fillOpacity: 0.6, textAnchor: 'end' }}>through the extender</text>
+    <rect x="236" y="36" width="72" height="24" style={{ fill: 'currentColor', fillOpacity: 0.3 }} />
+    <line x1="190" y1="48" x2="236" y2="48" style={{ stroke: 'currentColor', strokeOpacity: 0.35, strokeDasharray: '3 2' }} />
+    <text x="318" y="53" style={{ fontSize: '13px', fill: 'currentColor', fontFamily: 'ui-monospace, monospace' }}>75–190</text>
+    <text x="190" y="80" style={{ fontSize: '11px', fill: 'currentColor', fillOpacity: 0.6 }}>5% loss to the router · −68 dBm</text>
+
+    <text x="182" y="113" style={{ fontSize: '13px', fill: 'currentColor', textAnchor: 'end' }}>Next to the router</text>
+    <text x="182" y="129" style={{ fontSize: '11px', fill: 'currentColor', fillOpacity: 0.6, textAnchor: 'end' }}>same Wi-Fi</text>
+    <rect x="190" y="101" width="387" height="24" style={{ fill: 'currentColor', fillOpacity: 0.72 }} />
+    <text x="587" y="118" style={{ fontSize: '13px', fill: 'currentColor', fontFamily: 'ui-monospace, monospace' }}>624</text>
+    <text x="190" y="145" style={{ fontSize: '11px', fill: 'currentColor', fillOpacity: 0.6 }}>0% loss · −20 dBm · 866 Mbps link rate</text>
+
+    <text x="182" y="178" style={{ fontSize: '13px', fill: 'currentColor', textAnchor: 'end' }}>Desk, cable</text>
+    <text x="182" y="194" style={{ fontSize: '11px', fill: 'currentColor', fillOpacity: 0.6, textAnchor: 'end' }}>into the extender</text>
+    <rect x="190" y="166" width="305" height="24" style={{ fill: 'var(--green-primary)' }} />
+    <text x="505" y="183" style={{ fontSize: '13px', fill: 'currentColor', fontFamily: 'ui-monospace, monospace' }}>492</text>
+    <text x="190" y="210" style={{ fontSize: '11px', fill: 'currentColor', fillOpacity: 0.6 }}>0% loss · where I stopped</text>
+
+    <line x1="190" y1="230" x2="562" y2="230" style={{ stroke: 'currentColor', strokeOpacity: 0.25 }} />
+    <text x="190" y="246" style={{ fontSize: '10px', fill: 'currentColor', fillOpacity: 0.6, fontFamily: 'ui-monospace, monospace' }}>0</text>
+    <text x="376" y="246" style={{ fontSize: '10px', fill: 'currentColor', fillOpacity: 0.6, fontFamily: 'ui-monospace, monospace', textAnchor: 'middle' }}>300</text>
+    <text x="562" y="246" style={{ fontSize: '10px', fill: 'currentColor', fillOpacity: 0.6, fontFamily: 'ui-monospace, monospace', textAnchor: 'middle' }}>600</text>
+    <text x="190" y="264" style={{ fontSize: '10px', fill: 'currentColor', fillOpacity: 0.6 }}>Mbps, download (macOS networkQuality)</text>
+  </svg>
+</figure>
+
+The first number is a range, and that is not a typo. At the desk the speed wandered between 75 and 190 Mbps from run to run.
+
+The agent ruled out everything I suspected. The plan is already the top tier. DNS answers in 10 ms. MTU is fine, zero interface errors. But the ping to my own router was losing 5% of packets, and that ended the argument. If packets die inside the apartment, the ISP has nothing to do with it.
+
+The cause was the extender. The TP-Link I once added "for better coverage" was itself sitting on Wi-Fi: one hand holding the link to the router, the other to the laptop, and each hop halves the bandwidth. The link rate at my desk negotiated 234 Mbps — about what the speed tests were showing. The Wi-Fi had already told me everything, I just never looked.
+
+The cheapest diagnostic in the world: pick up the laptop and walk five meters to the router. −20 dBm instead of −68, an 866 Mbps link, 624 Mbps, zero loss.
+
+The two things the internet tells you to do first did nothing. Turning off Smart Connect: 611 vs 612 Mbps. Picking "cleaner" channels by hand: 398 and 418, against 624 on auto — worse.
+
+I asked an LLM council (ChatGPT + Gemini) whether to buy a second extender for the desk. Both ranked that option last: another wireless hop halves the bandwidth again. The right fix is a cable from the router to the desk with the extender in access-point mode.
+
+I never ran that cable. I plugged the Mac into the extender's gigabit port — the same extender still hanging off a wireless backhaul — so roughly 80% of the fix. 492 Mbps, zero loss. The agent honestly noted in its report that this is not a real wired backhaul and that 800–940 Mbps is still on the table.
+
+500 Mbps is quite good already. I stopped there.

@@ -1,0 +1,114 @@
+---
+title: 'Куди дівся мій гігабіт'
+canonicalSlug: 'check-network'
+publishedAt: 2026-07-12
+language: 'ua'
+summary: "Скіл check-network: агент дев'ять днів розбирався, чому за моїм столом замість гігабіта 100 Мбіт/с. Полагодив кабелем, який лежав у шухляді."
+cover: '/lab/check-network-cover.png'
+hideTitle: true
+---
+
+import TweetCard from '@components/TweetCard.astro';
+
+Побачив у травні ось це:
+
+<TweetCard
+  url="https://x.com/cjzafir/status/2056404142848135409"
+  author="CJ Zafir"
+  handle="cjzafir"
+  date="May 18, 2026"
+>
+  It was a simple /goal to make my internet network faster.<br />
+  &gt; Diagnosed the issue: ran speedtest-cli first.<br />
+  &gt; Checked DNS resolution times,<br />
+  &gt; Checked MTU, packet loss, Wi-Fi signal/interference.<br />
+  &gt; Found 3 issues.<br />
+  &gt; Removed stale network locations/profiles.<br />
+  &gt; Killed or throttled bandwidth-hogging background processes.<br />
+  &gt; Optimized mDNS.<br />
+  &gt; Ran before/after speed tests and latency checks.
+</TweetCard>
+
+Кинув посилання своєму клод коду: а мені так можеш?
+
+Я плачу за гігабіт. Ноутбук за робочим столом показував 100 Мбіт/с. Два роки я був певен, що так і має бути (вай-фай же).
+
+## Скіл
+
+З того, що агент робив ті дев'ять днів, вийшов `check-network`. Спочатку міряти, потім рекомендувати: скільки Мбіт/с, як стрибає затримка під навантаженням, скільки пакетів губиться, на чому домовився вай-фай-лінк. Далі чотири шари — тариф, роутер, вай-фай шлях, клієнт. І драбина фіксів, де кабель завжди перший, а другий бездротовий екстендер — ніколи.
+
+## Поставити
+
+Клод код:
+
+```
+/plugin marketplace add yermilov/learn-yy-skills
+/plugin install home-it@learn-yy-skills
+```
+
+Codex читає той самий репозиторій як маркетплейс — додай `yermilov/learn-yy-skills` і постав `home-it` з його Directory.
+
+Або один скіл, без маркетплейсу, у будь-який агент ([`npx skills`](https://github.com/vercel-labs/skills) підтримує клод код, Codex, Cursor і ще шістдесят):
+
+```bash
+npx skills add yermilov/learn-yy-skills --skill check-network
+```
+
+Далі просто сказати «зроби мою домашню мережу швидшою». Працює на macOS, Windows і Linux — інструменти різні, чотири виміри ті самі.
+
+## Що в мене вийшло
+
+<figure>
+  <svg viewBox="0 0 680 268" role="img" aria-labelledby="netchart-title" style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
+    <title id="netchart-title">
+      Швидкість завантаження того самого ноутбука: за столом через бездротовий екстендер 75–190 Мбіт/с
+      (5% втрат пакетів), поруч із роутером 624 Мбіт/с (0% втрат), за столом по кабелю в екстендер
+      492 Мбіт/с (0% втрат).
+    </title>
+
+    <line x1="190" y1="28" x2="190" y2="208" style={{ stroke: 'currentColor', strokeOpacity: 0.25 }} />
+
+    {/* Inline styles, not presentation attributes: the prose CSS outranks fontSize="…" and would
+        blow the labels up over the bars. */}
+    <text x="182" y="48" style={{ fontSize: '13px', fill: 'currentColor', textAnchor: 'end' }}>Стіл, вай-фай</text>
+    <text x="182" y="64" style={{ fontSize: '11px', fill: 'currentColor', fillOpacity: 0.6, textAnchor: 'end' }}>через екстендер</text>
+    <rect x="236" y="36" width="72" height="24" style={{ fill: 'currentColor', fillOpacity: 0.3 }} />
+    <line x1="190" y1="48" x2="236" y2="48" style={{ stroke: 'currentColor', strokeOpacity: 0.35, strokeDasharray: '3 2' }} />
+    <text x="318" y="53" style={{ fontSize: '13px', fill: 'currentColor', fontFamily: 'ui-monospace, monospace' }}>75–190</text>
+    <text x="190" y="80" style={{ fontSize: '11px', fill: 'currentColor', fillOpacity: 0.6 }}>5% втрат до роутера · сигнал −68 дБм</text>
+
+    <text x="182" y="113" style={{ fontSize: '13px', fill: 'currentColor', textAnchor: 'end' }}>Поруч із роутером</text>
+    <text x="182" y="129" style={{ fontSize: '11px', fill: 'currentColor', fillOpacity: 0.6, textAnchor: 'end' }}>той самий вай-фай</text>
+    <rect x="190" y="101" width="387" height="24" style={{ fill: 'currentColor', fillOpacity: 0.72 }} />
+    <text x="587" y="118" style={{ fontSize: '13px', fill: 'currentColor', fontFamily: 'ui-monospace, monospace' }}>624</text>
+    <text x="190" y="145" style={{ fontSize: '11px', fill: 'currentColor', fillOpacity: 0.6 }}>0% втрат · −20 дБм · лінк 866 Мбіт/с</text>
+
+    <text x="182" y="178" style={{ fontSize: '13px', fill: 'currentColor', textAnchor: 'end' }}>Стіл, кабель</text>
+    <text x="182" y="194" style={{ fontSize: '11px', fill: 'currentColor', fillOpacity: 0.6, textAnchor: 'end' }}>в екстендер</text>
+    <rect x="190" y="166" width="305" height="24" style={{ fill: 'var(--green-primary)' }} />
+    <text x="505" y="183" style={{ fontSize: '13px', fill: 'currentColor', fontFamily: 'ui-monospace, monospace' }}>492</text>
+    <text x="190" y="210" style={{ fontSize: '11px', fill: 'currentColor', fillOpacity: 0.6 }}>0% втрат · на цьому я зупинився</text>
+
+    <line x1="190" y1="230" x2="562" y2="230" style={{ stroke: 'currentColor', strokeOpacity: 0.25 }} />
+    <text x="190" y="246" style={{ fontSize: '10px', fill: 'currentColor', fillOpacity: 0.6, fontFamily: 'ui-monospace, monospace' }}>0</text>
+    <text x="376" y="246" style={{ fontSize: '10px', fill: 'currentColor', fillOpacity: 0.6, fontFamily: 'ui-monospace, monospace', textAnchor: 'middle' }}>300</text>
+    <text x="562" y="246" style={{ fontSize: '10px', fill: 'currentColor', fillOpacity: 0.6, fontFamily: 'ui-monospace, monospace', textAnchor: 'middle' }}>600</text>
+    <text x="190" y="264" style={{ fontSize: '10px', fill: 'currentColor', fillOpacity: 0.6 }}>Мбіт/с, завантаження (macOS networkQuality)</text>
+  </svg>
+</figure>
+
+Перше число — діапазон, і це не помилка. За столом швидкість гуляла від 75 до 190 Мбіт/с між замірами.
+
+Агент по черзі відкинув усе, на що я грішив. Тариф уже топовий. DNS відповідає за 10 мс. MTU нормальний, помилок на інтерфейсі нуль. А от пінг до власного роутера губив 5% пакетів — і на цьому суперечка закінчилася. Якщо пакети губляться ще всередині квартири, інтернет тут ні до чого.
+
+Причина — екстендер. TP-Link, який я колись поставив «щоб краще ловило», сам сидів на вай-фаї: однією рукою тримає лінк до роутера, другою до ноутбука, і на кожному стрибку смуга ділиться навпіл. Лінк за столом домовлявся на 234 Мбіт/с — приблизно те, що я й бачив у спідтестах. Вай-фай усе про себе розповів ще до вимірювань, треба було просто подивитися.
+
+Найдешевша перевірка у світі: взяти ноутбук і пройти п'ять метрів до роутера. −20 дБм замість −68, лінк 866, 624 Мбіт/с, нуль втрат.
+
+Дві поради, які гугл дає першими, не спрацювали. Вимкнути Smart Connect: 611 проти 612 Мбіт/с. Виставити «чистіші» канали вручну: 398 і 418 замість 624 на автоматі — тобто гірше.
+
+Питав llm-раду (ChatGPT + Gemini), чи не докупити ще один екстендер до столу. Обидва поставили цей варіант на останнє місце: другий бездротовий стрибок ріже смугу ще раз. Правильний фікс — кабель від роутера до столу, а екстендер у режим точки доступу.
+
+Кабель я так і не проклав. Увіткнув мак у гігабітний порт екстендера, який досі висить на бездротовому бекхолі — тобто зробив десь 80% фіксу. 492 Мбіт/с, нуль втрат. Агент чесно записав у звіт, що це не справжній wired backhaul і що 800–940 Мбіт/с усе ще лежать на столі.
+
+500 Mbps is quite good already. На цьому і зупинився.

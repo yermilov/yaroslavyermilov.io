@@ -12,6 +12,10 @@ interface Props {
   /** 'full' runs the island edge-to-edge (no prose header / max-width) for a
    * full-screen lab; 'default' keeps the reading column + LAB header. */
   layout?: 'default' | 'full';
+  /** Drop the <h1> only, keeping the date line and the lede. For a lab whose body opens with its
+   * own hook and would just repeat the title back at the reader. (`layout: 'full'` also hides the
+   * title, but it takes the date and the lede with it — this is the narrow lever.) */
+  hideTitle?: boolean;
 }
 
 const {
@@ -22,6 +26,7 @@ const {
   alternatePath,
   alternateMissing = false,
   layout = 'default',
+  hideTitle = false,
 } = Astro.props;
 const full = layout === 'full';
 
@@ -43,7 +48,7 @@ const fmt = new Intl.DateTimeFormat(bcp47Locale(locale), { dateStyle: 'long' });
           <p class="workbench">
             <time datetime={publishedAt.toISOString()}>{fmt.format(publishedAt)}</time> · LAB
           </p>
-          <h1>{title}</h1>
+          {!hideTitle && <h1>{title}</h1>}
           {description && <p class="lede">{description}</p>}
         </header>
       )
