@@ -64,7 +64,13 @@ const { url, author, handle, date, avatar, replyTo, media, hasVideo, embedded } 
 
 <style>
   .tweet {
-    margin: 0;
+    /* Prose paragraphs carry BOTTOM-only margins (top: 0), so a figure with `margin: 0`
+       leaves the next paragraph sitting flush against the card — there was literally 0px
+       under it. Give the card its own block margins, same rhythm as <hr>. The top one
+       collapses with the preceding paragraph's bottom margin, so the card ends up evenly
+       spaced on both sides. `.tweet.embedded` resets this — inside the masonry pin the
+       parent owns the spacing. */
+    margin: var(--space-4) 0;
     max-width: 38rem;
     border: 1px solid var(--rule);
     border-radius: 6px;
@@ -78,6 +84,7 @@ const { url, author, handle, date, avatar, replyTo, media, hasVideo, embedded } 
      edge — matching the book pins on the same wall. No offset shadow (the pin is
      flat, Field-Journal style); the parent supplies border + background. */
   .tweet.embedded {
+    margin: 0;
     max-width: none;
     border: none;
     border-radius: 0;
