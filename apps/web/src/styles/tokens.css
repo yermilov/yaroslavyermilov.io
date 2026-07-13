@@ -159,6 +159,7 @@ p,
 ul,
 ol,
 pre,
+figure,
 blockquote {
   margin: 0 0 var(--space-3);
 }

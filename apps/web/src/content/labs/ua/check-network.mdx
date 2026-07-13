@@ -59,42 +59,19 @@ npx skills add yermilov/learn-yy-skills --skill check-network
 ## Що в мене вийшло
 
 <figure>
-  <svg viewBox="0 0 680 268" role="img" aria-labelledby="netchart-title" style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
-    <title id="netchart-title">
-      Швидкість завантаження того самого ноутбука: за столом через бездротовий екстендер 75–190 Мбіт/с
-      (5% втрат пакетів), поруч із роутером 624 Мбіт/с (0% втрат), за столом по кабелю в екстендер
-      492 Мбіт/с (0% втрат).
-    </title>
+  <img src="/lab/check-network/1-wifi-through-extender.jpg" alt="Стіл, вай-фай через екстендер: 75–190 Мбіт/с, 5% втрат пакетів, −68 дБм, лінк 234 Мбіт/с" width="1360" height="765" loading="lazy" decoding="async" />
+</figure>
 
-    <line x1="190" y1="28" x2="190" y2="208" style={{ stroke: 'currentColor', strokeOpacity: 0.25 }} />
+<figure>
+  <img src="/lab/check-network/2-next-to-router.jpg" alt="Поруч із роутером, без екстендера: 624 Мбіт/с, 0% втрат, −20 дБм, лінк 866 Мбіт/с" width="1360" height="765" loading="lazy" decoding="async" />
+</figure>
 
-    {/* Inline styles, not presentation attributes: the prose CSS outranks fontSize="…" and would
-        blow the labels up over the bars. */}
-    <text x="182" y="48" style={{ fontSize: '13px', fill: 'currentColor', textAnchor: 'end' }}>Стіл, вай-фай</text>
-    <text x="182" y="64" style={{ fontSize: '11px', fill: 'currentColor', fillOpacity: 0.6, textAnchor: 'end' }}>через екстендер</text>
-    <rect x="236" y="36" width="72" height="24" style={{ fill: 'currentColor', fillOpacity: 0.3 }} />
-    <line x1="190" y1="48" x2="236" y2="48" style={{ stroke: 'currentColor', strokeOpacity: 0.35, strokeDasharray: '3 2' }} />
-    <text x="318" y="53" style={{ fontSize: '13px', fill: 'currentColor', fontFamily: 'ui-monospace, monospace' }}>75–190</text>
-    <text x="190" y="80" style={{ fontSize: '11px', fill: 'currentColor', fillOpacity: 0.6 }}>5% втрат до роутера · сигнал −68 дБм</text>
+<figure>
+  <img src="/lab/check-network/3-cable-into-extender.jpg" alt="Стіл, кабель у екстендер, але бекхол досі бездротовий: 492 Мбіт/с, 0% втрат" width="1360" height="765" loading="lazy" decoding="async" />
+</figure>
 
-    <text x="182" y="113" style={{ fontSize: '13px', fill: 'currentColor', textAnchor: 'end' }}>Поруч із роутером</text>
-    <text x="182" y="129" style={{ fontSize: '11px', fill: 'currentColor', fillOpacity: 0.6, textAnchor: 'end' }}>той самий вай-фай</text>
-    <rect x="190" y="101" width="387" height="24" style={{ fill: 'currentColor', fillOpacity: 0.72 }} />
-    <text x="587" y="118" style={{ fontSize: '13px', fill: 'currentColor', fontFamily: 'ui-monospace, monospace' }}>624</text>
-    <text x="190" y="145" style={{ fontSize: '11px', fill: 'currentColor', fillOpacity: 0.6 }}>0% втрат · −20 дБм · лінк 866 Мбіт/с</text>
-
-    <text x="182" y="178" style={{ fontSize: '13px', fill: 'currentColor', textAnchor: 'end' }}>Стіл, кабель</text>
-    <text x="182" y="194" style={{ fontSize: '11px', fill: 'currentColor', fillOpacity: 0.6, textAnchor: 'end' }}>в екстендер</text>
-    <rect x="190" y="166" width="305" height="24" style={{ fill: 'var(--green-primary)' }} />
-    <text x="505" y="183" style={{ fontSize: '13px', fill: 'currentColor', fontFamily: 'ui-monospace, monospace' }}>492</text>
-    <text x="190" y="210" style={{ fontSize: '11px', fill: 'currentColor', fillOpacity: 0.6 }}>0% втрат · на цьому я зупинився</text>
-
-    <line x1="190" y1="230" x2="562" y2="230" style={{ stroke: 'currentColor', strokeOpacity: 0.25 }} />
-    <text x="190" y="246" style={{ fontSize: '10px', fill: 'currentColor', fillOpacity: 0.6, fontFamily: 'ui-monospace, monospace' }}>0</text>
-    <text x="376" y="246" style={{ fontSize: '10px', fill: 'currentColor', fillOpacity: 0.6, fontFamily: 'ui-monospace, monospace', textAnchor: 'middle' }}>300</text>
-    <text x="562" y="246" style={{ fontSize: '10px', fill: 'currentColor', fillOpacity: 0.6, fontFamily: 'ui-monospace, monospace', textAnchor: 'middle' }}>600</text>
-    <text x="190" y="264" style={{ fontSize: '10px', fill: 'currentColor', fillOpacity: 0.6 }}>Мбіт/с, завантаження (macOS networkQuality)</text>
-  </svg>
+<figure>
+  <img src="/lab/check-network/4-wired-backhaul.jpg" alt="Те, чого я так і не зробив: кабель від роутера до екстендера в режимі точки доступу — очікувано 600–800 Мбіт/с, не міряно" width="1360" height="765" loading="lazy" decoding="async" />
 </figure>
 
 Перше число — діапазон, і це не помилка. За столом швидкість гуляла від 75 до 190 Мбіт/с між замірами.
