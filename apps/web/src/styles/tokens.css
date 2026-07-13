@@ -150,9 +150,15 @@ h3 {
   margin: var(--space-4) 0 var(--space-1);
 }
 
+/* Prose rhythm is BOTTOM-ONLY: every block owns the space under it and none above, so the
+   gap between two blocks is never the sum of two margins. Anything that lands in prose has
+   to be in this list — a block left at margin 0 (Tailwind's preflight zeroes them all) gets
+   the next paragraph glued to its underside. That's what `pre` did until code blocks on
+   every post sat flush against the line below them. */
 p,
 ul,
 ol,
+pre,
 blockquote {
   margin: 0 0 var(--space-3);
 }
