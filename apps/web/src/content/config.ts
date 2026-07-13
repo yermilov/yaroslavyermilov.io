@@ -120,6 +120,11 @@ const labs = defineCollection({
      * title already say the whole thing, so the summary underneath is just noise. `summary` stays
      * REQUIRED and still serves as the page's meta description. */
     hideCardSummary: z.boolean().optional(),
+    /** unlisted, not unpublished: the detail page is still built and stays reachable by direct
+     * link, but the lab index card, the sitemap, site search and search engines all drop it. For a
+     * lab that's finished but not announced yet. Like posts, the card only disappears in prod, so
+     * the index still previews it in dev. */
+    draft: z.boolean().optional(),
   }),
 });
 

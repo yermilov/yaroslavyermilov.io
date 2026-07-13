@@ -84,9 +84,11 @@ export function labSlug(entry: LabEntry): string {
  * Labs for one locale's index: one entry per canonicalSlug, preferring the active
  * locale and falling back to the other language so a lab still appears (in its
  * original language) before it's been translated.
+ *
+ * `draft` labs are unlisted here in prod but keep their detail page — see the schema.
  */
 export async function getLabsByLocale(locale: Locale): Promise<LabEntry[]> {
-  const all = await getCollection('labs');
+  const all = await getCollection('labs', isPublished);
   const byCanonical = new Map<string, LabEntry>();
   for (const lab of all) {
     const existing = byCanonical.get(lab.data.canonicalSlug);

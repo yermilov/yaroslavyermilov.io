@@ -249,3 +249,8 @@ Plausible site settings — the `pa-<id>.js` URL bundles that config server-side
   `astro.config.ts`. Pagefind and the SSR 404 handler depend on this.
 - **Drafts**: `draft: true` posts are rendered in dev but skipped in prod.
   Don't rely on this for sensitive material.
+- **Unlisted labs**: `draft: true` on a lab means unlisted, not unpublished — the
+  detail page is still built and anyone with the link can read it; only the index
+  card (prod), the sitemap, Pagefind and search-engine indexing drop away. Mark
+  BOTH locales, or the untranslated-fallback still lists the lab. Same caveat:
+  it's obscurity, not access control.

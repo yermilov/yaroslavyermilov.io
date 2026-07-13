@@ -19,6 +19,9 @@ interface Props {
   /** Drop the visible lede. `description` is still passed to BaseLayout for the meta description —
    * this only stops it being printed above a body that already opens with the same thought. */
   hideLede?: boolean;
+  /** Unlisted: this page is reachable by direct link only, so keep it out of site search and tell
+   * crawlers not to index it. (The lab index card and the sitemap are dropped upstream.) */
+  draft?: boolean;
 }
 
 const {
@@ -31,6 +34,7 @@ const {
   layout = 'default',
   hideTitle = false,
   hideLede = false,
+  draft = false,
 } = Astro.props;
 const full = layout === 'full';
 
@@ -43,9 +47,13 @@ const fmt = new Intl.DateTimeFormat(bcp47Locale(locale), { dateStyle: 'long' });
   description={description}
   alternatePath={alternatePath}
   alternateMissing={alternateMissing}
+  noindex={draft}
   themeLab
 >
-  <article class:list={['page-frame', 'lab', { 'lab--full': full }]} data-pagefind-body>
+  <article
+    class:list={['page-frame', 'lab', { 'lab--full': full }]}
+    data-pagefind-body={draft ? undefined : true}
+  >
     {
       !full && (
         <header class="lab-header prose-column">

@@ -61,6 +61,7 @@ const { Content } = await entry.render();
   layout={entry.data.fullBleed ? 'full' : 'default'}
   hideTitle={entry.data.hideTitle ?? false}
   hideLede={entry.data.hideLede ?? false}
+  draft={entry.data.draft ?? false}
 >
   <Content />
 </LabLayout>
