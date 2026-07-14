@@ -2,22 +2,28 @@
 /**
  * Personal moments as an Instagram-style grid — the platform's LAYOUT (a tight, square
  * photo grid) reinterpreted in the site's Field Journal aesthetic: 1px rule borders,
- * paper/ink tones, NO drop shadows or rounded "card" chrome. Each moment is one square
- * cell; a moment with a SINGLE photo is a plain tile, and a moment holding several photos
- * (same day + caption + location — a burst of near-identical shots) collapses into ONE
- * swipeable CAROUSEL cell — the platform's multi-photo post — instead of spilling across
- * separate tiles. Swiping is native CSS scroll-snap (touch + trackpad), so there is no JS;
- * a corner badge marks a carousel and shows the count. Each cell slides up a paper caption
- * band (serif caption + mono location · date) on hover/focus.
+ * paper/ink tones, NO drop shadows or rounded "card" chrome.
+ *
+ * The grid is PURE PHOTO — no captions, no date stamps, nothing overlaid but the carousel
+ * badge. Like the platform's profile grid, the tile is a cover and the words live one level
+ * down: opening a moment reveals a scrollable view holding every shot in it plus the caption
+ * and date. Each moment is one square cell; a moment with a SINGLE photo is a plain tile, and
+ * a moment holding several photos (a burst of near-identical shots) collapses into ONE
+ * swipeable CAROUSEL cell. Swiping is native CSS scroll-snap (touch + trackpad), so there is
+ * no JS; a corner badge marks a carousel and shows the count.
+ *
+ * Clicking any tile opens the moment view (see the <dialog> below). Without JS the links still
+ * resolve to the full-size JPEG, so the grid degrades to plain hyperlinks.
  */
 import type { TimelineEntry } from '@lib/content';
-import type { Locale } from '@lib/i18n';
+import { t, type Locale } from '@lib/i18n';
 
 interface Props {
   locale: Locale;
   entries: TimelineEntry[];
 }
 const { locale, entries } = Astro.props;
+const strings = t(locale);
 
 type Moment = {
   photos: string[];
@@ -44,16 +50,32 @@ const slideLabel = (m: Moment, i: number) =>
   locale === 'ua'
     ? `${momentLabel(m)} — фото ${i + 1} з ${m.photos.length}`
     : `${momentLabel(m)} — photo ${i + 1} of ${m.photos.length}`;
+
+/* The moment view is rendered client-side from this payload rather than from the grid DOM: the
+   grid tile is a cropped square, while the view wants the caption + date it no longer shows. */
+const momentData = moments.map((m) => ({
+  photos: m.photos,
+  caption: m.caption ?? '',
+  meta: metaText(m),
+  label: momentLabel(m),
+}));
 ---
 
 <ul class="grid" role="list">
   {
-    moments.map((m) =>
+    moments.map((m, mi) =>
       m.photos.length === 1 ? (
-        <li class="cell">
-          {/* Single-photo moment — a focusable link to the full-size shot (caption reachable
-              by keyboard via :focus-visible, and tapping opens the photo). */}
-          <a class="frame" href={m.photos[0]} target="_blank" rel="noopener" aria-label={momentLabel(m)}>
+        <li class="cell" data-moment={mi}>
+          {/* Single-photo moment — a focusable link that opens the moment view (and, without
+              JS, the full-size shot). */}
+          <a
+            class="frame"
+            href={m.photos[0]}
+            target="_blank"
+            rel="noopener"
+            aria-label={momentLabel(m)}
+            data-photo={0}
+          >
             <img
               class="photo"
               src={m.photos[0]}
@@ -61,21 +83,24 @@ const slideLabel = (m: Moment, i: number) =>
               loading="lazy"
               style={m.focus?.[m.photos[0]!] ? `object-position: ${m.focus[m.photos[0]!]}` : undefined}
             />
-            <span class="cap">
-              {m.caption ? <span class="cap-title">{m.caption}</span> : null}
-              <span class="cap-meta">{metaText(m)}</span>
-            </span>
           </a>
         </li>
       ) : (
-        <li class="cell">
+        <li class="cell" data-moment={mi}>
           {/* Multi-photo moment — one square cell holding a native scroll-snap carousel. The
-              track is a horizontal scroller (swipe on touch/trackpad); each slide links to its
-              full-size photo. A corner badge marks it as a carousel and shows the count. */}
+              track is a horizontal scroller (swipe on touch/trackpad); clicking a slide opens
+              the moment view at that photo. A corner badge marks it as a carousel. */}
           <div class="carousel" role="group" aria-roledescription="carousel" aria-label={momentLabel(m)}>
             <div class="track">
               {m.photos.map((src, i) => (
-                <a class="frame slide" href={src} target="_blank" rel="noopener" aria-label={slideLabel(m, i)}>
+                <a
+                  class="frame slide"
+                  href={src}
+                  target="_blank"
+                  rel="noopener"
+                  aria-label={slideLabel(m, i)}
+                  data-photo={i}
+                >
                   <img
                     class="photo"
                     src={src}
@@ -111,22 +136,41 @@ const slideLabel = (m: Moment, i: number) =>
               </svg>
               {m.photos.length}
             </span>
-            {m.caption || m.location ? (
-              <span class="cap">
-                {m.caption ? <span class="cap-title">{m.caption}</span> : null}
-                <span class="cap-meta">{metaText(m)}</span>
-              </span>
-            ) : (
-              <span class="cap">
-                <span class="cap-meta">{metaText(m)}</span>
-              </span>
-            )}
           </div>
         </li>
       ),
     )
   }
 </ul>
+
+{/* The individual moment — every shot in it, stacked and scrollable, with the caption and date
+    the grid no longer carries. Rendered once per page and filled on open. */}
+<dialog id="moment-view" class="mv" aria-modal="true">
+  <div class="mv-bar">
+    <p class="mv-count workbench" hidden></p>
+    <button class="mv-close" type="button" aria-label={strings.labels.close}>×</button>
+  </div>
+  {/* tabindex so the stack is reachable by keyboard: the dialog traps focus, and without this
+      the only stop is the × — which sits outside the scroll container, leaving everything below
+      the fold unreachable without a pointer. */}
+  <div class="mv-scroll" tabindex="0">
+    <div class="mv-shots"></div>
+    <div class="mv-cap">
+      <p class="mv-title"></p>
+      <p class="mv-meta"></p>
+    </div>
+  </div>
+</dialog>
+
+{/* `<` is escaped so a caption containing `</script>` can't close this tag early and spill the
+    rest of the payload into the page as markup. `<` is still valid JSON, so the parse is
+    unaffected. */}
+<script
+  is:inline
+  type="application/json"
+  id="moment-data"
+  set:html={JSON.stringify(momentData).replace(/</g, '\\u003c')}
+/>
 
 <script>
   // Progressive enhancement: wire the carousel arrows to the native scroll-snap track. Touch
@@ -151,18 +195,147 @@ const slideLabel = (m: Moment, i: number) =>
     next?.removeAttribute('hidden');
     sync();
   }
+
+  // The moment view: one moment, every shot in it, scrolled vertically. This is what a tile
+  // click opens instead of dumping the visitor on a bare JPEG in a new tab.
+  (() => {
+    type MomentDatum = { photos: string[]; caption: string; meta: string; label: string };
+
+    const dialog = document.getElementById('moment-view') as HTMLDialogElement | null;
+    const dataEl = document.getElementById('moment-data');
+    if (!dialog || !dataEl?.textContent) return;
+
+    const data: MomentDatum[] = JSON.parse(dataEl.textContent);
+
+    const scroll = dialog.querySelector<HTMLElement>('.mv-scroll');
+    const shots = dialog.querySelector<HTMLElement>('.mv-shots');
+    const cap = dialog.querySelector<HTMLElement>('.mv-cap');
+    const title = dialog.querySelector<HTMLElement>('.mv-title');
+    const meta = dialog.querySelector<HTMLElement>('.mv-meta');
+    const count = dialog.querySelector<HTMLElement>('.mv-count');
+    const closeBtn = dialog.querySelector<HTMLButtonElement>('.mv-close');
+    if (!scroll || !shots || !cap || !title || !meta || !count || !closeBtn) return;
+
+    let lastFocus: HTMLElement | null = null;
+    let current: MomentDatum | null = null;
+
+    /* "3 / 18" — whichever shot owns the middle of the viewport. Derived from scroll position
+       rather than an IntersectionObserver: before the photos have laid out every figure is
+       zero-height and intersects at once, and an observer would settle on whichever record it
+       saw last (it read "7 / 7" on open). Geometry is deterministic and self-corrects as the
+       images load. */
+    function syncCount() {
+      if (!scroll || !shots || !count || !current || current.photos.length < 2) return;
+      const middle = scroll.scrollTop + scroll.clientHeight / 2;
+      let best = 0;
+      let bestGap = Infinity;
+      for (let i = 0; i < shots.children.length; i++) {
+        const fig = shots.children[i] as HTMLElement;
+        const centre = fig.offsetTop - shots.offsetTop + fig.offsetHeight / 2;
+        const gap = Math.abs(centre - middle);
+        if (gap < bestGap) {
+          bestGap = gap;
+          best = i;
+        }
+      }
+      count.textContent = `${best + 1} / ${current.photos.length}`;
+    }
+
+    function open(m: MomentDatum, at: number) {
+      if (!dialog || !scroll || !shots || !cap || !title || !meta || !count || !closeBtn) return;
+
+      dialog.setAttribute('aria-label', m.label);
+      current = m;
+      shots.replaceChildren(
+        ...m.photos.map((src, i) => {
+          const fig = document.createElement('figure');
+          fig.className = 'mv-shot';
+          const img = document.createElement('img');
+          // `loading` MUST be set before `src`: assigning src first starts the fetch straight
+          // away and a later `lazy` arrives too late, so opening a moment would pull every
+          // full-size photo in it at once (these JPEGs are unoptimised — that's megabytes on a
+          // phone). The shot actually being looked at loads eagerly; the rest stream in.
+          img.loading = i === at ? 'eager' : 'lazy';
+          img.alt = i === 0 ? m.caption : '';
+          img.src = src;
+          // Each photo that lands reflows the column beneath it — re-read the counter.
+          img.addEventListener('load', syncCount);
+          fig.append(img);
+          return fig;
+        }),
+      );
+
+      title.textContent = m.caption;
+      title.hidden = !m.caption;
+      meta.textContent = m.meta;
+      meta.hidden = !m.meta;
+      cap.hidden = !m.caption && !m.meta;
+
+      count.hidden = m.photos.length < 2;
+
+      lastFocus = document.activeElement as HTMLElement | null;
+      dialog.showModal();
+      // Focus the stack, not the ×: arrow keys and PageDown then scroll the photos straight
+      // away, and Tab still reaches the close button.
+      scroll.focus();
+
+      // Land on the shot that was clicked (a carousel slide opens where you left off), without
+      // animating past the ones before it.
+      const target = shots.children[at] as HTMLElement | undefined;
+      scroll.scrollTop = target ? target.offsetTop - shots.offsetTop : 0;
+      syncCount();
+    }
+
+    function close() {
+      dialog?.close();
+    }
+
+    /* Tear-down hangs off the [open] attribute rather than the dialog's `close` event: Esc
+       dismisses the dialog without that event reaching us (it left the shots mounted), so
+       watching the attribute is the one signal every dismissal path — Esc, the ×, a click on
+       the backdrop — actually shares. */
+    new MutationObserver(() => {
+      if (dialog.open || !shots) return;
+      current = null;
+      shots.replaceChildren();
+      if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+    }).observe(dialog, { attributes: true, attributeFilter: ['open'] });
+
+    closeBtn.addEventListener('click', close);
+    scroll.addEventListener('scroll', syncCount, { passive: true });
+    window.addEventListener('resize', syncCount, { passive: true });
+    // Clicking the empty space around a shot closes — the photos themselves are inert.
+    scroll.addEventListener('click', (e) => {
+      if (e.target === scroll || (e.target as HTMLElement).classList.contains('mv-shot')) close();
+    });
+
+    for (const link of document.querySelectorAll<HTMLAnchorElement>('.grid .frame')) {
+      link.addEventListener('click', (e) => {
+        // Modifier-clicks (cmd/ctrl/shift/middle) keep opening the raw JPEG in a new tab.
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+        const cell = link.closest<HTMLElement>('.cell');
+        const mi = Number(cell?.dataset.moment);
+        const pi = Number(link.dataset.photo);
+        const m = data[mi];
+        if (!m) return;
+        e.preventDefault();
+        open(m, Number.isFinite(pi) ? pi : 0);
+      });
+    }
+  })();
 </script>
 
 <style>
-  /* Tight square grid — the platform's signature. Column count is fixed (like the
-     profile grid), not fluid, so the squares stay a clean 3-up / 2-up. */
+  /* Tight square grid — the platform's signature. Column count is fixed (like the profile
+     grid), not fluid, and stays 3-up down to the smallest phone: the density IS the look, and
+     with no caption band to read there is nothing that needs the extra width. */
   .grid {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-1);
+    gap: 2px;
   }
   .cell {
     margin: 0;
@@ -179,6 +352,7 @@ const slideLabel = (m: Moment, i: number) =>
   .frame:focus-visible {
     outline: none;
     box-shadow: var(--focus-ring);
+    z-index: 1;
   }
   .photo {
     display: block;
@@ -225,11 +399,11 @@ const slideLabel = (m: Moment, i: number) =>
     scroll-snap-stop: always;
   }
   /* Instagram's multi-photo badge — stacked squares + count, top-right, on a paper chip so it
-     stays legible over any photo without a shadow. */
+     stays legible over any photo without a shadow. The only mark left on the grid. */
   .count {
     position: absolute;
-    top: var(--space-2);
-    right: var(--space-2);
+    top: var(--space-1);
+    right: var(--space-1);
     display: inline-flex;
     align-items: center;
     gap: 0.28em;
@@ -267,10 +441,10 @@ const slideLabel = (m: Moment, i: number) =>
     transition: opacity 0.18s ease;
   }
   .nav.prev {
-    left: var(--space-2);
+    left: var(--space-1);
   }
   .nav.next {
-    right: var(--space-2);
+    right: var(--space-1);
   }
   .carousel:hover .nav,
   .carousel:focus-within .nav {
@@ -295,56 +469,145 @@ const slideLabel = (m: Moment, i: number) =>
     }
   }
 
-  /* Caption is a PAPER band that slides up over the photo on hover/focus — not an Instagram
-     dark scrim: keeps the page on-aesthetic (ink on paper, mono meta), theme-aware, no
-     shadow. The photo stays the hero until you hover. Shared by both tile + carousel. */
-  .cap {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
+  /* --- The moment view ------------------------------------------------------------------
+     A dark, immersive reading of one moment (matching the site's existing photo lightbox):
+     every shot stacked in a single vertical scroll, with the caption and date at the end —
+     the words the grid deliberately dropped. */
+  /* Hold the page still behind the open viewer. Tied to the dialog's own [open] state rather
+     than toggled from JS on open/close: an event-driven lock desyncs the moment one close path
+     is missed (Esc did exactly that — it left the page stuck at overflow:hidden), while this
+     releases itself no matter how the dialog is dismissed. */
+  :global(body:has(#moment-view[open])) {
+    overflow: hidden;
+  }
+
+  .mv {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    color: #f4f4f4;
+    overflow: hidden;
+  }
+  .mv[open] {
     display: flex;
     flex-direction: column;
-    gap: 0.1rem;
-    padding: var(--space-2);
-    background: color-mix(in oklab, var(--bg-paper) 90%, transparent);
-    border-top: 1px solid var(--rule);
-    transform: translateY(101%);
-    transition: transform 0.22s ease;
-    /* Informational only — the whole tile/slide is the link. Stay transparent to pointer
-       events so a tap or swipe that lands on the caption still reaches the photo/track
-       beneath (matters on touch, where the carousel caption is a forced-visible sibling
-       overlay above the scroll track — otherwise it would swallow the gesture). */
-    pointer-events: none;
   }
-  .frame:hover .cap,
-  .frame:focus .cap,
-  .carousel:hover .cap,
-  .carousel:focus-within .cap {
-    transform: translateY(0);
+  .mv::backdrop {
+    background: rgba(15, 15, 15, 0.96);
   }
-  /* Touch devices can't hover — keep the caption visible so its info isn't locked away. */
-  @media (hover: none) {
-    .cap {
-      transform: translateY(0);
-    }
+
+  .mv-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    flex: none;
   }
-  .cap-title {
-    font-family: var(--font-display);
-    font-size: 0.98rem;
-    line-height: 1.2;
-    color: var(--ink);
+  .mv-count {
+    margin: 0;
+    color: rgba(244, 244, 244, 0.7);
   }
-  .cap-meta {
+  .mv-close {
+    margin-left: auto;
+    background: transparent;
+    border: 0;
+    color: rgba(244, 244, 244, 0.85);
     font-family: var(--font-mono);
-    font-size: 0.66rem;
+    font-size: 2rem;
+    line-height: 1;
+    padding: 0 var(--space-1);
+    cursor: pointer;
+    transition: color 120ms ease;
+  }
+  .mv-close:hover {
+    color: var(--orange-accent);
+  }
+  .mv-close:focus-visible {
+    outline: none;
+    color: var(--orange-accent);
+  }
+
+  .mv-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* A gentle snap: the scroll settles on a shot rather than stranding two half-photos. */
+    scroll-snap-type: y proximity;
+  }
+  /* The stack takes focus on open, so it needs a visible ring like everything else here —
+     inset, because the region is full-bleed and an outset ring would fall off-screen. */
+  .mv-scroll:focus-visible {
+    outline: 2px solid var(--orange-accent);
+    outline-offset: -3px;
+  }
+  /* The shots are built in JS on open, so they never carry Astro's scope attribute — these
+     rules have to be :global() to reach them. Anchoring them under .mv-scroll (which IS
+     server-rendered, and so IS scoped) keeps them from leaking past this component. */
+  .mv-scroll :global(.mv-shot) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Each shot holds a slot whether or not its photo has downloaded yet. Without this, a
+       not-yet-lazy-loaded image collapses to its 2px border, every pending shot stacks up in
+       the same few pixels, and the counter reads off the wrong one. It also makes each photo a
+       proper scroll page. */
+    min-height: 62vh;
+    margin: 0 0 var(--space-2);
+    padding: 0 var(--space-2);
+    scroll-snap-align: center;
+  }
+  .mv-scroll :global(.mv-shot img) {
+    display: block;
+    max-width: min(100%, 46rem);
+    max-height: 84vh;
+    width: auto;
+    height: auto;
+    border: 1px solid var(--rule);
+    background: #000;
+  }
+
+  .mv-cap {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: var(--space-2) var(--space-3) var(--space-5);
+    text-align: center;
+  }
+  .mv-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    line-height: 1.25;
+    color: #f4f4f4;
+  }
+  .mv-meta {
+    margin: 0.35rem 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: var(--ink-muted);
+    color: rgba(244, 244, 244, 0.62);
   }
-  @media (max-width: 34rem) {
-    .grid {
-      grid-template-columns: repeat(2, 1fr);
+
+  @media (max-width: 540px) {
+    .mv-close {
+      font-size: 1.6rem;
+    }
+    /* :global for the same reason as above — these shots are built in JS and carry no scope
+       attribute. Phone is where this view is actually read, so a scoped selector here would
+       silently drop the full-bleed layout exactly where it matters most. */
+    .mv-scroll :global(.mv-shot) {
+      padding: 0;
+    }
+    .mv-scroll :global(.mv-shot img) {
+      max-width: 100%;
+      border-left: 0;
+      border-right: 0;
     }
   }
 </style>
