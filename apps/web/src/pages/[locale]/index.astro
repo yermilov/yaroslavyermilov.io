@@ -1,6 +1,6 @@
 ---
 export const prerender = true;
-import { LOCALES, t, localePath, languageBadge, bcp47Locale, type Locale } from '@lib/i18n';
+import { LOCALES, t, localePath, languageBadge, bcp47Locale, localized, type Locale } from '@lib/i18n';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import Timeline from '@components/Timeline.astro';
 import RelativeDays from '@components/RelativeDays.tsx';
@@ -58,7 +58,10 @@ const shelfPool: ShelfItem[] = [
     byline: `${strings.books.by} ${book.data.author}`,
     cover: book.data.cover,
     rating: book.data.rating ?? null,
-    summary: book.data.summary,
+    // The shelf card is the one place a book's blurb skipped localized() — /ua/ printed the
+    // English summary next to an otherwise Ukrainian page. Feeds the SSR card AND the
+    // client-side shuffle payload, so this single line covers both.
+    summary: localized(locale, book.data.summary, book.data.summaryUk),
     href: localePath(locale, `books/${bookSlug(book)}`),
     external: false,
     date: book.data.readAt?.getTime() ?? 0,
