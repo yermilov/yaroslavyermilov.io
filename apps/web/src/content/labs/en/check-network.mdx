@@ -58,29 +58,17 @@ Then just say "use check-network to make my home network faster".
 
 ## What it found
 
+The first number is a range, and that is not a typo. At the desk the speed wandered between 75 and 190 Mbps from run to run.
+
 <figure>
   <img src="/lab/check-network/1-wifi-through-extender.jpg" alt="Desk, Wi-Fi through the extender: 75–190 Mbps, 5% packet loss, −68 dBm, link 234 Mbps" width="1360" height="765" loading="lazy" decoding="async" />
 </figure>
-
-<figure>
-  <img src="/lab/check-network/2-next-to-router.jpg" alt="Next to the router, no extender: 624 Mbps, 0% packet loss, −20 dBm, link 866 Mbps" width="1360" height="765" loading="lazy" decoding="async" />
-</figure>
-
-<figure>
-  <img src="/lab/check-network/3-cable-into-extender.jpg" alt="Desk, cable into the extender, but the backhaul is still wireless: 492 Mbps, 0% packet loss" width="1360" height="765" loading="lazy" decoding="async" />
-</figure>
-
-<figure>
-  <img src="/lab/check-network/4-wired-backhaul.jpg" alt="What I never did: a cable from the router to the extender in AP mode — 600–800 Mbps expected, never measured" width="1360" height="765" loading="lazy" decoding="async" />
-</figure>
-
-The first number is a range, and that is not a typo. At the desk the speed wandered between 75 and 190 Mbps from run to run.
 
 The agent ruled out everything I suspected. The plan is already the top tier. DNS answers in 10 ms. MTU is fine, zero interface errors. But the ping to my own router was losing 5% of packets, and that ended the argument. If packets die inside the apartment, the ISP has nothing to do with it.
 
 <figure>
   <video src="/lab/check-network/1-hunt.mp4" poster="/lab/check-network/1-hunt-poster.jpg" controls muted playsinline preload="none" width="1600" height="900" style={{ width: '100%', height: 'auto', borderRadius: '6px' }}>
-    Video: the first measurements, the checklist, and 5% packet loss on the ping to my own router.
+    Terminal: the first measurements, the 92→189 swing, and 5% packet loss on the ping to my own router.
   </video>
 </figure>
 
@@ -88,22 +76,36 @@ The cause was the extender. The TP-Link I once added "for better coverage" was i
 
 The cheapest diagnostic in the world: pick up the laptop and walk five meters to the router. −20 dBm instead of −68, an 866 Mbps link, 624 Mbps, zero loss.
 
-The two things the internet tells you to do first did nothing. Turning off Smart Connect: 611 vs 612 Mbps. Picking "cleaner" channels by hand: 398 and 418, against 624 on auto — worse.
+<figure>
+  <img src="/lab/check-network/2-next-to-router.jpg" alt="Next to the router, no extender: 624 Mbps, 0% packet loss, −20 dBm, link 866 Mbps" width="1360" height="765" loading="lazy" decoding="async" />
+</figure>
+
+The two things the internet tells you to do first did nothing. Turning off Smart Connect: 611 vs 612 Mbps. Picking "cleaner" channels by hand: 398 on channel 36, 418 on channel 44 — and a re-measurement on auto in the same session gave 382. It is all one flat band of noise: the channel decides nothing.
 
 <figure>
   <video src="/lab/check-network/2-experiments.mp4" poster="/lab/check-network/2-experiments-poster.jpg" controls muted playsinline preload="none" width="1600" height="900" style={{ width: '100%', height: 'auto', borderRadius: '6px' }}>
-    Video: the laptop next to the router — 624 Mbps — and two dead ends.
+    Terminal: the laptop next to the router — 624 Mbps, zero loss — and the two dead ends that followed.
   </video>
 </figure>
 
 I asked an LLM council (ChatGPT + Gemini) whether to buy a second extender for the desk. Both ranked that option last: another wireless hop halves the bandwidth again. The right fix is a cable from the router to the desk with the extender in access-point mode.
 
-I never ran that cable. I plugged the Mac into the extender's gigabit port — the same extender still hanging off a wireless backhaul — so roughly 80% of the fix. 492 Mbps, zero loss. The agent honestly noted in its report that this is not a real wired backhaul and that 800–940 Mbps is still on the table.
+I never ran that cable. I plugged the Mac into the extender's gigabit port — the same extender still hanging off a wireless backhaul — so roughly 80% of the fix. 492 Mbps, zero loss.
+
+<figure>
+  <img src="/lab/check-network/3-cable-into-extender.jpg" alt="Desk, cable into the extender, but the backhaul is still wireless: 492 Mbps, 0% packet loss" width="1360" height="765" loading="lazy" decoding="async" />
+</figure>
+
+<figure>
+  <video src="/lab/check-network/3-cable.mp4" poster="/lab/check-network/3-cable-poster.jpg" controls muted playsinline preload="none" width="1600" height="900" style={{ width: '100%', height: 'auto', borderRadius: '6px' }}>
+    Terminal: the cable into the port, 492 Mbps, zero loss — and the honest caveat about the backhaul.
+  </video>
+</figure>
+
+The agent honestly noted in its report that this is not a real wired backhaul and that 800–940 Mbps is still on the table.
 
 500 Mbps is quite good already. I stopped there.
 
 <figure>
-  <video src="/lab/check-network/3-council.mp4" poster="/lab/check-network/3-council-poster.jpg" controls muted playsinline preload="none" width="1600" height="900" style={{ width: '100%', height: 'auto', borderRadius: '6px' }}>
-    Video: the council's verdict, the cable, 492 Mbps — and the honest caveat about the backhaul.
-  </video>
+  <img src="/lab/check-network/4-wired-backhaul.jpg" alt="What I never did: a cable from the router to the extender in AP mode — 600–800 Mbps expected, never measured" width="1360" height="765" loading="lazy" decoding="async" />
 </figure>

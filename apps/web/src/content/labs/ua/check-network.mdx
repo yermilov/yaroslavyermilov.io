@@ -58,29 +58,17 @@ npx skills add yermilov/learn-yy-skills --skill check-network
 
 ## Що в мене вийшло
 
+Перше число — діапазон, і це не помилка. За столом швидкість гуляла від 75 до 190 Мбіт/с між замірами.
+
 <figure>
   <img src="/lab/check-network/1-wifi-through-extender.jpg" alt="Стіл, вай-фай через екстендер: 75–190 Мбіт/с, 5% втрат пакетів, −68 дБм, лінк 234 Мбіт/с" width="1360" height="765" loading="lazy" decoding="async" />
 </figure>
-
-<figure>
-  <img src="/lab/check-network/2-next-to-router.jpg" alt="Поруч із роутером, без екстендера: 624 Мбіт/с, 0% втрат, −20 дБм, лінк 866 Мбіт/с" width="1360" height="765" loading="lazy" decoding="async" />
-</figure>
-
-<figure>
-  <img src="/lab/check-network/3-cable-into-extender.jpg" alt="Стіл, кабель у екстендер, але бекхол досі бездротовий: 492 Мбіт/с, 0% втрат" width="1360" height="765" loading="lazy" decoding="async" />
-</figure>
-
-<figure>
-  <img src="/lab/check-network/4-wired-backhaul.jpg" alt="Те, чого я так і не зробив: кабель від роутера до екстендера в режимі точки доступу — очікувано 600–800 Мбіт/с, не міряно" width="1360" height="765" loading="lazy" decoding="async" />
-</figure>
-
-Перше число — діапазон, і це не помилка. За столом швидкість гуляла від 75 до 190 Мбіт/с між замірами.
 
 Агент по черзі відкинув усе, на що я грішив. Тариф уже топовий. DNS відповідає за 10 мс. MTU нормальний, помилок на інтерфейсі нуль. А от пінг до власного роутера губив 5% пакетів — і на цьому суперечка закінчилася. Якщо пакети губляться ще всередині квартири, інтернет тут ні до чого.
 
 <figure>
   <video src="/lab/check-network/1-hunt.mp4" poster="/lab/check-network/1-hunt-poster.jpg" controls muted playsinline preload="none" width="1600" height="900" style={{ width: '100%', height: 'auto', borderRadius: '6px' }}>
-    Відео: перші заміри, чек-лист і 5% втрати пакетів на пінгу до власного роутера.
+    Термінал: перші заміри, розкид 92→189 і 5% втрати пакетів на пінгу до власного роутера.
   </video>
 </figure>
 
@@ -88,22 +76,36 @@ npx skills add yermilov/learn-yy-skills --skill check-network
 
 Найдешевша перевірка у світі: взяти ноутбук і пройти п'ять метрів до роутера. −20 дБм замість −68, лінк 866, 624 Мбіт/с, нуль втрат.
 
-Дві поради, які гугл дає першими, не спрацювали. Вимкнути Smart Connect: 611 проти 612 Мбіт/с. Виставити «чистіші» канали вручну: 398 і 418 замість 624 на автоматі — тобто гірше.
+<figure>
+  <img src="/lab/check-network/2-next-to-router.jpg" alt="Поруч із роутером, без екстендера: 624 Мбіт/с, 0% втрат, −20 дБм, лінк 866 Мбіт/с" width="1360" height="765" loading="lazy" decoding="async" />
+</figure>
+
+Дві поради, які гугл дає першими, не спрацювали. Вимкнути Smart Connect: 611 проти 612 Мбіт/с. Виставити «чистіші» канали вручну: 398 на 36-му, 418 на 44-му — а перезамір на автоматі в тій самій сесії дав 382. Тобто це все один суцільний шум: канал нічого не вирішує.
 
 <figure>
   <video src="/lab/check-network/2-experiments.mp4" poster="/lab/check-network/2-experiments-poster.jpg" controls muted playsinline preload="none" width="1600" height="900" style={{ width: '100%', height: 'auto', borderRadius: '6px' }}>
-    Відео: ноутбук поруч із роутером — 624 Мбіт/с, і два глухі кути.
+    Термінал: ноутбук поруч із роутером — 624 Мбіт/с і нуль втрат, і два глухі кути після нього.
   </video>
 </figure>
 
 Питав llm-раду (ChatGPT + Gemini), чи не докупити ще один екстендер до столу. Обидва поставили цей варіант на останнє місце: другий бездротовий стрибок ріже смугу ще раз. Правильний фікс — кабель від роутера до столу, а екстендер у режим точки доступу.
 
-Кабель я так і не проклав. Увіткнув мак у гігабітний порт екстендера, який досі висить на бездротовому бекхолі — тобто зробив десь 80% фіксу. 492 Мбіт/с, нуль втрат. Агент чесно записав у звіт, що це не справжній wired backhaul і що 800–940 Мбіт/с усе ще лежать на столі.
+Кабель я так і не проклав. Увіткнув мак у гігабітний порт екстендера, який досі висить на бездротовому бекхолі — тобто зробив десь 80% фіксу. 492 Мбіт/с, нуль втрат.
+
+<figure>
+  <img src="/lab/check-network/3-cable-into-extender.jpg" alt="Стіл, кабель у екстендер, але бекхол досі бездротовий: 492 Мбіт/с, 0% втрат" width="1360" height="765" loading="lazy" decoding="async" />
+</figure>
+
+<figure>
+  <video src="/lab/check-network/3-cable.mp4" poster="/lab/check-network/3-cable-poster.jpg" controls muted playsinline preload="none" width="1600" height="900" style={{ width: '100%', height: 'auto', borderRadius: '6px' }}>
+    Термінал: кабель у порт, 492 Мбіт/с, нуль втрат — і чесна примітка про бекхол.
+  </video>
+</figure>
+
+Агент чесно записав у звіт, що це не справжній wired backhaul і що 800–940 Мбіт/с усе ще лежать на столі.
 
 500 Mbps is quite good already. На цьому і зупинився.
 
 <figure>
-  <video src="/lab/check-network/3-council.mp4" poster="/lab/check-network/3-council-poster.jpg" controls muted playsinline preload="none" width="1600" height="900" style={{ width: '100%', height: 'auto', borderRadius: '6px' }}>
-    Відео: вердикт llm-ради, кабель, 492 Мбіт/с — і чесна примітка про бекхол.
-  </video>
+  <img src="/lab/check-network/4-wired-backhaul.jpg" alt="Те, чого я так і не зробив: кабель від роутера до екстендера в режимі точки доступу — очікувано 600–800 Мбіт/с, не міряно" width="1360" height="765" loading="lazy" decoding="async" />
 </figure>
