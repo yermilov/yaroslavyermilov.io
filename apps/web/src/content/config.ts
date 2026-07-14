@@ -30,6 +30,10 @@ const talks = defineCollection({
     title: z.string(),
     event: z.string(),
     date: z.coerce.date(),
+    /** What the appearance actually WAS — not everything on stage is a talk. Drives the kind
+        eyebrow ("ДОПОВІДЬ" / "ІНТЕРВ'Ю" / "ПАНЕЛЬНА ДИСКУСІЯ") in the writing-talking list and
+        the OG card. Defaults to 'talk', so existing entries keep their label. */
+    format: z.enum(['talk', 'interview', 'panel']).default('talk'),
     /** Language the talk was delivered in — drives the UA/EN badge, not the
         displayed copy (the English fields above are the default; the *Uk
         overrides below render on /ua/). */

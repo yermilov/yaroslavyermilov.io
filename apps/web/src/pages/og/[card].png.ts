@@ -67,7 +67,10 @@ async function buildCards(): Promise<OgCard[]> {
     cards.push({
       id: `talk-${talk.slug}`,
       language,
-      eyebrow: `TALK · ${talk.data.event.toUpperCase()} · ${fmtDate(talk.data.date, language)}`,
+      // The kind word tracks the format — an interview or a panel shouldn't announce itself as a
+      // TALK. English on every card by design (see the book note below): the eyebrow is
+      // language-neutral chrome, so this reads INTERVIEW / PANEL, not their UA labels.
+      eyebrow: `${talk.data.format.toUpperCase()} · ${talk.data.event.toUpperCase()} · ${fmtDate(talk.data.date, language)}`,
       title: talk.data.title,
     });
   }

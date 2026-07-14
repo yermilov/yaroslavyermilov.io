@@ -70,7 +70,8 @@ for (const entry of entries) {
     rows.push({
       href: localePath(locale, `talks/${tk.slug}`),
       kind: 'talk',
-      kindLabel: strings.timeline.talk,
+      // An interview and a panel are not доповіді — label each appearance by what it actually was.
+      kindLabel: strings.timeline[tk.data.format],
       title: localized(locale, tk.data.title, tk.data.titleUk),
       dek: abstract.split(/\n\n+/)[0] ?? '',
       metaExtra: localized(locale, tk.data.event, tk.data.eventUk),

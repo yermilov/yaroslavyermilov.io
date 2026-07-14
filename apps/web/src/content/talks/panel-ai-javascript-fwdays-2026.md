@@ -3,6 +3,7 @@ title: "Is your experience ready for the AI reality?"
 titleUk: "Чи готовий ваш досвід до AI-реальності?"
 event: "AI JavaScript fwdays'26, Kyiv"
 eventUk: "AI JavaScript fwdays'26, Київ"
+format: "panel"
 eventUrl: "https://fwdays.com/event/ai-javascript-fwdays-26"
 date: 2026-05-23
 language: "ua"

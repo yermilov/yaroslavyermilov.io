@@ -80,6 +80,9 @@ export interface Strings {
   timeline: {
     post: string;
     talk: string;
+    /** Not every stage appearance is a talk — these label the other two formats. */
+    interview: string;
+    panel: string;
     book: string;
     photos: string;
     upcoming: string;
@@ -222,6 +225,10 @@ const STRINGS: Record<Locale, Strings> = {
     timeline: {
       post: 'post',
       talk: 'talk',
+      interview: 'interview',
+      // Kept to one word: this label also heads the OG card's single mono eyebrow line, which
+      // has no clamp — "panel discussion" there would wrap and shove the title down.
+      panel: 'panel',
       book: 'book',
       photos: 'photos',
       upcoming: 'upcoming',
@@ -364,6 +371,8 @@ const STRINGS: Record<Locale, Strings> = {
     timeline: {
       post: 'допис',
       talk: 'доповідь',
+      interview: 'інтерв’ю',
+      panel: 'панельна дискусія',
       book: 'книга',
       photos: 'фото',
       upcoming: 'скоро',

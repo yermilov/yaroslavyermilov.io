@@ -105,7 +105,18 @@ if (compact || undated) {
 
 const KIND_GLYPHS = { post: '✎', talk: '▸', book: '❖', photos: '✧', link: '✦' } as const;
 
-type KindLabelKey = 'post' | 'talk' | 'book' | 'photos' | 'tweet' | 'article' | 'video' | 'podcast' | 'link';
+type KindLabelKey =
+  | 'post'
+  | 'talk'
+  | 'interview'
+  | 'panel'
+  | 'book'
+  | 'photos'
+  | 'tweet'
+  | 'article'
+  | 'video'
+  | 'podcast'
+  | 'link';
 function kindLabel(kind: KindLabelKey): string {
   return strings.timeline[kind];
 }
@@ -174,7 +185,7 @@ function kindLabel(kind: KindLabelKey): string {
           {stamp}
           <article class="body">
             <p class="workbench kindline">
-              {!compact && <span class="kind">{KIND_GLYPHS.talk} {kindLabel('talk')}</span>}
+              {!compact && <span class="kind">{KIND_GLYPHS.talk} {kindLabel(talk.data.format)}</span>}
               {upcoming && <span class="kind-upcoming" data-upcoming-tag>{strings.timeline.upcoming}</span>}
               <span class="kind-event">
                 {compact ? (

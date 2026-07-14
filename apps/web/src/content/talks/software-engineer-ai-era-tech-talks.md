@@ -3,6 +3,7 @@ title: "Software Engineer in the AI Era"
 titleUk: "Software Engineer в еру AI"
 event: "Tech Talks by Neoversity"
 eventUk: "Tech Talks від Neoversity"
+format: "interview"
 eventUrl: "https://www.linkedin.com/feed/update/urn:li:activity:7480551151998767104/"
 date: 2026-07-08
 language: "ua"
