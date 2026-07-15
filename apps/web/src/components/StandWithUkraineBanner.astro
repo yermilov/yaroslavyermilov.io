@@ -1,28 +1,39 @@
 ---
-// A "Stand With Ukraine" statement banner shown to visitors associated with the
-// russian war: (1) Yandex Browser users — Yandex injects "YaBrowser" into the UA
-// — and (2) visitors connecting from russia, belarus, iran, or north korea.
+// A full-screen "Stand With Ukraine" block shown INSTEAD of the site to visitors
+// associated with the russian war: (1) Yandex Browser users — Yandex injects
+// "YaBrowser" into the UA — and (2) visitors connecting from russia, belarus,
+// iran, or north korea. On a match it covers the whole viewport with the
+// statement, locks scrolling, and `display:none`s the rest of the page, so no
+// site content is rendered or reachable — any URL just shows this.
 //
-// GitHub Pages is static (served via Fastly), so there's no server/edge to read
-// geo or UA — detection is client-side. UA is free and synchronous; country is
-// a one-call lookup to country.is (returns ONLY a country code, no key, no
-// cookies), cached per session to minimise the third-party request. The banner
-// ships `hidden` and is revealed only on a match, so everyone else never sees
-// it and pays nothing. Design takes after grammarly.com/stand-with-ukraine:
-// dignified, flag colours, a "what you can do" link (United24).
+// Detection is CLIENT-SIDE by design: the site is Railway Node SSR with no edge
+// geo header, so there is no server signal to key on. UA is free and synchronous;
+// country is a one-call lookup to country.is (returns ONLY a country code, no key,
+// no cookies), cached per session. The block ships `hidden` and is revealed only
+// on a match, so everyone else never sees it and pays nothing. Caveat of doing
+// this client-side: the HTML is still delivered and a determined visitor (JS off,
+// view-source, a tracker blocker that eats the country.is call) can bypass it — a
+// true "content never served" block would need Cloudflare/edge geo in front.
+// Design takes after grammarly.com/stand-with-ukraine: dignified, flag colours,
+// a "what you can do" link (United24).
 ---
 
-<aside id="ua-banner" class="ua-banner" role="alert" hidden>
+<aside
+  id="ua-banner"
+  class="ua-block"
+  role="alertdialog"
+  aria-modal="true"
+  aria-labelledby="uab-title"
+  hidden
+>
   <div class="uab-inner">
     <span class="uab-flag" aria-hidden="true">🇺🇦</span>
-    <div class="uab-body">
-      <p class="uab-title">This site stands with Ukraine.</p>
-      <p class="uab-text">
-        russia’s war on Ukraine — and any cooperation with it — is not welcome here.
-        <span id="ua-banner-reason" class="uab-reason"></span>
-        <span class="uab-slava">Слава Україні! 🇺🇦</span>
-      </p>
-    </div>
+    <p id="uab-title" class="uab-title">This site stands with Ukraine.</p>
+    <p class="uab-text">
+      russia’s war on Ukraine — and any cooperation with it — is not welcome here.
+      <span id="ua-banner-reason" class="uab-reason"></span>
+      <span class="uab-slava">Слава Україні! 🇺🇦</span>
+    </p>
     <a class="uab-cta" href="https://u24.gov.ua" target="_blank" rel="noopener noreferrer"
       >How you can help →</a
     >
@@ -39,7 +50,13 @@
       if (shown) return;
       shown = true;
       if (reasonEl && reason) reasonEl.textContent = reason;
+      // Take over the page: reveal the block and add the `ua-blocked` class. The
+      // class both locks scroll and `display:none`s every other body child (see
+      // the stylesheet), which removes the site content from render, the a11y
+      // tree and tab order — done in CSS so it holds no matter when show() runs
+      // (the inline script can fire mid-parse, before <main>/<footer> exist).
       banner.hidden = false;
+      document.documentElement.classList.add('ua-blocked');
     }
 
     // (1) Yandex Browser — synchronous, instant, no network.
@@ -48,10 +65,10 @@
       return; // already shown; skip the geo lookup
     }
 
-    // (2) Location — russia / belarus / iran / north korea. Static hosting has
-    // no edge geo, so resolve the country client-side via country.is. Cached in
-    // sessionStorage so it's at most one third-party request per session, and
-    // fail-open (a lookup error never blocks the page).
+    // (2) Location — russia / belarus / iran / north korea. No edge geo, so
+    // resolve the country client-side via country.is. Cached in sessionStorage so
+    // it's at most one third-party request per session, and fail-open (a lookup
+    // error never takes the site down for everyone).
     var BLOCKED = { RU: 'russia', BY: 'belarus', IR: 'iran', KP: 'north korea' };
     function handle(code) {
       if (code && BLOCKED[code]) show('You appear to be connecting from ' + BLOCKED[code] + '.');
@@ -77,7 +94,7 @@
           handle(code);
         })
         .catch(function () {
-          /* fail open — never block the site on a geo lookup error */
+          /* fail open — never take the site down on a geo lookup error */
         });
     } catch (e) {}
   })();
@@ -85,48 +102,66 @@
 
 <style>
   /* Out of the layout entirely until the script un-hides it. */
-  .ua-banner[hidden] {
+  .ua-block[hidden] {
     display: none;
   }
-  .ua-banner {
-    background: #0057b7; /* Ukrainian flag — blue */
-    border-bottom: 4px solid #ffd700; /* Ukrainian flag — yellow */
-    color: #fff;
-  }
-  .uab-inner {
-    max-width: 64rem;
-    margin: 0 auto;
-    padding: var(--space-3, 1.25rem);
+  /* Full-viewport takeover: covers the whole page, above everything. */
+  .ua-block {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
     display: flex;
     align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    background: #0057b7; /* Ukrainian flag — blue */
+    color: #fff;
+    padding: var(--space-4, 2rem);
+  }
+  /* Lock the page behind the block so it can't be scrolled to. */
+  :global(html.ua-blocked),
+  :global(html.ua-blocked body) {
+    overflow: hidden;
+  }
+  /* Remove every other body child from render, the a11y tree and tab order, so
+     nothing but the block is reachable. CSS (not JS) so it holds regardless of
+     when the block triggers relative to parsing the rest of <body>. */
+  :global(html.ua-blocked body > *:not(#ua-banner)) {
+    display: none !important;
+  }
+  .uab-inner {
+    max-width: 40rem;
+    width: 100%;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
     gap: var(--space-3, 1.25rem);
+    border-bottom: 4px solid #ffd700; /* Ukrainian flag — yellow */
+    padding-bottom: var(--space-4, 2rem);
   }
   .uab-flag {
-    font-size: 1.75rem;
+    font-size: 3.5rem;
     line-height: 1;
-    flex: 0 0 auto;
-  }
-  .uab-body {
-    flex: 1 1 auto;
-    min-width: 0;
   }
   .uab-title {
     margin: 0;
     font-family: var(--font-display, ui-serif, Georgia, serif);
-    font-size: 1.15rem;
+    font-size: 1.9rem;
     font-weight: 600;
-    line-height: 1.2;
+    line-height: 1.15;
   }
   .uab-text {
-    margin: 0.35rem 0 0;
+    margin: 0;
     font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 0.82rem;
-    line-height: 1.5;
+    font-size: 0.95rem;
+    line-height: 1.6;
     color: rgba(255, 255, 255, 0.92);
   }
   .uab-reason {
     display: block;
-    margin-top: 0.15rem;
+    margin-top: 0.5rem;
     color: #ffd700;
   }
   .uab-reason:empty {
@@ -134,36 +169,23 @@
   }
   .uab-slava {
     display: block;
-    margin-top: 0.35rem;
+    margin-top: 0.75rem;
     font-weight: 700;
     color: #ffd700;
     letter-spacing: 0.02em;
   }
   .uab-cta {
-    flex: 0 0 auto;
-    align-self: center;
     font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     font-weight: 700;
     color: #001a3a;
     background: #ffd700;
-    padding: 0.5rem 0.9rem;
+    padding: 0.6rem 1.1rem;
     border-radius: 4px;
     text-decoration: none;
     white-space: nowrap;
   }
   .uab-cta:hover {
     background: #ffe34d;
-  }
-  @media (max-width: 640px) {
-    .uab-inner {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: var(--space-2, 0.75rem);
-    }
-    .uab-cta {
-      align-self: stretch;
-      text-align: center;
-    }
   }
 </style>
