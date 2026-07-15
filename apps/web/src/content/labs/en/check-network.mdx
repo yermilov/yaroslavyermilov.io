@@ -90,16 +90,16 @@ The agent tried the two most popular fixes — neither worked. And it ran them i
 
 I asked an LLM council (ChatGPT + Gemini) whether to buy a second extender for the desk. Both ranked that option last: an extender that is itself sitting on Wi-Fi halves the bandwidth — one hand holding the link to the router, the other to the laptop. The right fix is a cable from the router to the desk with the extender in access-point mode.
 
+<figure>
+  <video src="/lab/check-network/3-council.mp4" poster="/lab/check-network/3-council-poster.jpg" controls muted playsinline preload="none" width="1600" height="900" style={{ width: '100%', height: 'auto', borderRadius: '6px' }}>
+    Cowork, via Claude-in-Chrome, asks ChatGPT and Gemini: both recommend a cable + access-point mode and rank a second extender last.
+  </video>
+</figure>
+
 I never ran that cable. I plugged the Mac into the extender's gigabit port — the same extender still hanging off a wireless backhaul — so roughly 80% of the fix. 492 Mbps, zero loss.
 
 <figure>
   <img src="/lab/check-network/3-cable-into-extender.jpg" alt="Desk, cable into the extender, but the backhaul is still wireless: 492 Mbps, 0% packet loss" width="1360" height="765" loading="lazy" decoding="async" />
-</figure>
-
-<figure>
-  <video src="/lab/check-network/3-cable.mp4" poster="/lab/check-network/3-cable-poster.jpg" controls muted playsinline preload="none" width="1600" height="900" style={{ width: '100%', height: 'auto', borderRadius: '6px' }}>
-    Codex session: the cable into the port, 492 Mbps, zero loss — and the honest caveat about the backhaul.
-  </video>
 </figure>
 
 The agent honestly noted this isn't a real wired backhaul — 800–940 Mbps is still on the table. But 500 is already good, so I stopped.
