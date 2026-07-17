@@ -47,6 +47,8 @@ const C = {
   frame: '#00a8a8', // cyan lines + file names
   dir: '#ffffff',
   text: '#00a8a8',
+  open: '#54fcfc', // bright cyan — files that actually open (run or F3-view)
+  dim: '#545454', // dark gray — inert files (binary assets), not selectable
   hi: '#ffff54', // yellow — column titles
   cursorBg: '#00a8a8',
   cursorFg: '#000000',
@@ -65,6 +67,18 @@ function fmtSize(f: ManifestFile): string {
   return String(f.size);
 }
 
+// The run slug this specific file would launch (mirrors tryRun's resolution):
+// a `runs` mapping wins, else a folder default applies only to .EXE files.
+function runSlugFor(folder: ManifestFolder, file: ManifestFile): string | undefined {
+  return folder.runs?.[file.name] ?? (/\.exe$/i.test(file.name) ? folder.run : undefined);
+}
+// A file "opens" if it launches a port OR its source is viewable (F3). Inert
+// binary assets (.CHR/.BGI, exes in un-ported folders) do neither — the panel
+// dims them and the cursor skips over them.
+function isOpenable(folder: ManifestFolder, file: ManifestFile): boolean {
+  return Boolean(runSlugFor(folder, file)) || file.view;
+}
+
 export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua' }) {
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [error, setError] = useState(false);
@@ -75,6 +89,10 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
   const rootRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const viewRef = useRef<HTMLDivElement>(null);
+  // The currently-highlighted file row — kept scrolled into view because the
+  // cursor can jump across a long run of dimmed files (FOOTBALL's 283 data
+  // files) that the panel isn't scrolled to.
+  const cursorRowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch('/retro/manifest.json')
@@ -85,6 +103,28 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
 
   const folder = manifest?.folders[folderIdx];
   const files = useMemo(() => folder?.files ?? [], [folder]);
+  // Which files open — used to dim the rest AND to skip them while navigating.
+  const openable = useMemo(
+    () => files.map((f) => (folder ? isOpenable(folder, f) : false)),
+    [files, folder],
+  );
+  const firstOpenable = useMemo(() => {
+    const i = openable.indexOf(true);
+    return i === -1 ? 0 : i;
+  }, [openable]);
+  const lastOpenable = useMemo(() => {
+    const i = openable.lastIndexOf(true);
+    return i === -1 ? 0 : i;
+  }, [openable]);
+  // Next openable index in `dir` from `from` (inclusive of neither end); stays
+  // put when there is none, so the cursor never lands on a dimmed row.
+  const stepOpenable = useCallback(
+    (from: number, dir: 1 | -1) => {
+      for (let i = from + dir; i >= 0 && i < files.length; i += dir) if (openable[i]) return i;
+      return from;
+    },
+    [files.length, openable],
+  );
 
   const openView = useCallback(
     (dir: string, file: ManifestFile) => {
@@ -164,27 +204,27 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
           break;
         case 'ArrowDown':
           if (inFolders) setFolderIdx((i) => Math.min(i + 1, manifest.folders.length - 1));
-          else setFileIdx((i) => Math.min(i + 1, files.length - 1));
+          else setFileIdx((i) => stepOpenable(i, 1));
           break;
         case 'ArrowUp':
           if (inFolders) setFolderIdx((i) => Math.max(i - 1, 0));
-          else setFileIdx((i) => Math.max(i - 1, 0));
+          else setFileIdx((i) => stepOpenable(i, -1));
           break;
         case 'Home':
-          inFolders ? setFolderIdx(0) : setFileIdx(0);
+          inFolders ? setFolderIdx(0) : setFileIdx(firstOpenable);
           break;
         case 'End':
-          inFolders ? setFolderIdx(manifest.folders.length - 1) : setFileIdx(files.length - 1);
+          inFolders ? setFolderIdx(manifest.folders.length - 1) : setFileIdx(lastOpenable);
           break;
         case 'Enter': {
           if (!folder) break;
           if (inFolders) {
             setPanel(1);
-            setFileIdx(0);
+            setFileIdx(firstOpenable);
             break;
           }
           const file = files[fileIdx];
-          if (!file) break;
+          if (!file || !openable[fileIdx]) break;
           if (/\.exe$/i.test(file.name) || folder.runs?.[file.name]) tryRun(folder, file);
           else openView(folder.dir, file);
           break;
@@ -194,7 +234,7 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
           break;
         case 'F3': {
           if (!folder) break;
-          const file = inFolders ? undefined : files[fileIdx];
+          const file = inFolders || !openable[fileIdx] ? undefined : files[fileIdx];
           if (file) openView(folder.dir, file);
           break;
         }
@@ -206,7 +246,7 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
       }
       e.preventDefault();
     },
-    [manifest, overlay, panel, folder, files, fileIdx, locale, openView, tryRun],
+    [manifest, overlay, panel, folder, files, fileIdx, locale, openView, tryRun, stepOpenable, firstOpenable, lastOpenable, openable],
   );
 
   useEffect(() => {
@@ -228,9 +268,16 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
     if (overlay?.kind === 'run') frameRef.current?.focus();
   }, [overlay]);
 
+  // On folder change, land the cursor on the first file that actually opens.
   useEffect(() => {
-    setFileIdx(0);
-  }, [folderIdx]);
+    setFileIdx(firstOpenable);
+  }, [folderIdx, firstOpenable]);
+
+  // Keep the highlighted file row visible — a cursor jump over a long dimmed
+  // block would otherwise leave the selection scrolled out of the panel.
+  useEffect(() => {
+    if (panel === 1) cursorRowRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [fileIdx, folderIdx, panel]);
 
   const fullscreen = () => rootRef.current?.requestFullscreen?.().catch(() => undefined);
 
@@ -244,21 +291,24 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
 
   const row = (
     cols: [string, string, string],
-    opts: { cursor?: boolean; dir?: boolean; key: string; onClick: () => void; onOpen: () => void },
+    opts: { cursor?: boolean; dir?: boolean; dim?: boolean; key: string; onClick: () => void; onOpen: () => void },
   ) => (
     <div
       key={opts.key}
-      onClick={opts.onClick}
-      onDoubleClick={opts.onOpen}
+      ref={opts.cursor ? cursorRowRef : undefined}
+      onClick={opts.dim ? undefined : opts.onClick}
+      onDoubleClick={opts.dim ? undefined : opts.onOpen}
       style={{
         display: 'grid',
         gridTemplateColumns: 'minmax(0,1fr) 8ch 11ch',
         gap: '1ch',
         padding: '0 1ch',
-        cursor: 'pointer',
+        cursor: opts.dim ? 'default' : 'pointer',
         whiteSpace: 'nowrap',
         background: opts.cursor ? C.cursorBg : 'transparent',
-        color: opts.cursor ? C.cursorFg : opts.dir ? C.dir : C.text,
+        // Openable files pop in bright cyan; inert ones fade to gray and take
+        // no cursor. Folders stay white; the selection bar overrides both.
+        color: opts.cursor ? C.cursorFg : opts.dim ? C.dim : opts.dir ? C.dir : C.open,
       }}
     >
       <span style={{ overflow: 'hidden', textOverflow: 'clip' }}>{cols[0]}</span>
@@ -373,8 +423,9 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
             files.map((f, i) =>
               row([f.name, fmtSize(f), f.mtime], {
                 key: f.name,
-                cursor: i === fileIdx && panel === 1,
+                cursor: i === fileIdx && panel === 1 && openable[i],
                 dir: false,
+                dim: !openable[i],
                 onClick: () => {
                   setPanel(1);
                   setFileIdx(i);
