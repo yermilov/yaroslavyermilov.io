@@ -165,6 +165,9 @@ procedure ClearDevice;
 var
   i: integer;
 begin
+  // A ClrScr before InitGraph (DOS text-mode clear — PUSHKA does this) must be
+  // a no-op, not a crash: the framebuffer only exists after InitGraph.
+  if Length(FB) = 0 then exit;
   for i := 0 to ScreenW * ScreenH - 1 do
     FB[i] := 0;
 end;

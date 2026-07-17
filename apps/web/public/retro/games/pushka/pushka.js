@@ -1474,20 +1474,6 @@ var rtl = {
 rtl.module("System",[],function () {
   "use strict";
   var $mod = this;
-  var $impl = $mod.$impl;
-  rtl.createClass($mod,"TObject",null,function () {
-    this.$init = function () {
-    };
-    this.$final = function () {
-    };
-    this.AfterConstruction = function () {
-    };
-    this.BeforeDestruction = function () {
-    };
-  });
-  this.Random = function (Range) {
-    return Math.floor(Math.random()*Range);
-  };
   this.Trunc = function (A) {
     if (!Math.trunc) {
       Math.trunc = function(v) {
@@ -1503,35 +1489,9 @@ rtl.module("System",[],function () {
     if (Index<1) Index = 1;
     return (Size>0) ? S.substring(Index-1,Index+Size-1) : "";
   };
-  this.Writeln = function () {
-    var i = 0;
-    var l = 0;
-    var s = "";
-    l = arguments.length - 1;
-    if ($impl.WriteCallBack != null) {
-      for (var $l = 0, $end = l; $l <= $end; $l++) {
-        i = $l;
-        $impl.WriteCallBack(arguments[i],i === l);
-      };
-    } else {
-      s = $impl.WriteBuf;
-      for (var $l1 = 0, $end1 = l; $l1 <= $end1; $l1++) {
-        i = $l1;
-        s = s + ("" + arguments[i]);
-      };
-      console.log(s);
-      $impl.WriteBuf = "";
-    };
-  };
   $mod.$init = function () {
     rtl.exitcode = 0;
   };
-},null,function () {
-  "use strict";
-  var $mod = this;
-  var $impl = $mod.$impl;
-  $impl.WriteBuf = "";
-  $impl.WriteCallBack = null;
 });
 rtl.module("JS",["System"],function () {
   "use strict";
@@ -1544,52 +1504,6 @@ rtl.module("weborworker",["System","JS"],function () {
 rtl.module("Web",["System","JS","weborworker"],function () {
   "use strict";
   var $mod = this;
-});
-rtl.module("SysUtils",["System","JS"],function () {
-  "use strict";
-  var $mod = this;
-  var $impl = $mod.$impl;
-  rtl.createClass($mod,"Exception",pas.System.TObject,function () {
-  });
-  rtl.createClass($mod,"EExternal",$mod.Exception,function () {
-  });
-  rtl.createClass($mod,"EInvalidCast",$mod.Exception,function () {
-  });
-  rtl.createClass($mod,"EIntError",$mod.EExternal,function () {
-  });
-  rtl.createClass($mod,"ERangeError",$mod.EIntError,function () {
-  });
-  rtl.createClass($mod,"EAbstractError",$mod.Exception,function () {
-  });
-  this.IntToStr = function (Value) {
-    var Result = "";
-    Result = "" + Value;
-    return Result;
-  };
-  this.ShortMonthNames = rtl.arraySetLength(null,"",12);
-  this.LongMonthNames = rtl.arraySetLength(null,"",12);
-  this.ShortDayNames = rtl.arraySetLength(null,"",7);
-  this.LongDayNames = rtl.arraySetLength(null,"",7);
-  $mod.$init = function () {
-    $impl.DoClassRef($mod.EInvalidCast);
-    $impl.DoClassRef($mod.EAbstractError);
-    $impl.DoClassRef($mod.ERangeError);
-    $mod.ShortMonthNames = $impl.DefaultShortMonthNames.slice(0);
-    $mod.LongMonthNames = $impl.DefaultLongMonthNames.slice(0);
-    $mod.ShortDayNames = $impl.DefaultShortDayNames.slice(0);
-    $mod.LongDayNames = $impl.DefaultLongDayNames.slice(0);
-  };
-},null,function () {
-  "use strict";
-  var $mod = this;
-  var $impl = $mod.$impl;
-  $impl.DefaultShortMonthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  $impl.DefaultLongMonthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  $impl.DefaultShortDayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  $impl.DefaultLongDayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-  $impl.DoClassRef = function (C) {
-    if (C === null) ;
-  };
 });
 rtl.module("graph",["System"],function () {
   "use strict";
@@ -1616,94 +1530,12 @@ rtl.module("graph",["System"],function () {
     gm.set(0);
     window.requestAnimationFrame($impl.Frame);
   };
-  this.CloseGraph = function () {
-  };
-  this.GraphResult = function () {
-    var Result = 0;
-    Result = $impl.LastResult;
-    return Result;
-  };
-  this.GraphErrorMsg = function (code) {
-    var Result = "";
-    if (code === 0) {
-      Result = ""}
-     else Result = "Graphics error " + pas.SysUtils.IntToStr(code);
-    return Result;
-  };
   this.SetColor = function (c) {
     $impl.CurColor = c & 15;
-  };
-  this.SetFillStyle = function (pattern, c) {
-    $impl.FillColor = c & 15;
   };
   this.PutPixel = function (x, y, c) {
     if ((x < 0) || (y < 0) || (x >= 640) || (y >= 480)) return;
     $impl.FB[(y * 640) + x] = c & 15;
-  };
-  this.GetPixel = function (x, y) {
-    var Result = 0;
-    if ((x < 0) || (y < 0) || (x >= 640) || (y >= 480)) {
-      Result = 0}
-     else Result = $impl.FB[(y * 640) + x];
-    return Result;
-  };
-  this.Line = function (x1, y1, x2, y2) {
-    var dx = 0;
-    var dy = 0;
-    var sx = 0;
-    var sy = 0;
-    var err = 0;
-    var e2 = 0;
-    dx = Math.abs(x2 - x1);
-    dy = -Math.abs(y2 - y1);
-    if (x1 < x2) {
-      sx = 1}
-     else sx = -1;
-    if (y1 < y2) {
-      sy = 1}
-     else sy = -1;
-    err = dx + dy;
-    while (true) {
-      $mod.PutPixel(x1,y1,$impl.CurColor);
-      if ((x1 === x2) && (y1 === y2)) break;
-      e2 = 2 * err;
-      if (e2 >= dy) {
-        err = err + dy;
-        x1 = x1 + sx;
-      };
-      if (e2 <= dx) {
-        err = err + dx;
-        y1 = y1 + sy;
-      };
-    };
-  };
-  this.Rectangle = function (x1, y1, x2, y2) {
-    $mod.Line(x1,y1,x2,y1);
-    $mod.Line(x2,y1,x2,y2);
-    $mod.Line(x2,y2,x1,y2);
-    $mod.Line(x1,y2,x1,y1);
-  };
-  this.Bar = function (x1, y1, x2, y2) {
-    var x = 0;
-    var y = 0;
-    var t = 0;
-    if (x1 > x2) {
-      t = x1;
-      x1 = x2;
-      x2 = t;
-    };
-    if (y1 > y2) {
-      t = y1;
-      y1 = y2;
-      y2 = t;
-    };
-    for (var $l = y1, $end = y2; $l <= $end; $l++) {
-      y = $l;
-      for (var $l1 = x1, $end1 = x2; $l1 <= $end1; $l1++) {
-        x = $l1;
-        $mod.PutPixel(x,y,$impl.FillColor);
-      };
-    };
   };
   this.Circle = function (x, y, r) {
     var cx = 0;
@@ -1730,52 +1562,17 @@ rtl.module("graph",["System"],function () {
       };
     };
   };
-  this.FloodFill = function (x, y, border) {
-    var stack = [];
-    var sp = 0;
-    var p = 0;
-    var px = 0;
-    var py = 0;
-    var b = 0;
-    var f = 0;
-    function Push(idx) {
-      if (sp >= rtl.length(stack)) stack = rtl.arraySetLength(stack,0,rtl.length(stack) * 2);
-      stack[sp] = idx;
-      sp += 1;
-    };
-    b = border & 15;
-    f = $impl.FillColor;
-    if ((x < 0) || (y < 0) || (x >= 640) || (y >= 480)) return;
-    if ($impl.FB[(y * 640) + x] === b) return;
-    stack = rtl.arraySetLength(stack,0,4096);
-    sp = 0;
-    Push((y * 640) + x);
-    while (sp > 0) {
-      sp -= 1;
-      p = stack[sp];
-      if ($impl.FB[p] === b) continue;
-      if ($impl.FB[p] === f) continue;
-      $impl.FB[p] = f;
-      px = p % 640;
-      py = Math.floor(p / 640);
-      if (px > 0) Push(p - 1);
-      if (px < (640 - 1)) Push(p + 1);
-      if (py > 0) Push(p - 640);
-      if (py < (480 - 1)) Push(p + 640);
-    };
-  };
   this.ClearDevice = function () {
     var i = 0;
     if (rtl.length($impl.FB) === 0) return;
     for (i = 0; i <= 307199; i++) $impl.FB[i] = 0;
   };
-},["JS","Web","weborworker","SysUtils"],function () {
+},["JS","Web","weborworker"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
   $impl.FB = [];
   $impl.CurColor = 15;
-  $impl.FillColor = 15;
   $impl.LastResult = 0;
   $impl.Canvas = null;
   $impl.Ctx = null;
@@ -1832,26 +1629,56 @@ rtl.module("crt",["System","JS"],function () {
     $impl.Queue = rtl.arraySetLength($impl.Queue,"",rtl.length($impl.Queue) - 1);
     return Result;
   };
-  this.Delay = function (ms) {
+  this.AskReal = function (prompt) {
     var Result = null;
-    var wait = 0;
-    $impl.Install();
-    wait = Math.round(ms * $mod.DelayScale);
     Result = new Promise(function (resolve, reject) {
-      window.setTimeout(function () {
-        resolve(0);
-      },wait);
+      const box = document.createElement('div');
+      box.style.cssText = 'position:fixed;inset:auto 0 40% 0;display:flex;justify-content:center;z-index:99;';
+      const line = document.createElement('div');
+      line.style.cssText = 'background:#000;color:#fff;font:16px/24px ui-monospace,Menlo,monospace;padding:8px 16px;border:1px solid #545454;white-space:pre;';
+      box.appendChild(line);
+      let buf = '';
+      const paint = () => { line.textContent = prompt + ' ' + buf + '▎'; };
+      paint();
+      document.body.appendChild(box);
+      const onKey = (e) => {
+        // Esc must stay quittable mid-prompt: let it propagate to the
+        // bundle's page-level listener (retro:quit to the NC parent).
+        if (e.key === 'Escape') return;
+        if (e.key === 'Enter') {
+          const n = parseFloat(buf);
+          if (!isFinite(n)) { buf = ''; paint(); return; }
+          document.removeEventListener('keydown', onKey, true);
+          box.remove();
+          resolve(n);
+        } else if (e.key === 'Backspace') {
+          buf = buf.slice(0, -1); paint();
+        } else if (/^[0-9.\-]$/.test(e.key)) {
+          buf += e.key; paint();
+        }
+        e.stopPropagation();
+      };
+      // capture phase: the prompt owns the keyboard while it is up
+      document.addEventListener('keydown', onKey, true);
+    });
+    return Result;
+  };
+  this.Yield = function () {
+    var Result = null;
+    Result = new Promise(function (resolve, reject) {
+      if (!window.__retroYield) {
+        const ch = new MessageChannel();
+        const q = [];
+        ch.port1.onmessage = () => { const f = q.shift(); if (f) f(0); };
+        window.__retroYield = (cb) => { q.push(cb); ch.port2.postMessage(0); };
+      }
+      window.__retroYield(resolve);
     });
     return Result;
   };
   this.ClrScr = function () {
     pas.graph.ClearDevice();
   };
-  this.Randomize = function () {
-  };
-  this.Readln = function () {
-  };
-  this.DelayScale = 0.004;
 },["Web","graph"],function () {
   "use strict";
   var $mod = this;
@@ -1899,273 +1726,45 @@ rtl.module("crt",["System","JS"],function () {
 rtl.module("program",["System","crt","graph"],function () {
   "use strict";
   var $mod = this;
-  rtl.recNewT($mod,"coordinates",function () {
-    this.x = 0;
-    this.y = 0;
-    this.$eq = function (b) {
-      return (this.x === b.x) && (this.y === b.y);
-    };
-    this.$assign = function (s) {
-      this.x = s.x;
-      this.y = s.y;
-      return this;
-    };
-  });
-  rtl.recNewT($mod,"block",function () {
-    this.nx = 0;
-    this.ny = 0;
-    this.color = 0;
-    this.balls = 0;
-    this.here = false;
-    this.$eq = function (b) {
-      return (this.nx === b.nx) && (this.ny === b.ny) && (this.color === b.color) && (this.balls === b.balls) && (this.here === b.here);
-    };
-    this.$assign = function (s) {
-      this.nx = s.nx;
-      this.ny = s.ny;
-      this.color = s.color;
-      this.balls = s.balls;
-      this.here = s.here;
-      return this;
-    };
-  });
-  this.duration = 1000;
-  this.ballspeed = 10;
-  this.herospeed = 10;
-  this.ball = $mod.coordinates.$new();
-  this.fly = $mod.coordinates.$new();
-  this.ud = $mod.coordinates.$new();
-  this.alfa = 0;
-  this.beta = 0;
-  this.c = 0;
-  this.HeroX = 0;
-  this.vertical = false;
-  this.gorizontal = false;
-  this.right = false;
-  this.left = false;
-  this.d = false;
-  this.ng = 0;
-  this.nv = 0;
-  this.key = "";
-  this.blocks = rtl.arraySetLength(null,$mod.block,5,16);
-  this.score = 0;
-  this.lines = 0;
-  this.InKey = function () {
-    var Result = "";
-    if (pas.crt.KeyPressed()) Result = pas.crt.ReadKey();
-    return Result;
-  };
-  this.MakeBall = function (x, y, radius, color) {
-    pas.graph.SetColor(color);
-    pas.graph.SetFillStyle(1,color);
-    pas.graph.Circle(x,y,radius);
-    pas.graph.FloodFill(x,y,color);
-  };
-  this.MakeHero = function (color) {
-    pas.graph.SetColor(color);
-    pas.graph.SetFillStyle(1,color);
-    pas.graph.Bar($mod.HeroX,425,$mod.HeroX + 100,440);
-  };
-  this.udar = function (doska) {
-    var Result = false;
-    var i = 0;
-    var j = 0;
-    var flag = false;
-    Result = false;
-    if ($mod.ball.x <= 5) {
-      Result = true;
-      $mod.gorizontal = true;
-      $mod.MakeBall($mod.ball.x,$mod.ball.y,25,0);
-      $mod.ball.x = 6;
-    };
-    if ($mod.ball.x >= 635) {
-      Result = true;
-      $mod.gorizontal = false;
-      $mod.MakeBall($mod.ball.x,$mod.ball.y,35,0);
-      $mod.ball.x = 634;
-    };
-    flag = true;
-    if (pas.graph.GetPixel($mod.ball.x,$mod.ball.y - 6) !== 0) {
-      Result = true;
-      $mod.vertical = false;
-      $mod.ball.y = $mod.ball.y + 7;
-      for (var $l = 5; $l >= 1; $l--) {
-        i = $l;
-        for (j = 1; j <= 16; j++) {
-          var $with = $mod.blocks[i - 1][j - 1];
-          if ($with.here) {
-            if (($mod.ball.x >= (($with.nx - 1) * 40)) && ($mod.ball.x <= ($with.nx * 40)) && flag) {
-              $mod.score = $mod.score + $with.balls;
-              $with.here = false;
-              flag = false;
-              pas.graph.SetColor(0);
-              pas.graph.SetFillStyle(1,0);
-              pas.graph.Rectangle(($with.nx - 1) * 40,($with.ny - 1) * 50,$with.nx * 40,$with.ny * 50);
-              pas.graph.Line(639,1,639,$with.ny * 50);
-              pas.graph.FloodFill((($with.nx - 1) * 40) + 1,(($with.ny - 1) * 50) + 1,0);
-            };
-          };
-        };
-      };
-      $mod.MakeBall($mod.ball.x,$mod.ball.y - 7,25,0);
-    };
-    doska.set(false);
-    if ($mod.ball.y >= 450) {
-      Result = true;
-      $mod.vertical = true;
-      $mod.MakeBall($mod.ball.x,$mod.ball.y,25,0);
-      $mod.ball.y = 445;
-      doska.set(true);
-      $mod.lines += 1;
-      for (i = 1; i <= 5; i++) {
-        if (i === $mod.lines) {
-          for (j = 1; j <= 16; j++) {
-            $mod.blocks[i - 1][j - 1].here = true;
-          };
-        };
-      };
-    };
-    if ((Math.abs($mod.ball.y - 425) <= 8) && ($mod.ball.x >= $mod.HeroX) && ($mod.ball.x <= ($mod.HeroX + 100)) && !$mod.vertical) {
-      Result = true;
-      $mod.vertical = true;
-      $mod.MakeBall($mod.ball.x,$mod.ball.y,7,0);
-      if (($mod.left && !$mod.gorizontal) || ($mod.right && $mod.gorizontal)) $mod.beta = $mod.beta + 3;
-      if (($mod.left && $mod.gorizontal) || ($mod.right && !$mod.gorizontal)) $mod.beta = $mod.beta - 3;
-      doska.set(true);
-    };
-    return Result;
-  };
-  this.MakeBlocks = function () {
-    var i = 0;
-    var j = 0;
-    for (i = 1; i <= 5; i++) for (j = 1; j <= 16; j++) {
-      var $with = $mod.blocks[i - 1][j - 1];
-      if ($with.here) {
-        pas.graph.SetColor(15);
-        pas.graph.SetFillStyle(1,$with.color);
-        pas.graph.Rectangle(($with.nx - 1) * 40,($with.ny - 1) * 50,$with.nx * 40,$with.ny * 50);
-        pas.graph.Line(639,1,639,$with.ny * 50);
-        pas.graph.FloodFill((($with.nx - 1) * 40) + 1,(($with.ny - 1) * 50) + 1,15);
-      };
-    };
-  };
-  this.Game = async function () {
-    var i = 0;
-    var j = 0;
-    var flag = false;
-    pas.crt.Randomize();
-    $mod.score = 0;
-    $mod.HeroX = 100;
-    $mod.vertical = true;
-    $mod.gorizontal = true;
-    $mod.alfa = pas.System.Random(89) + 1;
-    $mod.ball.x = 150;
-    $mod.ball.y = 350;
-    $mod.HeroX = 100;
-    $mod.right = false;
-    $mod.left = false;
-    $mod.d = false;
-    $mod.lines = 1;
-    for (i = 1; i <= 5; i++) for (j = 1; j <= 16; j++) {
-      var $with = $mod.blocks[i - 1][j - 1];
-      $with.nx = j;
-      $with.ny = i;
-      $with.color = pas.System.Random(15) + 1;
-      $with.balls = 100;
-      if (i === 1) {
-        $with.here = true}
-       else $with.here = false;
-    };
-    do {
-      $mod.c = 1;
-      $mod.MakeBall($mod.ball.x,$mod.ball.y,25,0);
-      $mod.ud.x = $mod.ball.x;
-      $mod.ud.y = $mod.ball.y;
-      for (i = 1; i <= 5; i++) for (j = 1; j <= 16; j++) {
-        var $with1 = $mod.blocks[i - 1][j - 1];
-        pas.graph.SetColor(0);
-        pas.graph.SetFillStyle(1,0);
-        pas.graph.Rectangle(($with1.nx - 1) * 40,($with1.ny - 1) * 50,$with1.nx * 40,$with1.ny * 50);
-        pas.graph.Line(639,1,639,$with1.ny * 50);
-        pas.graph.FloodFill((($with1.nx - 1) * 40) + 1,(($with1.ny - 1) * 50) + 1,0);
-      };
-      do {
-        if ($mod.d) $mod.vertical = true;
-        $mod.MakeBall($mod.ball.x,$mod.ball.y,5,0);
-        if ($mod.d) {
-          $mod.d = false;
-          $mod.vertical = true;
-        };
-        $mod.fly.y = pas.System.Trunc($mod.c * Math.sin($mod.alfa));
-        $mod.fly.x = pas.System.Trunc($mod.c * Math.sin(90 - $mod.alfa));
-        if ($mod.vertical) {
-          $mod.nv = -1}
-         else $mod.nv = 1;
-        if ($mod.gorizontal) {
-          $mod.ng = 1}
-         else $mod.ng = -1;
-        $mod.ball.x = $mod.ud.x + ($mod.fly.x * $mod.ng);
-        $mod.ball.y = $mod.ud.y + ($mod.fly.y * $mod.nv);
-        $mod.MakeBall($mod.ball.x,$mod.ball.y,5,4);
-        $mod.c = $mod.c + 10;
-        $mod.key = $mod.InKey();
-        var $tmp = $mod.key;
-        if ($tmp === "K") {
-          $mod.left = true;
-          $mod.right = false;
-        } else if ($tmp === "M") {
-          $mod.right = true;
-          $mod.left = false;
-        };
-        $mod.MakeHero(0);
-        if ($mod.left) $mod.HeroX = $mod.HeroX - 10;
-        if ($mod.right) $mod.HeroX = $mod.HeroX + 10;
-        if ($mod.HeroX <= 1) $mod.HeroX = 1;
-        if ($mod.HeroX >= 540) $mod.HeroX = 540;
-        if (($mod.HeroX <= 1) && ($mod.HeroX >= 540)) {
-          $mod.left = false;
-          $mod.right = false;
-        };
-        $mod.MakeHero(14);
-        $mod.MakeBlocks();
-        flag = true;
-        for (i = 1; i <= 5; i++) {
-          for (j = 1; j <= 16; j++) flag = flag && !$mod.blocks[i - 1][j - 1].here;
-          if (flag) $mod.lines = i - 1;
-        };
-        await pas.crt.Delay(1000 * 3);
-      } while (!$mod.udar({p: $mod, get: function () {
-          return this.p.d;
-        }, set: function (v) {
-          this.p.d = v;
-        }}));
-    } while (!($mod.key === "\x1B"));
-  };
-  this.InitPingPong = async function () {
-    var errorcode = 0;
-    var gd = 0;
-    var gm = 0;
-    gd = 0;
-    pas.graph.InitGraph({get: function () {
-        return gd;
+  this.y = 0;
+  this.x = 0;
+  this.v = 0;
+  this.x0 = 0;
+  this.y0 = 0;
+  this.alfa = 0.0;
+  this.t = 0.0;
+  this.Gd = 0;
+  this.Gm = 0;
+  this.Main = async function () {
+    pas.crt.ClrScr();
+    $mod.alfa = await pas.crt.AskReal("Print alfa");
+    $mod.alfa = ($mod.alfa * Math.PI) / 180;
+    $mod.v = pas.System.Trunc(await pas.crt.AskReal("Print speed"));
+    $mod.x0 = pas.System.Trunc(await pas.crt.AskReal("Print coordinates (x)"));
+    $mod.y0 = pas.System.Trunc(await pas.crt.AskReal("Print coordinates (y)"));
+    $mod.t = 0;
+    $mod.Gd = 0;
+    pas.graph.InitGraph({p: $mod, get: function () {
+        return this.p.Gd;
       }, set: function (v) {
-        gd = v;
-      }},{get: function () {
-        return gm;
+        this.p.Gd = v;
+      }},{p: $mod, get: function () {
+        return this.p.Gm;
       }, set: function (v) {
-        gm = v;
+        this.p.Gm = v;
       }},"");
-    errorcode = pas.graph.GraphResult();
-    if (errorcode === 0) {
-      await $mod.Game();
-      pas.graph.CloseGraph();
-    } else {
-      pas.crt.ClrScr();
-      pas.System.Writeln("Error:",pas.graph.GraphErrorMsg(errorcode));
-      pas.crt.Readln();
-    };
+    pas.graph.SetColor(15);
+    do {
+      $mod.x = pas.System.Trunc($mod.x0 + ($mod.v * $mod.t * Math.cos($mod.alfa)));
+      $mod.y = pas.System.Trunc(($mod.y0 + ($mod.v * $mod.t * Math.sin($mod.alfa))) - ((9.81 * $mod.t * $mod.t) / 2));
+      $mod.y = 480 - $mod.y;
+      pas.graph.Circle($mod.x,$mod.y,5);
+      $mod.t = $mod.t + 0.0001;
+      await pas.crt.Yield();
+    } while (!pas.crt.KeyPressed());
+    pas.crt.ReadKey();
   };
   $mod.$main = function () {
-    $mod.InitPingPong();
+    $mod.Main();
   };
 });

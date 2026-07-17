@@ -19,6 +19,11 @@ emulator) and served by the Norton Commander lab page
   `apps/web/public/retro/`: the NC manifest (real file names/sizes/dates from
   the original folders), the CP866→UTF-8 decoded sources for the F3 viewer,
   and the per-game runnable bundles.
+- `rtl.js` — the canonical pas2js RUNTIME (protocol 10501, from the FPC 3.2.2
+  tree, `utils/pas2js/dist/rtl.js`). build.ts INLINES it into every game
+  bundle via `-Ji` by absolute path — never let the compiler find one by
+  search, or it silently picks the RTL checkout's own rtl.js (protocol 30200)
+  and the bundle dies at load with a null 'DoClassRef'.
 
 ## Rebuilding a game
 
@@ -39,15 +44,15 @@ match only binds `rtl.js`):
 
 Without `PAS2JS_RTL` the script keeps the committed bundles and only refreshes
 the manifest + decoded sources. ⚠️ Asymmetric match rule: the 3.2.0 zip's
-SOURCE units are fine, but its `rtl.js` is NOT — the runtime `rtl.js` must
-match the compiler's protocol (1.5.1 → 10501; taken from the FPC 3.2.2 tree,
-`utils/pas2js/dist/rtl.js`, already committed per game). A mismatched rtl.js
-compiles clean and dies at runtime with a null `$impl` — verify by RUNNING,
-compilation proves nothing.
+SOURCE units are fine, but its `rtl.js` is NOT — the runtime must match the
+compiler's protocol (1.5.1 → 10501; the canonical copy is `retro/rtl.js`,
+inlined into bundles by build.ts). A mismatched rtl.js compiles clean and dies
+at runtime (null `$impl` / null 'DoClassRef') — verify by RUNNING, compilation
+proves nothing.
 
 ## Porting order (simplest → hardest)
 
-PINGPONG ✓ → PUSHKA → ANIMGAME/CARS → SUPER → QUIDDITC → BAKKARA → FOOTBALL →
+PINGPONG ✓ → PUSHKA ✓ → ANIMGAME/CARS → SUPER → QUIDDITC → BAKKARA → FOOTBALL →
 WARWORK → STARWARS. Not portable: SAPER (source is C++), game/GAME.PAS (an
 olympiad exercise, not a game) — both still browsable in the NC.
 

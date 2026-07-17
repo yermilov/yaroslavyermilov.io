@@ -49,7 +49,14 @@ const GAMES: GameDef[] = [
     controls: '← → — рухати платформу · Esc — вийти',
     port: { slug: 'pingpong', main: 'PINGPONG.pas' },
   },
-  { dir: 'PUSHKA', title: 'Пушка', year: '2008', note: 'Балістика: політ снаряда під кутом.' },
+  {
+    dir: 'PUSHKA',
+    title: 'Пушка',
+    year: '2008',
+    note: 'Балістика: політ снаряда під кутом.',
+    controls: 'введи кут/швидкість/координати + Enter · будь-яка клавіша — стоп · Esc — вийти',
+    port: { slug: 'pushka', main: 'PUSHKA.pas' },
+  },
   { dir: 'ANIMGAME', title: 'Cars', year: '2005', note: 'Анімації машинок (CARS1/CARS2).' },
   { dir: 'SUPER', title: 'Super', year: '2008', note: 'Текстова програма з TEXT.TXT.' },
   { dir: 'QUIDDITC', title: 'Quidditch', year: '2008', note: 'Квідич: RANDOM і SNITCH.' },
@@ -151,9 +158,14 @@ function compilePort(def: GameDef): void {
     throw new Error(`${port.slug}: no committed bundle and PAS2JS_RTL is not set (see retro/README.md)`);
   }
   const main = path.join(srcDir, port.main);
+  // -Ji INLINES the runtime into the bundle, and it must be the protocol-10501
+  // rtl.js (retro/rtl.js, from the FPC 3.2.2 tree) — by ABSOLUTE path, or the
+  // compiler silently picks the RTL checkout's own rtl.js (protocol 30200),
+  // which compiles clean and dies at load with a null 'DoClassRef' (the
+  // documented asymmetric-match trap; bit this build once already).
   execFileSync(
     PAS2JS,
-    ['-Jc', '-Jirtl.js', `-Fu${shims}`, `-Fu${srcDir}`, `-Fu${PAS2JS_RTL}/src`, '-Tbrowser', `-o${path.join(outGame, `${port.slug}.js`)}`, main],
+    ['-Jc', `-Ji${path.join(REPO_ROOT, 'retro/rtl.js')}`, `-Fu${shims}`, `-Fu${srcDir}`, `-Fu${PAS2JS_RTL}/src`, '-Tbrowser', `-o${path.join(outGame, `${port.slug}.js`)}`, main],
     { stdio: 'inherit' },
   );
   console.log(`✓ ${port.slug}: compiled`);

@@ -24,6 +24,14 @@ uses JS;
 function KeyPressed: boolean;
 function ReadKey: char;
 function Delay(ms: integer): TJSPromise;
+{ DOS-style numeric prompt for ports of programs that ReadLn from the console.
+  Renders a white-on-black prompt line over the canvas and resolves with the
+  typed number on Enter. Input is collected from DOCUMENT-level keydowns, so it
+  works both with real keyboard focus and with the NC parent's retro:key relay
+  (which synthesizes document events — a focused <input> would never see those). }
+function AskReal(const prompt: string): TJSPromise;
+{ Fast macrotask yield for busy compute loops — see the implementation note. }
+function Yield: TJSPromise;
 procedure ClrScr;
 { Not a crt routine on DOS — it lived in System, which pas2js does not provide.
   Absorbed here so the game's own source needs no further edits. JS's Math.random
@@ -113,10 +121,73 @@ var
 begin
   Install;
   wait := Round(ms * DelayScale);
+  { Deliberately setTimeout even when wait rounds to 0: the browser's ~4ms
+    nested-timer clamp IS the effective frame pacing of the Delay-driven game
+    loops (PINGPONG). Making this a fast yield once sent the game into warp
+    speed — five block rows in two seconds. Tight compute loops that only need
+    to stay responsive use Yield instead. }
   Result := TJSPromise.New(
     procedure(resolve, reject: TJSPromiseResolver)
     begin
       window.setTimeout(procedure begin resolve(0); end, wait);
+    end);
+end;
+
+function Yield: TJSPromise;
+begin
+  Result := TJSPromise.New(
+    procedure(resolve, reject: TJSPromiseResolver)
+    begin
+      { A real macrotask yield (paint + input reach the page) in microseconds —
+        a MessageChannel round-trip dodges the setTimeout clamp. For busy
+        compute loops (PUSHKA's plotter), NOT for game pacing — see Delay. }
+      asm
+        if (!window.__retroYield) {
+          const ch = new MessageChannel();
+          const q = [];
+          ch.port1.onmessage = () => { const f = q.shift(); if (f) f(0); };
+          window.__retroYield = (cb) => { q.push(cb); ch.port2.postMessage(0); };
+        }
+        window.__retroYield(resolve);
+      end;
+    end);
+end;
+
+function AskReal(const prompt: string): TJSPromise;
+begin
+  Result := TJSPromise.New(
+    procedure(resolve, reject: TJSPromiseResolver)
+    begin
+      asm
+        const box = document.createElement('div');
+        box.style.cssText = 'position:fixed;inset:auto 0 40% 0;display:flex;justify-content:center;z-index:99;';
+        const line = document.createElement('div');
+        line.style.cssText = 'background:#000;color:#fff;font:16px/24px ui-monospace,Menlo,monospace;padding:8px 16px;border:1px solid #545454;white-space:pre;';
+        box.appendChild(line);
+        let buf = '';
+        const paint = () => { line.textContent = prompt + ' ' + buf + '▎'; };
+        paint();
+        document.body.appendChild(box);
+        const onKey = (e) => {
+          // Esc must stay quittable mid-prompt: let it propagate to the
+          // bundle's page-level listener (retro:quit to the NC parent).
+          if (e.key === 'Escape') return;
+          if (e.key === 'Enter') {
+            const n = parseFloat(buf);
+            if (!isFinite(n)) { buf = ''; paint(); return; }
+            document.removeEventListener('keydown', onKey, true);
+            box.remove();
+            resolve(n);
+          } else if (e.key === 'Backspace') {
+            buf = buf.slice(0, -1); paint();
+          } else if (/^[0-9.\-]$/.test(e.key)) {
+            buf += e.key; paint();
+          }
+          e.stopPropagation();
+        };
+        // capture phase: the prompt owns the keyboard while it is up
+        document.addEventListener('keydown', onKey, true);
+      end;
     end);
 end;
 
