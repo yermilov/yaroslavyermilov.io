@@ -52,7 +52,7 @@ proves nothing.
 
 ## Porting order (simplest → hardest)
 
-PINGPONG ✓ → PUSHKA ✓ → ANIMGAME/CARS ✓ → SUPER → QUIDDITC → BAKKARA → FOOTBALL →
+PINGPONG ✓ → PUSHKA ✓ → ANIMGAME/CARS ✓ → SUPER ✓ → QUIDDITC → BAKKARA → FOOTBALL →
 WARWORK → STARWARS. Not portable: SAPER (source is C++), game/GAME.PAS (an
 olympiad exercise, not a game) — both still browsable in the NC.
 

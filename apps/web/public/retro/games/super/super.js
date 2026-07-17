@@ -1475,9 +1475,16 @@ rtl.module("System",[],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
-  this.Copy = function (S, Index, Size) {
-    if (Index<1) Index = 1;
-    return (Size>0) ? S.substring(Index-1,Index+Size-1) : "";
+  this.Trunc = function (A) {
+    if (!Math.trunc) {
+      Math.trunc = function(v) {
+        v = +v;
+        if (!isFinite(v)) return v;
+        return (v - v % 1) || (v < 0 ? -0 : v === 0 ? v : 0);
+      };
+    }
+    $mod.Trunc = Math.trunc;
+    return Math.trunc(A);
   };
   this.Write = function () {
     var i = 0;
@@ -1540,54 +1547,52 @@ rtl.module("graph",["System"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
-  this.ScreenW = 640;
-  this.ScreenH = 480;
   this.GraphActive = function () {
     var Result = false;
     Result = $impl.Ctx !== null;
     return Result;
   };
-  this.ClearDevice = function () {
-    var i = 0;
-    if (rtl.length($impl.FB) === 0) return;
-    for (i = 0; i <= 307199; i++) $impl.FB[i] = 0;
-  };
 },["JS","Web","weborworker","crt"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
-  $impl.FB = [];
   $impl.Ctx = null;
 });
 rtl.module("crt",["System","JS"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
-  this.ReadKey = function () {
-    var Result = "";
-    var i = 0;
-    $impl.Install();
-    if (rtl.length($impl.Queue) === 0) {
-      Result = "\x00";
-      return Result;
-    };
-    Result = $impl.Queue[0];
-    for (var $l = 0, $end = rtl.length($impl.Queue) - 2; $l <= $end; $l++) {
-      i = $l;
-      $impl.Queue[i] = $impl.Queue[i + 1];
-    };
-    $impl.Queue = rtl.arraySetLength($impl.Queue,"",rtl.length($impl.Queue) - 1);
-    return Result;
-  };
-  this.Delay = function (ms) {
+  this.AskReal = function (prompt) {
     var Result = null;
-    var wait = 0;
-    $impl.Install();
-    wait = Math.round(ms * $mod.DelayScale);
     Result = new Promise(function (resolve, reject) {
-      window.setTimeout(function () {
-        resolve(0);
-      },wait);
+      const box = document.createElement('div');
+      box.style.cssText = 'position:fixed;inset:auto 0 40% 0;display:flex;justify-content:center;z-index:99;';
+      const line = document.createElement('div');
+      line.style.cssText = 'background:#000;color:#fff;font:16px/24px ui-monospace,Menlo,monospace;padding:8px 16px;border:1px solid #545454;white-space:pre;';
+      box.appendChild(line);
+      let buf = '';
+      const paint = () => { line.textContent = prompt + ' ' + buf + '▎'; };
+      paint();
+      document.body.appendChild(box);
+      const onKey = (e) => {
+        // Esc must stay quittable mid-prompt: let it propagate to the
+        // bundle's page-level listener (retro:quit to the NC parent).
+        if (e.key === 'Escape') return;
+        if (e.key === 'Enter') {
+          const n = parseFloat(buf);
+          if (!isFinite(n)) { buf = ''; paint(); return; }
+          document.removeEventListener('keydown', onKey, true);
+          box.remove();
+          resolve(n);
+        } else if (e.key === 'Backspace') {
+          buf = buf.slice(0, -1); paint();
+        } else if (/^[0-9.\-]$/.test(e.key)) {
+          buf += e.key; paint();
+        }
+        e.stopPropagation();
+      };
+      // capture phase: the prompt owns the keyboard while it is up
+      document.addEventListener('keydown', onKey, true);
     });
     return Result;
   };
@@ -1604,36 +1609,6 @@ rtl.module("crt",["System","JS"],function () {
     });
     return Result;
   };
-  this.TextBackground = function (c) {
-    $impl.TextEnsure();
-    $impl.CurBg = c & 15;
-  };
-  this.TextColor = function (c) {
-    $impl.TextEnsure();
-    $impl.CurFg = c & 15;
-  };
-  this.GotoXY = function (x, y) {
-    $impl.TextEnsure();
-    if ((x < 1) || (x > 80) || (y < 1) || (y > 25)) return;
-    $impl.CurX = x;
-    $impl.CurY = y;
-  };
-  this.ClrScr = function () {
-    var i = 0;
-    if (pas.graph.GraphActive()) {
-      pas.graph.ClearDevice();
-      return;
-    };
-    $impl.TextEnsure();
-    for (i = 0; i <= 1999; i++) {
-      $impl.CellCh[i] = " ";
-      $impl.CellFg[i] = $impl.CurFg;
-      $impl.CellBg[i] = $impl.CurBg;
-    };
-    $impl.CurX = 1;
-    $impl.CurY = 1;
-  };
-  this.DelayScale = 0.004;
   $mod.$init = function () {
     pas.System.SetWriteCallBack(function (S, NewLine) {
       if (pas.graph.GraphActive()) return;
@@ -1645,45 +1620,6 @@ rtl.module("crt",["System","JS"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
-  $impl.Queue = [];
-  $impl.Installed = false;
-  $impl.Push = function (c) {
-    $impl.Queue = rtl.arraySetLength($impl.Queue,"",rtl.length($impl.Queue) + 1);
-    $impl.Queue[rtl.length($impl.Queue) - 1] = c;
-  };
-  $impl.OnKeyDown = function (aEvent) {
-    var Result = false;
-    var $tmp = aEvent.key;
-    if ($tmp === "ArrowLeft") {
-      $impl.Push("\x00");
-      $impl.Push("K");
-    } else if ($tmp === "ArrowRight") {
-      $impl.Push("\x00");
-      $impl.Push("M");
-    } else if ($tmp === "ArrowUp") {
-      $impl.Push("\x00");
-      $impl.Push("H");
-    } else if ($tmp === "ArrowDown") {
-      $impl.Push("\x00");
-      $impl.Push("P");
-    } else if ($tmp === "Escape") {
-      $impl.Push("\x1B")}
-     else if ($tmp === "Enter") {
-      $impl.Push("\r")}
-     else if ($tmp === " ") {
-      $impl.Push(" ")}
-     else {
-      if (aEvent.key.length === 1) $impl.Push(aEvent.key.charAt(0));
-    };
-    if (pas.System.Copy(aEvent.key,1,5) === "Arrow") aEvent.preventDefault();
-    Result = true;
-    return Result;
-  };
-  $impl.Install = function () {
-    if ($impl.Installed) return;
-    $impl.Installed = true;
-    document.addEventListener("keydown",$impl.OnKeyDown);
-  };
   $impl.Cols = 80;
   $impl.Rows = 25;
   $impl.CellW = 8;
@@ -1831,101 +1767,43 @@ rtl.module("crt",["System","JS"],function () {
     window.requestAnimationFrame($impl.TextPaint);
   };
 });
-rtl.module("t_graph",["System","crt"],function () {
+rtl.module("program",["System","crt"],function () {
   "use strict";
   var $mod = this;
-  this.gorizontal = function (x1, y, x2, uc, dc) {
-    var n = 0;
-    pas.crt.TextColor(uc);
-    pas.crt.TextBackground(dc);
-    pas.crt.GotoXY(x1,y);
-    for (var $l = x1, $end = x2; $l <= $end; $l++) {
-      n = $l;
-      pas.System.Write("-");
-    };
-  };
-  this.vertical = function (y1, x, y2, uc, dc) {
-    var n = 0;
-    pas.crt.TextColor(uc);
-    pas.crt.TextBackground(dc);
-    for (var $l = y1, $end = y2; $l <= $end; $l++) {
-      n = $l;
-      pas.crt.GotoXY(x,n);
-      pas.System.Write("|");
-    };
-  };
-  this.line = function (x1, y1, x2, y2, uc, dc) {
-    pas.crt.TextColor(uc);
-    pas.crt.TextBackground(dc);
-    if (y1 === y2) {
-      $mod.gorizontal(x1,y1,x2,uc,dc)}
-     else if (x1 === x2) {
-      $mod.vertical(y1,x1,y2,uc,dc)}
-     else {
-      pas.System.Writeln("В текстовом режиме невозможно выводить косые линии");
-      return;
-    };
-  };
-  this.box = function (x1, y1, x2, y2, uc, dc) {
-    var x = 0;
-    var y = 0;
-    pas.crt.TextColor(uc);
-    pas.crt.TextBackground(0);
-    $mod.line(x1,y1,x1,y2,uc,0);
-    $mod.line(x1,y1,x2,y1,uc,0);
-    $mod.line(x1,y2,x2,y2,uc,0);
-    $mod.line(x2,y1,x2,y2,uc,0);
-    pas.crt.GotoXY(x1,y1);
-    pas.System.Write("Ú");
-    pas.crt.GotoXY(x2,y1);
-    pas.System.Write("¿");
-    pas.crt.GotoXY(x1,y2);
-    pas.System.Write("À");
-    pas.crt.GotoXY(x2,y2);
-    pas.System.Write("Ù");
-    pas.crt.TextBackground(dc);
-    for (var $l = y1, $end = y2; $l <= $end; $l++) {
-      y = $l;
-      for (var $l1 = x1, $end1 = x2; $l1 <= $end1; $l1++) {
-        x = $l1;
-        pas.crt.GotoXY(x,y);
-        pas.System.Write(" ");
-      };
-    };
-  };
-});
-rtl.module("program",["System","t_graph","crt"],function () {
-  "use strict";
-  var $mod = this;
-  this.duration = 1000;
-  this.cx = 0;
-  this.ch = 0;
+  this.c = 47;
+  this.symbol = ["а","б","в","г","д","е","ё","ж","з","и","й","к","л","м","н","о","п","р","с","т","у","ф","х","ц","ч","ш","щ","ь","ъ","ы","э","ю","я",".",",","!",'"',"№",";","%",":","?","*","(",")","-"," "];
+  this.t = rtl.arraySetLength(null,0,10000);
+  this.i = 0;
+  this.j = 0;
+  this.n = 0;
+  this.s = 0.0;
   this.Main = async function () {
-    pas.crt.TextBackground(0);
-    pas.crt.ClrScr();
-    $mod.cx = 40;
-    pas.t_graph.box(20,1,60,24,15,10);
-    pas.crt.TextColor(0);
+    $mod.n = pas.System.Trunc(await pas.crt.AskReal("n (довжина рядка; 1-3 розумно)"));
+    for (var $l = 1, $end = $mod.n; $l <= $end; $l++) {
+      $mod.i = $l;
+      $mod.t[$mod.i - 1] = 1;
+    };
     do {
-      await pas.crt.Yield();
-      pas.crt.TextBackground(10);
-      $mod.ch = pas.crt.ReadKey().charCodeAt();
-      if (($mod.ch === 75) || ($mod.ch === 77)) {
-        pas.crt.GotoXY($mod.cx,23);
-        pas.System.Write(" ");
-        var $tmp = $mod.ch;
-        if ($tmp === 75) {
-          $mod.cx = $mod.cx - 1}
-         else if ($tmp === 77) $mod.cx = $mod.cx + 1;
-        await pas.crt.Delay(1000 * 3);
+      for (var $l1 = 1, $end1 = $mod.n; $l1 <= $end1; $l1++) {
+        $mod.i = $l1;
+        pas.System.Write($mod.symbol[$mod.t[$mod.i - 1] - 1]);
+        $mod.t[$mod.n - 1] += 1;
+        for (var $l2 = $mod.n; $l2 >= 2; $l2--) {
+          $mod.j = $l2;
+          if ($mod.t[$mod.j - 1] > 47) {
+            $mod.t[$mod.j - 1] = 1;
+            $mod.t[$mod.j - 1 - 1] += 1;
+          };
+        };
       };
-      if ($mod.cx === 20) $mod.cx = 21;
-      if ($mod.cx === 60) $mod.cx = 59;
-      pas.crt.GotoXY($mod.cx,23);
-      pas.System.Write("\x1E");
-      pas.crt.GotoXY(1,1);
-      pas.crt.TextBackground(0);
-    } while (!($mod.ch === 27));
+      pas.System.Writeln();
+      await pas.crt.Yield();
+      $mod.s = 0;
+      for (var $l3 = 1, $end2 = $mod.n; $l3 <= $end2; $l3++) {
+        $mod.i = $l3;
+        $mod.s = $mod.s + $mod.t[$mod.i - 1];
+      };
+    } while (!($mod.s === (47 * $mod.n)));
   };
   $mod.$main = function () {
     $mod.Main();

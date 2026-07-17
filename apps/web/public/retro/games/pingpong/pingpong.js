@@ -1859,7 +1859,6 @@ rtl.module("crt",["System","JS"],function () {
   this.TextShutdown = function () {
     if (!$impl.TextActive) return;
     $impl.TextActive = false;
-    pas.System.SetWriteCallBack($impl.SavedWriteCb);
   };
   this.ClrScr = function () {
     var i = 0;
@@ -1881,6 +1880,13 @@ rtl.module("crt",["System","JS"],function () {
   this.Readln = function () {
   };
   this.DelayScale = 0.004;
+  $mod.$init = function () {
+    pas.System.SetWriteCallBack(function (S, NewLine) {
+      if (pas.graph.GraphActive()) return;
+      $impl.TextEnsure();
+      $impl.HandleWrite(S,NewLine);
+    });
+  };
 },["Web","graph"],function () {
   "use strict";
   var $mod = this;
@@ -1939,7 +1945,6 @@ rtl.module("crt",["System","JS"],function () {
   $impl.CurY = 1;
   $impl.CurFg = 7;
   $impl.CurBg = 0;
-  $impl.SavedWriteCb = null;
   $impl.CtrlGlyph = function (code) {
     var Result = "";
     var $tmp = code;
@@ -1997,60 +2002,59 @@ rtl.module("crt",["System","JS"],function () {
       $impl.CellFg[i] = 7;
       $impl.CellBg[i] = 0;
     };
-    $impl.SavedWriteCb = pas.System.SetWriteCallBack(function (S, NewLine) {
-      var txt = "";
-      var k = 0;
-      var code = 0;
-      var g = "";
-      if (!$impl.TextActive) return;
-      txt = "" + S;
-      for (var $l = 1, $end = txt.length; $l <= $end; $l++) {
-        k = $l;
-        code = txt.charCodeAt(k - 1);
-        if (code === 13) {
-          $impl.CurX = 1;
-          continue;
-        };
-        if (code === 10) {
-          $impl.CurX = 1;
-          $impl.CurY += 1;
-          continue;
-        };
-        if (code < 32) {
-          g = $impl.CtrlGlyph(code)}
-         else if (code > 126) {
-          g = $impl.HighGlyph(code)}
-         else g = txt.charAt(k - 1);
-        if (($impl.CurX >= 1) && ($impl.CurX <= 80) && ($impl.CurY >= 1) && ($impl.CurY <= 25)) {
-          $impl.CellCh[(($impl.CurY - 1) * 80) + ($impl.CurX - 1)] = g;
-          $impl.CellFg[(($impl.CurY - 1) * 80) + ($impl.CurX - 1)] = $impl.CurFg;
-          $impl.CellBg[(($impl.CurY - 1) * 80) + ($impl.CurX - 1)] = $impl.CurBg;
-        };
-        $impl.CurX += 1;
-        if ($impl.CurX > 80) {
-          $impl.CurX = 1;
-          $impl.CurY += 1;
-        };
+    window.requestAnimationFrame($impl.TextPaint);
+  };
+  $impl.HandleWrite = function (S, NewLine) {
+    var txt = "";
+    var k = 0;
+    var code = 0;
+    var g = "";
+    txt = "" + S;
+    for (var $l = 1, $end = txt.length; $l <= $end; $l++) {
+      k = $l;
+      code = txt.charCodeAt(k - 1);
+      if (code === 13) {
+        $impl.CurX = 1;
+        continue;
       };
-      if (NewLine) {
+      if (code === 10) {
+        $impl.CurX = 1;
+        $impl.CurY += 1;
+        continue;
+      };
+      if (code < 32) {
+        g = $impl.CtrlGlyph(code)}
+       else if (code > 126) {
+        g = $impl.HighGlyph(code)}
+       else g = txt.charAt(k - 1);
+      if (($impl.CurX >= 1) && ($impl.CurX <= 80) && ($impl.CurY >= 1) && ($impl.CurY <= 25)) {
+        $impl.CellCh[(($impl.CurY - 1) * 80) + ($impl.CurX - 1)] = g;
+        $impl.CellFg[(($impl.CurY - 1) * 80) + ($impl.CurX - 1)] = $impl.CurFg;
+        $impl.CellBg[(($impl.CurY - 1) * 80) + ($impl.CurX - 1)] = $impl.CurBg;
+      };
+      $impl.CurX += 1;
+      if ($impl.CurX > 80) {
         $impl.CurX = 1;
         $impl.CurY += 1;
       };
-      while ($impl.CurY > 25) {
-        for (k = 0; k <= 1919; k++) {
-          $impl.CellCh[k] = $impl.CellCh[k + 80];
-          $impl.CellFg[k] = $impl.CellFg[k + 80];
-          $impl.CellBg[k] = $impl.CellBg[k + 80];
-        };
-        for (k = 1920; k <= 1999; k++) {
-          $impl.CellCh[k] = " ";
-          $impl.CellFg[k] = 7;
-          $impl.CellBg[k] = $impl.CurBg;
-        };
-        $impl.CurY -= 1;
+    };
+    if (NewLine) {
+      $impl.CurX = 1;
+      $impl.CurY += 1;
+    };
+    while ($impl.CurY > 25) {
+      for (k = 0; k <= 1919; k++) {
+        $impl.CellCh[k] = $impl.CellCh[k + 80];
+        $impl.CellFg[k] = $impl.CellFg[k + 80];
+        $impl.CellBg[k] = $impl.CellBg[k + 80];
       };
-    });
-    window.requestAnimationFrame($impl.TextPaint);
+      for (k = 1920; k <= 1999; k++) {
+        $impl.CellCh[k] = " ";
+        $impl.CellFg[k] = 7;
+        $impl.CellBg[k] = $impl.CurBg;
+      };
+      $impl.CurY -= 1;
+    };
   };
   $impl.TextPaint = function (aTime) {
     var x = 0;

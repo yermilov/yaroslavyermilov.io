@@ -233,7 +233,6 @@ var
   CurY: integer = 1;
   CurFg: byte = 7;
   CurBg: byte = 0;
-  SavedWriteCb: TConsoleHandler;
 
 { CP437's visible control glyphs (the games draw with them: #30 is the car). }
 function CtrlGlyph(code: integer): string;
@@ -287,15 +286,18 @@ begin
     CellFg[i] := 7;
     CellBg[i] := 0;
   end;
-  // Route System Write/Writeln into the cell grid.
-  SavedWriteCb := SetWriteCallBack(
-    procedure(S: JSValue; NewLine: boolean)
+  window.requestAnimationFrame(@TextPaint);
+end;
+
+{ The write-callback body — installed once at unit init (see initialization):
+  pure-Write programs (SUPER) never call a text op first, so the FIRST Write
+  itself must boot the text screen. }
+procedure HandleWrite(S: JSValue; NewLine: boolean);
     var
       txt: string;
       k, code: integer;
       g: string;
     begin
-      if not TextActive then exit;
       txt := String(S);
       for k := 1 to Length(txt) do
       begin
@@ -332,8 +334,6 @@ begin
         end;
         Dec(CurY);
       end;
-    end);
-  window.requestAnimationFrame(@TextPaint);
 end;
 
 procedure TextPaint(aTime: TJSDOMHighResTimeStamp);
@@ -365,7 +365,6 @@ procedure TextShutdown;
 begin
   if not TextActive then exit;
   TextActive := false; // the paint loop sees this and stops re-queueing
-  SetWriteCallBack(SavedWriteCb);
 end;
 
 procedure TextBackground(c: byte);
@@ -424,4 +423,14 @@ procedure Readln;
 begin
 end;
 
+initialization
+  // Writes boot the text screen unless graphics owns the canvas — this is what
+  // makes pure-Write programs (SUPER) render without any prior crt call.
+  SetWriteCallBack(
+    procedure(S: JSValue; NewLine: boolean)
+    begin
+      if GraphActive then exit;
+      TextEnsure;
+      HandleWrite(S, NewLine);
+    end);
 end.
