@@ -1,0 +1,152 @@
+program PingPong0;
+uses crt,graph,jarik;
+type coordinates = record
+     x,y:integer;
+     end;
+const duration = 1000;
+      ballspeed = 10;
+      herospeed = 10;
+var ball,fly,ud:coordinates;
+    alfa,c,HeroX:integer;
+    right,left:boolean;
+    flagy,n0:byte;
+    key:char;
+
+    procedure MakeBall(x,y:integer; radius,color:byte);
+    begin
+         SetColor(color);
+         SetFillStyle(1,color);
+         Circle(x,y,radius);
+         FloodFill(x,y,color);
+    end;
+
+    procedure MakeHero(color:byte);
+    begin
+         SetColor(color);
+         SetFillStyle(1,color);
+         Bar(HeroX,425,HeroX+100,440);
+    end;
+
+    function udar:boolean;
+    var x:shortint;
+        s:string;
+        flag:boolean;
+    begin
+         Udar:=false;
+         if ball.x<=7 then {Влево}
+            begin
+                 Udar:=true;
+                 MakeBall(ball.x,ball.y,5,0);
+                 ball.x:=8;
+            end;
+         if ball.x>=633 then {Вправо}
+            begin
+                 Udar:=true;
+                 alfa:=360-(180-alfa);
+                 MakeBall(ball.x,ball.y,5,0);
+                 ball.x:=632;
+            end;
+         if ball.y<=7 then     {Вверх}
+            begin
+                 Udar:=true;
+                 alfa:=360-(90-alfa);
+                 MakeBall(ball.x,ball.y,5,0);
+                 ball.y:=10;
+            end;
+         if ball.y>=450 then
+            begin
+                 Udar:=true;
+                 alfa:=360-(270-alfa);
+                 MakeBall(ball.x,ball.y,5,0);
+                 ball.y:=449;
+            end;
+         if (abs(ball.y-425)<=5) and (ball.x>=herox) and (ball.x<=herox+100) {and (not vertical)} then
+            begin
+                 Udar:=true;
+                 MakeBall(ball.x,ball.y,5,0);
+                 {if Left and not flag then x:=-3;
+                 if Right and flag then x:=-3;
+                 if Left and flag then x:=3;
+                 if Right and not flag then x:=3;
+                 x:=x+alfa;
+                 alfa:=x;}
+                 ball.y:=419;
+                 alfa:=360-(270-alfa);
+            end;
+    end;
+
+    procedure Game;
+    var s:string;
+    begin
+         randomize;
+         HeroX:=100;
+         flagy:=4;
+         alfa:=45;
+         ball.x:=150;
+         ball.y:=350;
+         herox:=100;
+         right:=false;
+         left:=false;
+         repeat
+               c:=1;
+               MakeBall(ball.x,ball.y,5,0);
+               ud.x:=ball.x;
+               ud.y:=ball.y;
+               repeat
+                     MakeBall(ball.x,ball.y,5,0);
+                     fly.y:=trunc(c*sin(alfa));
+                     fly.x:=trunc(c*cos(alfa));
+                     ball.x:=ud.x+fly.x;
+                     ball.y:=ud.y-fly.y;
+                     MakeBall(ball.x,ball.y,5,4);
+                     c:=c+ballspeed;
+                     key:=inkey;
+                     case key of
+                     #75:begin
+                              Left:=true;
+                              Right:=false;
+                         end;
+                     #77:begin
+                              Right:=true;
+                              Left:=false;
+                         end;
+                     end;
+                     MakeHero(0);
+                     If Left then herox:=herox-herospeed;
+                     if right then herox:=herox+herospeed;
+                     If HeroX<=1 then HeroX:=1;
+                     If HeroX>=540 then HeroX:=540;
+                     If (HeroX<=1) or (HeroX>=540) then
+                        begin
+                             Left:=false;
+                             Right:=false;
+                        end;
+                     if key=#27 then Halt;
+                     MakeHero(14);
+                     delay(duration*3);
+               until Udar;
+         until key=#27;
+    end;
+
+procedure InitPingPong;
+var errorcode,gd,gm:integer;
+begin
+     gd:=detect;
+     InitGraph(gd,gm,'');
+     ErrorCode:=GraphResult;
+     If ErrorCode=GrOk then
+                           begin
+                       Game;
+                       CloseGraph;
+                           end
+                       else
+                           begin
+                       ClrScr;
+                       Writeln('Error:',GraphErrorMsg(ErrorCode));
+                       Readln;
+                           end;
+end;
+
+begin
+InitPingPong;
+end.

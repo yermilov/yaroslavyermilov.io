@@ -1,0 +1,4 @@
+The IBM VGA 8x16 web font (WebPlus_IBM_VGA_8x16.woff) is from
+"The Ultimate Oldschool PC Font Pack" v2.2 by VileR (int10h.org),
+licensed under CC BY-SA 4.0 — https://int10h.org/oldschool-pc-fonts/
+Full license text: https://creativecommons.org/licenses/by-sa/4.0/

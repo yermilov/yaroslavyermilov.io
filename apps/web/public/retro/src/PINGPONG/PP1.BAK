@@ -1,0 +1,828 @@
+program PingPong0;
+uses crt,graph,mouse,dos;
+type coordinates = record
+     x,y:integer;
+     end;
+     block = record
+     color,nx,ny,sort:byte;
+     x,y,balls:integer;
+     here:boolean;
+     end;
+const pi180 = pi/180;
+      HeroY = 400;
+      by=7;
+      bx=8;
+      Colors: array [0..15] of string =
+              ('Чёрный','Синий','Зелёный','Бирюзовый','Красный','Розовый',
+              'Коричневый','Светло-серый','Тёмно-серый','Светло-синий',
+              'Светло-зелёный','Светло-бирюзовый','Светло-красный',
+              'Светло-розовый','Желтый','Белый');
+
+var ball,fly,ud:coordinates;
+    alfa,c,HeroX:integer;
+    right,left:boolean;
+    n0:byte;
+    ng,nv:shortint;
+    key:char;
+    radian:real;
+    ColorBall,ColorHero,ColorFon,ColorMenuFon,ColorButton,ColorGameMenu,
+    ColorMenuText,ColorGameText,ColorClock,ColorSelect:byte;
+    BallSpeed,HeroSpeed,HeroB,Duration:integer;
+    Score:longint;
+    FirstTime,NowTime,Time:longint;
+    Lives : 1..3;
+    Level:Integer;
+    blocks:array [1..by, 1..bx] of block;
+
+    function InKey:char;
+    begin
+         If Keypressed then Inkey:=Readkey;
+    end;
+
+    procedure Clean(x1,y1,x2,y2:integer;Color:byte);
+    var i,j:integer;
+    begin
+         for i:=x1 to x2 do
+             for j:=y1 to y2 do
+                 PutPixel(i,j,Color);
+    end;
+
+    procedure MakeBall(x,y:integer; radius,color:byte);
+{Рисует мяч с координатами центра (x;y) радиусом radius и цветом color}
+    begin
+         SetColor(color);
+         SetFillStyle(1,color);
+         Circle(x,y,radius);
+         FloodFill(x,y,color);
+    end;
+
+    procedure MakeHero(color:byte);
+{Рисует доску цветом color и с координатами левого верхнего края (HerroX;425}
+    begin
+         SetColor(color);
+         SetFillStyle(1,color);
+         Bar(HeroX,HeroY,HeroX+HeroB,HeroY+15);
+    end;
+
+    function udar:boolean;
+{Проверяет был ли удар со стенкой и доской. Результаты:
+ *true* - удар состоялся; *false* - удара не было}
+    var x:shortint;
+        s:string;
+        flag:boolean;
+    begin
+         Udar:=false;
+         if ball.x<=7 then {Left}
+            begin
+                 Udar:=true;
+                 ng:=1;
+                 MakeBall(ball.x,ball.y,5,ColorFon);
+                 ball.x:=8;
+            end;
+         if ball.x>=633 then {Right}
+            begin
+                 Udar:=true;
+                 ng:=-1;
+                 MakeBall(ball.x,ball.y,5,ColorFon);
+                 ball.x:=632;
+            end;
+         if ball.y<=7 then   {Up}
+            begin
+                 Udar:=true;
+                 nv:=1;
+                 MakeBall(ball.x,ball.y,5,ColorFon);
+                 ball.y:=11;
+            end;
+         if ball.y>=heroy+10 then {Down}
+            begin
+                 Udar:=true;
+                 nv:=-1;
+                 MakeBall(ball.x,ball.y,5,ColorFon);
+                 ball.y:=heroy+9;
+                 Dec(Lives);
+                 Clean(105,435,125,480,ColorGameMenu);
+            end;
+ {Doska} if (abs(ball.y-heroy)<=5) and (ball.x>=herox) and (ball.x<=herox+Herob) then
+            begin
+                 Udar:=true;
+                 MakeBall(ball.x,ball.y,5,ColorFon);
+                 nv:=-1;
+                 ball.y:=Heroy-6;
+                 If Left then
+                    if ng=1 then alfa:=alfa+5
+                            else alfa:=alfa-5;
+                 If Right then
+                    if ng=-1 then alfa:=alfa+5
+                             else alfa:=alfa-5;
+            end;
+    end;
+
+    procedure GameText;
+    var s:string;
+        h,m,sec,d:word;
+        i,j:integer;
+    begin
+         SetColor(ColorGameText);
+         SetTextStyle(7,HorizDir,3);
+         OutTextXy(10,435,'Lives - ');
+         Str(lives,s);
+         OutTextXy(105,435,s);
+         OutTextXy(125,435,'Level -');
+         Str(level,s);
+         OutTextXy(220,435,s);
+         OutTextXy(240,435,'Score -');
+         str(score,s);
+         OutTextXy(335,435,s);
+         OutTextXy(450,435,'Time -');
+         GetTime(h,m,sec,d);
+         NowTime:=sec+m*60+h*3600;
+         if NowTime-FirstTime>Time then
+            begin
+                 Time:=NowTime-FirstTime;
+                 str(NowTime-FirstTime,s);
+                 Clean(550,435,640,460,ColorGameMenu);
+                 OutTextXy(550,435,s);
+            end;
+    end;
+
+    procedure InitBlocks;
+    var i,j:byte;
+    begin
+         for i:=1 to by do
+             for j:=1 to bx do
+                 with blocks[i,j] do
+                  begin
+                      sort:=random(14)+1;
+                      case sort of
+                      1:color:=0;
+                      2:color:=4;
+                      3:color:=5;
+                      4:color:=12;
+                      5:color:=13;
+                      6:color:=6;
+                      7:color:=7;
+                      8:color:=1;
+                      9:color:=2;
+                      10:color:=9;
+                      11:color:=10;
+                      12:color:=14;
+                      13:color:=15;
+                      end;
+                      case sort of
+                      1..10:balls:=sort*100;
+                      11:balls:=1500;
+                      12:balls:=2500;
+                      13:balls:=5000;
+                      end;
+                      if i=1 then here:=true
+                             else here:=false;
+                      nx:=j;
+                      ny:=i;
+                      x:=(j-1)*80;
+                      y:=(i-1)*20;
+                  end;
+    end;
+
+    procedure MakeBlocks;
+    var i,j:byte;
+    begin
+         SetColor(ColorFon);
+         SetFillStyle(1,ColorFon);
+         Bar(0,0,640,300);
+         for i:=1 to by do
+             for j:=1 to bx do
+                 with blocks[i,j] do
+                 if here then
+                   begin
+                      SetColor(15);
+                      SetFillStyle(1,Color);
+                      Rectangle(x,y,x+79,y+19);
+                      FloodFill(x+1,y+1,15);
+                   end;
+    end;
+
+    function BlockUdar:boolean;
+    var i,j:byte;
+        u:boolean;
+    begin
+         u:=false;
+         for i:=1 to by do
+             for j:=1 to bx do
+                      if blocks[i,j].here then
+                         begin
+                              if (Ball.x>blocks[i,j].x) and
+                                 (Ball.x<blocks[i,j].x+78) and
+                                 (abs(Ball.y-(blocks[i,j].y+19))<=10) then
+                                       begin
+                                            blocks[i,j].here:=false;
+                                            score:=score+blocks[i,j].balls;
+                                            SetColor(ColorFon);
+                                            SetFillStyle(1,ColorFon);
+                                            Rectangle(1,1,640,300);
+                                            FloodFill(2,2,ColorFon);
+                                            Clean(335,435,449,480,ColorGameMenu);
+                                            nv:=1;
+                                            MakeBall(ball.x,ball.y,5,ColorFon);
+                                            Ball.y:=Blocks[i,j].y+11;
+                                            u:=true;
+                                       end;
+                         end;
+         BlockUdar:=u;
+    end;
+
+    procedure Game;
+    var h,m,s,d:word;
+{Процедура, отвечающая за основную игру}
+    begin
+         InitBlocks;
+         SetColor(ColorFon);
+         SetFillStyle(1,ColorFon);
+         Bar(0,0,641,Heroy+25);
+         SetColor(ColorGameMenu);
+         SetFillStyle(1,ColorGameMenu);
+         Bar(0,Heroy+26,641,481);
+         Score:=0;
+         Level:=1;
+         HeroX:=100;
+         nv:=-1;
+         Lives:=3;
+         alfa:=random(179)+1;
+         if alfa>90 then begin alfa:=alfa-90; ng:=-1; end
+                    else ng:=1;
+         ball.x:=150;
+         ball.y:=350;
+         herox:=100;
+         right:=false;
+         left:=false;
+         GetTime(h,m,s,d);
+         FirstTime:=s+m*60+h*3600;
+         repeat
+               MakeBlocks;
+               c:=1;
+               MakeBall(ball.x,ball.y,5,0);
+               if alfa>90 then begin alfa:=alfa-90; ng:=-ng; end;
+               if alfa<1 then begin alfa:=180-alfa; nv:=-nv; end;
+               ud.x:=ball.x;
+               ud.y:=ball.y;
+               repeat
+                     MakeBall(ball.x,ball.y,5,ColorFon);
+                     if BlockUdar then MakeBlocks;
+                     radian:=pi180*alfa;
+                     fly.y:=trunc(c*sin(radian));
+                     fly.x:=trunc(c*cos(radian));
+                     ball.x:=ud.x+fly.x*ng;
+                     ball.y:=ud.y+fly.y*nv;
+                     MakeBall(ball.x,ball.y,5,ColorBall);
+                     c:=c+ballspeed;
+                     key:=inkey;
+                     case key of
+                     #75:begin
+                              Left:=true;
+                              Right:=false;
+                         end;
+                     #77:begin
+                              Right:=true;
+                              Left:=false;
+                         end;
+                     'P','p':repeat until keypressed;
+                     end;
+                     MakeHero(ColorFon);
+                     If Left then herox:=herox-herospeed;
+                     if right then herox:=herox+herospeed;
+                     If HeroX<=1 then HeroX:=1;
+                     If HeroX>=640-herob then HeroX:=641-herob;
+                     If (HeroX<=1) or (HeroX>=540) then
+                        begin
+                             Left:=false;
+                             Right:=false;
+                        end;
+                     MakeHero(ColorHero);
+                     delay(duration*2);
+                     GameText;
+               until (Udar) or (Key=#27) or (BlockUdar);
+         until (key=#27) or (lives=0);
+    end;
+
+procedure Information;
+var inffile:text;
+    i:byte;
+    str:string;
+    gd,gm,ErrorCode:integer;
+begin
+     CloseGraph;
+     TextBackGround(ColorMenuFon);
+     ClrScr;
+     TextColor(ColorMenuText);
+     assign(inffile,'readme.hlp');
+     reset(infFile);
+     For i:=1 to 24 do
+         begin
+              readln(inffile,str);
+              if i<>4 then Writeln(str)
+                      else write(str);
+         end;
+     Write('Нажмите Esc для возврата в меню');
+     repeat until Readkey=#27;
+     close(inffile);
+     gd:=Detect;
+     InitGraph(gd,gm,'');
+     ErrorCode:=GraphResult;
+     if ErrorCode<>0 then
+         begin
+              ClrScr;
+              Writeln('Error:',GraphErrorMsg(ErrorCode));
+              Readln;
+         end;
+end;
+
+procedure Change(n:byte);
+var st,s:string;
+    m:word;
+    f,fl:boolean;
+begin
+ f:=false;
+ fl:=true;
+ repeat
+     if fl then begin
+     gotoxy(15,20);
+     Write('                                                  ');
+     gotoxy(15,20);
+     case n of
+     1:st:='     Цвет мяча - '+Colors[ColorBall];
+     2:st:='     Цвет доски - '+Colors[ColorHero];
+     3:st:='     Цвет фона в игровом поле - '+Colors[ColorFon];
+     4:st:='     Цвет фона меню - '+Colors[ColorMenuFon];
+     5:st:='     Цвет кнопок - '+Colors[ColorButton];
+     6:st:='     Цвет фона меню в игре - '+Colors[ColorGameMenu];
+     7:st:='     Цвет текста в меню - '+Colors[ColorMenuText];
+     8:st:='     Цвет текста в игре - '+Colors[ColorGameText];
+     9:st:='     Цвет часов - '+Colors[ColorClock];
+     10:begin str(BallSpeed,s);
+              st:='     Скорость мяча - '+s+' пикселей за один ход';
+        end;
+     11:begin str(HeroSpeed,s);
+              st:='     Скорость доски - '+s+' пикселей за один ход';
+        end;
+     12:begin str(HeroB,s);
+              st:='     Ширина доски - '+s+' пикселей';
+        end;
+     13:begin str(Duration,s);
+              st:='     Задержка - '+s+' милисекунд';
+        end;
+     end;
+     Write(St);
+     gotoxy(80,25);
+     fl:=false;
+     end;
+     case n of
+     1:m:=ColorBall;
+     2:m:=ColorHero;
+     3:m:=ColorFon;
+     4:m:=ColorMenuFon;
+     5:m:=ColorButton;
+     6:m:=ColorGameMenu;
+     7:m:=ColorMenuText;
+     8:m:=ColorGameText;
+     9:m:=ColorClock;
+     10:m:=BallSpeed;
+     11:m:=HeroSpeed;
+     12:m:=HeroB;
+     13:m:=Duration;
+     end;
+     Case Inkey of
+     #72:begin inc(m); fl:=true; end;
+     #80:begin dec(m); fl:=true; end;
+     #13:f:=true;
+     end;
+     if n<10 then
+      begin
+        if m=16 then m:=1;
+        if m=0 then m:=15;
+      end
+             else
+             if m=0 then m:=1;
+     if n=12 then if m>640 then m:=640;
+     case n of
+     1:ColorBall:=m;
+     2:ColorHero:=m;
+     3:ColorFon:=m;
+     4:ColorMenuFon:=m;
+     5:ColorButton:=m;
+     6:ColorGameMenu:=m;
+     7:ColorMenuText:=m;
+     8:ColorGameText:=m;
+     9:ColorClock:=m;
+     10:BallSpeed:=m;
+     11:HeroSpeed:=m;
+     12:HeroB:=m;
+     13:Duration:=m;
+     end;
+ until f;
+ gotoxy(15,20);
+ Write('                                                  ');
+ TextBackGround(ColorMenuFon);
+ TextColor(ColorMenuText);
+ ClrScr;
+ GotoXy(35,1);
+ Write('Настройки');
+ Gotoxy(1,3);
+ Writeln('     Цвет мяча - ',Colors[ColorBall]);
+ Writeln('     Цвет доски - ',Colors[ColorHero]);
+ Writeln('     Цвет фона в игровом поле - ',Colors[ColorFon]);
+ Writeln('     Цвет фона меню - ',Colors[ColorMenuFon]);
+ Writeln('     Цвет кнопок - ',Colors[ColorButton]);
+ Writeln('     Цвет фона меню в игре - ',Colors[ColorGameMenu]);
+ Writeln('     Цвет текста в меню - ',Colors[ColorMenuText]);
+ Writeln('     Цвет текста в игре - ',Colors[ColorGameText]);
+ Writeln('     Цвет часов - ',Colors[ColorClock]);
+ Writeln('     Скорость мяча - ',BallSpeed,' пикселей за один ход');
+ Writeln('     Скорость доски - ',HeroSpeed,' пикселей за один ход');
+ Writeln('     Ширина доски - ',HeroB,' пикселей');
+ Writeln('     Задержка - ',Duration,' милисекунд');
+ Writeln('     Вернуть по умолчанию');
+ Writeln('     Файл опций - options.opt');
+end;
+
+procedure Default;
+var Fi : Text;
+begin
+     Assign(fi,'default.opt');
+     Reset(fi);
+     Readln(fi,ColorBall);
+     Readln(fi,ColorHero);
+     Readln(fi,ColorFon);
+     Readln(fi,ColorMenuFon);
+     Readln(fi,ColorButton);
+     Readln(fi,ColorGameMenu);
+     Readln(fi,ColorMenuText);
+     Readln(fi,ColorGameText);
+     Readln(fi,ColorClock);
+     Readln(fi,BallSpeed);
+     Readln(fi,HeroSpeed);
+     Readln(fi,HeroB);
+     Readln(fi,Duration);
+     Close(fi);
+     ClrScr;
+     GotoXy(35,1);
+     Write('Настройки');
+     Gotoxy(1,3);
+     Writeln('     Цвет мяча - ',Colors[ColorBall]);
+     Writeln('     Цвет доски - ',Colors[ColorHero]);
+     Writeln('     Цвет фона в игровом поле - ',Colors[ColorFon]);
+     Writeln('     Цвет фона меню - ',Colors[ColorMenuFon]);
+     Writeln('     Цвет кнопок - ',Colors[ColorButton]);
+     Writeln('     Цвет фона меню в игре - ',Colors[ColorGameMenu]);
+     Writeln('     Цвет текста в меню - ',Colors[ColorMenuText]);
+     Writeln('     Цвет текста в игре - ',Colors[ColorGameText]);
+     Writeln('     Цвет часов - ',Colors[ColorClock]);
+     Writeln('     Скорость мяча - ',BallSpeed,' пикселей за один ход');
+     Writeln('     Скорость доски - ',HeroSpeed,' пикселей за один ход');
+     Writeln('     Ширина доски - ',HeroB,' пикселей');
+     Writeln('     Задержка - ',Duration,' милисекунд');
+     Writeln('     Вернуть по умолчанию');
+     Writeln('     Файл опций - options.opt');
+end;
+
+
+procedure Options;
+var fil:text;
+    gd,gm,errorcode:integer;
+    n:byte;
+    flag:boolean;
+begin
+     CloseGraph;
+     TextBackGround(ColorMenuFon);
+     TextColor(ColorMenuText);
+     ClrScr;
+     GotoXy(35,1);
+     Write('Настройки');
+     Gotoxy(1,3);
+     Writeln('     Цвет мяча - ',Colors[ColorBall]);
+     Writeln('     Цвет доски - ',Colors[ColorHero]);
+     Writeln('     Цвет фона в игровом поле - ',Colors[ColorFon]);
+     Writeln('     Цвет фона меню - ',Colors[ColorMenuFon]);
+     Writeln('     Цвет кнопок - ',Colors[ColorButton]);
+     Writeln('     Цвет фона меню в игре - ',Colors[ColorGameMenu]);
+     Writeln('     Цвет текста в меню - ',Colors[ColorMenuText]);
+     Writeln('     Цвет текста в игре - ',Colors[ColorGameText]);
+     Writeln('     Цвет часов - ',Colors[ColorClock]);
+     Writeln('     Скорость мяча - ',BallSpeed,' пикселей за один ход');
+     Writeln('     Скорость доски - ',HeroSpeed,' пикселей за один ход');
+     Writeln('     Ширина доски - ',HeroB,' пикселей');
+     Writeln('     Задержка - ',Duration,' милисекунд');
+     Writeln('     Вернуть по умолчанию');
+     Writeln('     Файл опций - options.opt');
+     n:=3;
+     flag:=false;
+     repeat
+           Gotoxy(3,n);
+           Write('*');
+           Gotoxy(80,25);
+           Case Readkey of
+           #72:begin
+                    Gotoxy(3,n);
+                    Write(' ');
+                    Dec(n);
+               end;
+           #80:begin
+                    Gotoxy(3,n);
+                    Writeln(' ');
+                    Inc(n);
+               end;
+           #13:if n<>16 then Change(n-2)
+                        else Default;
+           #27:flag:=true;
+           end;
+           if n=2 then n:=16;
+           if n=17 then n:=3;
+     until flag;
+     assign(fil,'options.opt');
+     Rewrite(fil);
+     Writeln(fil,ColorBall);
+     Writeln (fil,ColorHero);
+     Writeln (fil,ColorFon);
+     Writeln (fil,ColorMenuFon);
+     Writeln (fil,ColorButton);
+     Writeln (fil,ColorGameMenu);
+     Writeln (fil,ColorMenuText);
+     Writeln (fil,ColorGameText);
+     Writeln (fil,ColorClock);
+     Writeln (fil,BallSpeed);
+     Writeln (fil,HeroSpeed);
+     Writeln (fil,HeroB);
+     Writeln (fil,Duration);
+     Close(fil);
+     gd:=Detect;
+     InitGraph(gd,gm,'');
+     ErrorCode:=GraphResult;
+     if ErrorCode<>0 then
+         begin
+              ClrScr;
+              Writeln('Error:',GraphErrorMsg(ErrorCode));
+              Readln;
+         end;
+end;
+
+procedure ButtonPress(n:byte);
+var x,y:integer;
+    s:string;
+begin
+     HideMouse;
+     case n of
+     1:y:=10;
+     2:y:=110;
+     3:y:=210;
+     4:y:=310;
+     5:y:=410;
+     end;
+     SetColor(ColorMenuFon);
+     SetFillStyle(1,ColorMenuFon);
+     Bar(100,y,300,y+50);
+     SetColor(0);
+     SetFillStyle(1,0);
+     Bar(105,y+5,305,y+55);
+     SetColor(15);
+     SetTextStyle(3,HorizDir,4);
+     case n of
+     1:s:='Start game';
+     2:s:='Best players';
+     3:s:='Options';
+     4:s:='Information';
+     5:s:='Quit';
+     end;
+     case n of
+     1,4:x:=125;
+     2:x:=115;
+     3:x:=155;
+     5:x:=175;
+     end;
+     OutTextXy(x+5,y+5,s);
+     ShowMouse;
+     delay(duration*7);
+end;
+
+function MainMenu:byte;
+var color,choice:byte;
+    radius:integer;
+    n:shortint;
+    flag:boolean;
+    i,j:integer;
+    h,m,s,d,sec:word;
+    st:string;
+    year,month,day,dayofweek,date:word;
+    x:integer;
+    number:byte;
+begin
+     Color:=ColorMenuFon;
+     SetColor(Color);
+     SetFillStyle(1,Color);
+     Bar(0,0,641,481);
+     Color:=ColorButton;
+     SetColor(Color);
+     SetFillStyle(1,Color);
+     Bar(100,10,300,60);
+     Bar(100,110,300,160);
+     Bar(100,210,300,260);
+     Bar(100,310,300,360);
+     Bar(100,410,300,460);
+     Color:=ColorMenuText;
+     SetColor(color);
+     SetTextStyle(3,HorizDir,4);
+     OutTextXy(120,10,'Start game');
+     OutTextXy(110,110,'Best players');
+     OutTextXy(150,210,'Options');
+     OutTextXy(120,310,'Information');
+     OutTextXy(170,410,'Quit');
+     SetTextStyle(4,VertDir,7);
+     OutTextXy(10,40,'PING PONG');
+     OutTextXy(300,40,'PING PONG');
+     SetTextStyle(7,HorizDir,1);
+     OutTextXy(437,375,'Copyright by');
+     OutTextXy(412,400,'Yermilov Yaroslav');
+     Choice:=0;
+     InitMouse;
+     ShowMouse;
+     Color:=0;
+     Date:=0;
+     number:=1;
+ repeat
+     Radius:=1;
+     N:=1;
+     repeat
+     color:=random(16);
+     until color<>ColorMenuFon;
+     SetColor(Color);
+     SetFillStyle(1,Color);
+     repeat
+           SetColor(ColorSelect);
+           Rectangle(100,number*100-90,300,number*100-40);
+           case Inkey of
+           #72:begin
+                    SetColor(ColorMenuFon);
+                    Rectangle(100,number*100-90,300,number*100-40);
+                    dec(number);
+               end;
+           #80:begin
+                    SetColor(ColorMenuFon);
+                    Rectangle(100,number*100-90,300,number*100-40);
+                    inc(number);
+               end;
+           #13:Choice:=Number;
+           end;
+           if number=0 then number:=5;
+           If (MouseX>100) and (MouseX<300) and (MouseY>10) and (MouseY<460) and (LeftButton) then
+              begin
+                   If (MouseY>10) and (MouseY<60) then choice:=1;
+                   If (MouseY>110) and (MouseY<160) then choice:=2;
+                   If (MouseY>210) and (MouseY<260) then choice:=3;
+                   if (MouseY>310) and (MouseY<360) then choice:=4;
+                   if (MouseY>410) and (MouseY<460) then choice:=5;
+                   if choice<>0 then ButtonPress(Choice);
+              end;
+           flag:=false;
+           If ((MouseX>375) and (MouseX<625) and
+           (MouseY>125) and (MouseY<375)) or
+           ((MouseX>350) and (MouseX<460) and (MouseY>435) and
+           (MouseY<480)) then flag:=true;
+           if flag then HideMouse;
+           SetColor(Color);
+           Circle(500,250,radius);
+           radius:=radius+n;
+           If radius>125 then
+              begin
+                    Color:=ColorMenuFon;
+                    n:=-1;
+              end;
+           if flag then ShowMouse;
+           GetTime(h,m,s,d);
+           if s+m*60+h*3600<>sec then Clean(440,435,550,480,ColorMenuFon);
+           Sec:=S+M*60+H*3600;
+           SetColor(ColorClock);
+           SetTextStyle(3,HorizDir,3);
+           Str(h,st);
+           if h<10 then st:='0'+st;
+           OutTextXy(440,435,st);
+           OutTextXy(470,435,':');
+           Str(m,st);
+           if m<10 then st:='0'+st;
+           OutTextXy(480,435,st);
+           OutTextXy(510,435,':');
+           Str(s,st);
+           if s<10 then st:='0'+st;
+           OutTextXy(520,435,st);
+           GetDate(year,month,day,dayofweek);
+           if day+month*31+year*365<>date then
+              begin
+                   date:=day+month*31+year*365;
+                   Clean(420,40,640,150,ColorMenuFon);
+              end;
+           OutTextXy(450,10,'Today is');
+           Case dayofweek of
+           0:st:='Sunday';
+           1:st:='Monday';
+           2:st:='Tuesday';
+           3:st:='Wednesday';
+           4:st:='Thursday';
+           5:st:='Friday';
+           6:st:='Saturday';
+           end;
+           case dayofweek of
+           0:x:=459;
+           1:x:=459;
+           2:x:=454;
+           3:x:=440;
+           4:x:=447;
+           5:x:=465;
+           6:x:=450;
+           end;
+           OutTextXy(x,40,st);
+           Case month of
+           1,10:x:=435;
+           2,11,12:x:=430;
+           3:x:=445;
+           4:x:=450;
+           5,7:x:=457;
+           6:x:=453;
+           8:x:=440;
+           9:x:=420;
+           end;
+           str(day,st);
+           OutTextXy(x,70,st);
+           Case month of
+           1:st:='January';
+           2:st:='February';
+           3:st:='March';
+           4:st:='April';
+           5:st:='May';
+           6:st:='June';
+           7:st:='July';
+           8:st:='August';
+           9:st:='September';
+           10:st:='October';
+           11:st:='November';
+           12:st:='December';
+           end;
+           OutTextXy(x+40,70,st);
+           str(year,st);
+           OutTextXy(465,100,st);
+           delay(duration div 2);
+     until (radius<=0) or (choice<>0);
+     inc(color);
+ until choice<>0;
+     MainMenu:=choice;
+     HideMouse;
+end;
+
+
+procedure InitPingPong;
+{Инициализация графики и игры}
+var errorcode,gd,gm:integer;
+    result:byte;
+    f:text;
+begin
+     gd:=detect;
+     randomize;
+     InitGraph(gd,gm,'');
+     ErrorCode:=GraphResult;
+     Assign(f,'options.opt');
+     Reset(f);
+     Readln(f,ColorBall);
+     Readln(f,ColorHero);
+     Readln(f,ColorFon);
+     Readln(f,ColorMenuFon);
+     Readln(f,ColorButton);
+     Readln(f,ColorGameMenu);
+     Readln(f,ColorMenuText);
+     Readln(f,ColorGameText);
+     Readln(f,ColorClock);
+     Readln(f,ColorSelect);
+     Readln(f,BallSpeed);
+     Readln(f,HeroSpeed);
+     Readln(f,HeroB);
+     Readln(f,Duration);
+     Close(f);
+     If ErrorCode=GrOk then
+                           begin
+                       repeat
+                             delay(duration*40);
+                             Result:=0;
+                             Result:=MainMenu;
+                             Case Result of
+                             1:Game;
+                             3:Options;
+                             4:Information;
+                             end;
+                       until Result=5;
+                       CloseGraph;
+                           end
+                       else
+                           begin
+                       ClrScr;
+                       Writeln('Error:',GraphErrorMsg(ErrorCode));
+                       Readln;
+                           end;
+end;
+
+begin
+InitPingPong;
+end.

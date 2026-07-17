@@ -1,0 +1,415 @@
+program bakkara;
+uses crt;
+var sel:char;
+    balans:longint;
+    a:byte;
+label 1;
+procedure first_picture;
+var tb:text;
+    str:string;
+    n,bk:byte;
+    flag:boolean;
+    begin
+     ClrScr;
+     flag:=false;
+     assign(tb, 'C:\cash\bakkara\textbak.txt');
+     Reset(tb);
+     for n:=1 to 23 do
+           begin
+                readln(tb,str);
+                writeln(str);
+           end;
+     repeat
+           bk:=ord(ReadKey);
+           if bk=13 then begin flag:=true; ClrScr; end;
+     until flag;
+end;
+
+function choice:char;
+var tm:text;
+    n:byte;
+    bk:char;
+    str:string;
+    flag:boolean;
+begin
+     assign(tm, 'C:\cash\bakkara\textmenu.txt');
+     reset(tm);
+     for n:=1 to 23 do
+              begin
+                   readln(tm,str);
+                   writeln(str);
+              end;
+     repeat
+           bk:=ReadKey;
+           case bk of
+           's','S','o','O','i','I','q','Q':flag:=true;
+           end;
+           choice:=bk;
+     until flag;
+end;
+
+procedure Informations;
+var fi:text;
+    ch,n:byte;
+    str:string;
+    bk:byte;
+    flag:boolean;
+begin
+     assign(fi,'c:\cash\bakkara\info.txt');
+     reset(fi);
+     for n:=1 to 23 do
+               begin
+                    readln(fi,str);
+                    writeln(str);
+               end;
+     writeln ('Для выхода из меню информации нажмите Esc');
+     repeat
+           ch:=ord(ReadKey);
+           if ch=27 then flag:=true;
+     until flag;
+     end;
+
+procedure quit;
+var fq:text;
+    str:string;
+    n:byte;
+    ch:char;
+begin
+     assign (fq,'c:\cash\bakkara\quit.txt');
+     reset(fq);
+     for n:=1 to 23 do
+         begin
+              readln(fq,str);
+              writeln(str);
+         end;
+     repeat
+           ch:=ReadKey;
+           case ch of
+                'y','Y':halt;
+                'n','N':choice;
+           end;
+     until false;
+end;
+
+procedure write_bal(bals:longint);
+var fsm:text;
+    n:byte;
+    str:string;
+    bal:longint;
+begin
+     assign(fsm,'c:\cash\bakkara\fsm1.txt');
+     reset(fsm);
+     for n:=1 to 5 do
+         begin
+              readln(fsm,str);
+              writeln(str);
+         end;
+     gotoxy (33,4);
+     writeln(bal);
+end;
+
+function player:byte;
+var n:byte;
+    ch:char;
+    fsm:text;
+    str:string;
+begin
+     assign(fsm,'c:\cash\bakkara\fsm2.txt');
+     reset(fsm);
+     for n:=1 to 5 do
+         begin
+              readln(fsm,str);
+              writeln(str);
+         end;
+     ch:=ReadKey;
+     repeat
+           case readkey of
+           'f','F':player:=1;
+           's','S':player:=2;
+           'n','N':player:=0;
+           end;
+     until false;
+end;
+
+function stavka:longint;
+var n:byte;
+    s:longint;
+    fsm:text;
+    str:string;
+begin
+     assign(fsm,'c:\cash\bakkara\fsm3.txt');
+     reset(fsm);
+     for n:=1 to 5 do
+         begin
+              readln(fsm,str);
+              writeln(str);
+         end;
+     readln(s);
+     stavka:=s;
+end;
+
+function random_kart:byte;
+var n:byte;
+begin
+randomize;
+random_kart:=random(55);
+end;
+
+function num_kart(num:byte):byte;
+const name_of_files : array [1..54] of string =
+      ('k1','k2','k3','k4','k5','k6','k7','k8','k9','k10',
+      'k11','k12','k13','k14','k15','k16','k17','k18','k19','k20',
+      'k21','k22','k23','k24','k25','k26','k27','k28','k29','k30',
+      'k31','k32','k33','k34','k35','k36','k37','k38','k39','k40',
+      'k41','k42','k43','k44','k45','k46','k47','k48','k49','k50',
+      'k51','k52','k53','k54');
+var x,h2:byte;
+    fk:text;
+    kart:byte;
+    str,nf:string;
+begin
+     x:=1 + num*12;
+     kart:=random_kart;
+     num_kart:=kart;
+              gotoxy(x,9);
+              nf:=name_of_files[kart];
+              assign(fk,'c:\cash\bakkara\'+nf);
+              reset(fk);
+              for h2:=1 to 17 do
+                  begin
+                       readln(fk,str);
+                       writeln(str);
+                  end;
+end;
+
+procedure palka;
+var y,h3:byte;
+begin
+     y:=9;
+     for h3:=1 to  16 do
+         begin
+              gotoxy(38,y);
+              write('|');
+              inc(y);
+         end;
+end;
+
+function win(pl:byte;karts:array of byte ):boolean;
+var n,sum1,sum2,sel:byte;
+    b:array [1..6] of byte;
+begin
+     ClrScr;
+     sum1:=0;
+     sum2:=0;
+     for n:=1 to 6 do
+              case karts[n] of
+              53,54:b[n]:=25;
+              else case (karts[n] mod 13) of
+                   0:b[n]:=14;
+                   1:b[n]:=2;
+                   2:b[n]:=3;
+                   3:b[n]:=4;
+                   4:b[n]:=5;
+                   5:b[n]:=6;
+                   6:b[n]:=7;
+                   7:b[n]:=8;
+                   8:b[n]:=9;
+                   9:b[n]:=10;
+                   10:b[n]:=11;
+                   11:b[n]:=12;
+                   12:b[n]:=13;
+                   end;
+              end;
+     for n:=1 to 3 do
+              sum1:=sum1+b[n];
+     for n:=4 to 6 do
+              sum2:=sum2+b[n];
+     gotoxy (35,12);
+     writeln ('1 игрок заработал ',sum1,' балов');
+     writeln;
+     writeln ('2 игрок заработал ',sum2,' балов');
+     writeln;
+     if sum1>sum2 then
+                      begin
+                           sel:=1;
+                           writeln('1 игрок победил');
+                      end
+                  else
+                      if sum1<sum2 then
+                                       begin
+                                            sel:=2;
+                                            writeln('2 игрок победил');
+                                       end
+                                   else
+                                       begin
+                                            sel:=0;
+                                            writeln('Ничья');
+                                       end;
+     if sel=pl then win:=true
+               else win:=false;
+end;
+
+procedure Save;
+var fs:text;
+    ch:char;
+    name_save:string;
+begin
+    ClrScr;
+    gotoxy (35,3);
+    assign(fs,'c:\cash\bakkara\saves.txt');
+    append(fs);
+                 writeln('Введите имя вашего сохранения');
+                 readln(name_save);
+                 writeln(fs,name_save);
+                 writeln(fs,balans);
+                 writeln('Ваше сохранение успешко создано и сохранено');
+    ClrScr;
+    gotoxy(35,10);
+    writeln('Хотите вернутся в игру (g), или же в главное меню (m)?');
+    repeat
+          ch:=ReadKey;
+          case ch of
+          'g','G':begin halt; a:=1; sel:='s'; ; end;
+          'm','M':Choice;
+          end;
+    until false;
+end;
+
+
+procedure start(balan:longint);
+var balans,post:longint;
+    pl,n:byte;
+    number_of_karts:array [1..6] of byte;
+    flag:boolean;
+    chord:byte;
+    ch:char;
+begin
+     balans:=balan;
+     repeat
+           ClrScr;
+           write_bal(balans);
+           pl:=player;
+           post:=stavka;
+           ClrScr;
+           for n:=1 to 6 do
+                    number_of_karts[n]:=num_kart(n);
+           gotoxy(12,24);
+           writeln('Игрок 1');
+           gotoxy(52,24);
+           writeln('Игрок 2');
+           palka;
+           flag:=false;
+           repeat
+                 chord:=ord(readkey);
+                 if chord=13 then flag:=true;
+           until false;
+
+           flag:=win(pl,number_of_karts);
+           if flag then
+                       begin
+                            writeln ('Вы победили');
+                            writeln ('Вы заработали ',post, ' гривен');
+                            balans:=balans+post;
+                       end
+                   else
+                       begin
+                            writeln ('Вы проиграли');
+                            writeln ('Вы проиграли ',post, ' гривен');
+                            balans:=balans-post;
+                       end;
+           writeln;
+           writeln('Хотите сохранить игру?');
+           writeln('y-да             n-нет');
+           repeat
+                 ch:=ReadKey;
+                 case ch of
+                 'y','Y','n','N':flag:=true;
+                 end;
+           until flag;
+           if (ch='y') or (ch='Y') then Save;
+     until flag;
+end;
+
+procedure load;
+var fs:text;
+    str,st:string;
+    flag:boolean;
+    ch:char;
+    n:byte;
+begin
+     ClrScr;
+     assign(fs,'c:\cash\bakkara\saves.txt');
+     reset(fs);
+     writeln('Сейчас появится список сохранений. Первый рядок - это название, а второй - баланс');
+     while (not Eof) do
+           begin
+                for n:=1 to 23 do
+                    begin
+                         readln(fs,str);
+                         writeln(str);
+                    end;
+                readln;
+           end;
+     writeln('Введите имя вашего сохранения, или "Выход" чтобы выйти');
+     readln(str);
+     if (str='Выход') or (str='"Выход"') then choice;
+     while (not Eof) do
+           begin
+                readln(st);
+                if st=str then
+                              begin
+                                   writeln('Ваше сохранение найдено');
+                                   readln(fs,balans);
+                                   writeln('Для начала игры нажмите Esc, а для повторного поиска сохранения n');
+                                   repeat
+                                         ch:=readkey;
+                                         case ch of
+                                         #27:start(balans);
+                                         'n','N':load;
+                                         end;
+                                   until false;
+                              end;
+           end;
+end;
+
+procedure options;
+var fo:text;
+    n:byte;
+    str:string;
+    ch:char;
+begin
+     ClrScr;
+     assign(fo,'c:\cash\bakkara\options.txt');
+     reset(fo);
+     for n:=1 to 23 do
+         begin
+              readln(fo,str);
+              writeln(str);
+         end;
+     writeln('Нажмите нужную букву подменю, которое вас интересует и Esc чтобы выйти');
+     repeat
+           ch:=readkey;
+           case ch of
+           'l','L':Load;
+           #27:choice;
+           end;
+     until false;
+end;
+
+
+
+begin
+first_picture;
+sel:=choice;
+balans:=500;
+1:case sel of
+'s','S':Start(balans);
+'o','O':Options;
+'i','I':Informations;
+'q','Q':Quit;
+end;
+if a=1 then goto 1;
+end.
+
+
+

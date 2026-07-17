@@ -1,0 +1,509 @@
+/**
+ * Norton Commander — the retro-games lab (Tier 2 island hosting Tier-3 iframes).
+ *
+ * Renders a full-area NC screen below the site header: two blue panels over the
+ * real file system of my 2005–2009 Turbo Pascal games (manifest.json is
+ * generated from the original folders by retro/build.ts — real names, byte
+ * sizes and dates). F3 views the CP866-decoded sources; Enter on a .EXE runs
+ * the pas2js-ported game inside a sandboxed <iframe> (the Tier-3 boundary:
+ * global key handlers and rtl.js state die with the iframe on exit).
+ *
+ * Keyboard-first like the original: ↑↓ move, Tab switches panels, Enter
+ * opens/runs, F3 views, F1 help, F10 quit (with the classic dialog).
+ */
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+interface ManifestFile {
+  name: string;
+  size: number;
+  mtime: string;
+  view: boolean;
+}
+interface ManifestFolder {
+  dir: string;
+  title: string;
+  year: string;
+  note: string;
+  controls?: string;
+  run?: string;
+  files: ManifestFile[];
+}
+interface Manifest {
+  generatedAt: string;
+  folders: ManifestFolder[];
+}
+
+type Overlay =
+  | { kind: 'help' }
+  | { kind: 'quit' }
+  | { kind: 'msg'; title: string; lines: string[] }
+  | { kind: 'view'; dir: string; file: string; text: string }
+  | { kind: 'run'; slug: string; title: string; controls?: string };
+
+// Classic NC 16-colour roles.
+const C = {
+  panelBg: '#0000a8',
+  frame: '#00a8a8', // cyan lines + file names
+  dir: '#ffffff',
+  text: '#00a8a8',
+  hi: '#ffff54', // yellow — column titles
+  cursorBg: '#00a8a8',
+  cursorFg: '#000000',
+  barBg: '#00a8a8',
+  barFg: '#000000',
+  keyFg: '#ffffff',
+  screenBg: '#000000',
+  dlgBg: '#a8a8a8',
+  dlgFg: '#000000',
+  viewBg: '#0000a8',
+} as const;
+
+const FONT = '"IBM VGA", ui-monospace, Menlo, monospace';
+
+function fmtSize(f: ManifestFile): string {
+  return String(f.size);
+}
+
+export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua' }) {
+  const [manifest, setManifest] = useState<Manifest | null>(null);
+  const [error, setError] = useState(false);
+  const [panel, setPanel] = useState<0 | 1>(0);
+  const [folderIdx, setFolderIdx] = useState(0);
+  const [fileIdx, setFileIdx] = useState(0);
+  const [overlay, setOverlay] = useState<Overlay | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLIFrameElement>(null);
+  const viewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch('/retro/manifest.json')
+      .then((r) => (r.ok ? (r.json() as Promise<Manifest>) : Promise.reject(new Error(String(r.status)))))
+      .then(setManifest)
+      .catch(() => setError(true));
+  }, []);
+
+  const folder = manifest?.folders[folderIdx];
+  const files = useMemo(() => folder?.files ?? [], [folder]);
+
+  const openView = useCallback(
+    (dir: string, file: ManifestFile) => {
+      if (!file.view) {
+        setOverlay({
+          kind: 'msg',
+          title: file.name,
+          lines: ['Двійковий файл — перегляд недоступний.', 'F3 працює для .PAS/.TXT/.BAT/.CPP.'],
+        });
+        return;
+      }
+      fetch(`/retro/src/${dir}/${file.name}`)
+        .then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
+        .then((text) => setOverlay({ kind: 'view', dir, file: file.name, text }))
+        .catch(() => setOverlay({ kind: 'msg', title: file.name, lines: ['Не вдалося прочитати файл.'] }));
+    },
+    [],
+  );
+
+  const tryRun = useCallback(
+    (f: ManifestFolder, file?: ManifestFile) => {
+      if (f.run) {
+        setOverlay({ kind: 'run', slug: f.run, title: f.title, controls: f.controls });
+        return;
+      }
+      setOverlay({
+        kind: 'msg',
+        title: file?.name ?? f.dir,
+        lines: [
+          f.dir === 'SAPER'
+            ? 'Сорс лише C++ — pas2js не застосовний.'
+            : f.dir === 'game'
+              ? 'Це олімпіадна задачка з file I/O, не гра.'
+              : 'Ще не портовано. Портуються по одній,',
+          f.dir === 'SAPER' || f.dir === 'game' ? 'Кинь F3 на сорс — він читається.' : 'від простіших до складніших (F1 — черга).',
+        ],
+      });
+    },
+    [],
+  );
+
+  const onKey = useCallback(
+    (e: KeyboardEvent) => {
+      if (!manifest) return;
+      // A running game owns the keyboard. Keys that land on the PARENT (focus
+      // outside the canvas, or input layers that don't route into a sandboxed
+      // frame) are RELAYED into the bundle via retro:key; Esc closes here
+      // directly (from inside the iframe the bundle posts retro:quit instead).
+      if (overlay?.kind === 'run') {
+        if (e.key === 'Escape') {
+          setOverlay(null);
+        } else {
+          frameRef.current?.contentWindow?.postMessage({ type: 'retro:key', key: e.key }, '*');
+        }
+        e.preventDefault();
+        return;
+      }
+      if (overlay) {
+        if (e.key === 'Escape' || e.key === 'F10' || (overlay.kind === 'quit' && e.key === 'n')) setOverlay(null);
+        if (overlay.kind === 'quit' && (e.key === 'y' || e.key === 'Enter'))
+          window.location.assign(`/${locale}/lab/`);
+        if (overlay.kind === 'view' && viewRef.current) {
+          const el = viewRef.current;
+          if (e.key === 'ArrowDown') el.scrollBy(0, 32);
+          if (e.key === 'ArrowUp') el.scrollBy(0, -32);
+          if (e.key === 'PageDown') el.scrollBy(0, el.clientHeight - 32);
+          if (e.key === 'PageUp') el.scrollBy(0, -(el.clientHeight - 32));
+        }
+        e.preventDefault();
+        return;
+      }
+      const inFolders = panel === 0;
+      switch (e.key) {
+        case 'Tab':
+          setPanel((p) => (p === 0 ? 1 : 0));
+          break;
+        case 'ArrowDown':
+          if (inFolders) setFolderIdx((i) => Math.min(i + 1, manifest.folders.length - 1));
+          else setFileIdx((i) => Math.min(i + 1, files.length - 1));
+          break;
+        case 'ArrowUp':
+          if (inFolders) setFolderIdx((i) => Math.max(i - 1, 0));
+          else setFileIdx((i) => Math.max(i - 1, 0));
+          break;
+        case 'Home':
+          inFolders ? setFolderIdx(0) : setFileIdx(0);
+          break;
+        case 'End':
+          inFolders ? setFolderIdx(manifest.folders.length - 1) : setFileIdx(files.length - 1);
+          break;
+        case 'Enter': {
+          if (!folder) break;
+          if (inFolders) {
+            setPanel(1);
+            setFileIdx(0);
+            break;
+          }
+          const file = files[fileIdx];
+          if (!file) break;
+          if (/\.exe$/i.test(file.name)) tryRun(folder, file);
+          else openView(folder.dir, file);
+          break;
+        }
+        case 'F1':
+          setOverlay({ kind: 'help' });
+          break;
+        case 'F3': {
+          if (!folder) break;
+          const file = inFolders ? undefined : files[fileIdx];
+          if (file) openView(folder.dir, file);
+          break;
+        }
+        case 'F10':
+          setOverlay({ kind: 'quit' });
+          break;
+        default:
+          return;
+      }
+      e.preventDefault();
+    },
+    [manifest, overlay, panel, folder, files, fileIdx, locale, openView, tryRun],
+  );
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => onKey(e);
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [onKey]);
+
+  // The running game quits by posting retro:quit (Esc inside the bundle).
+  useEffect(() => {
+    const h = (e: MessageEvent) => {
+      if ((e.data as { type?: string } | null)?.type === 'retro:quit') setOverlay(null);
+    };
+    window.addEventListener('message', h);
+    return () => window.removeEventListener('message', h);
+  }, []);
+
+  useEffect(() => {
+    if (overlay?.kind === 'run') frameRef.current?.focus();
+  }, [overlay]);
+
+  useEffect(() => {
+    setFileIdx(0);
+  }, [folderIdx]);
+
+  const fullscreen = () => rootRef.current?.requestFullscreen?.().catch(() => undefined);
+
+  const fkeys: Array<[string, string, () => void]> = [
+    ['1', 'Help', () => setOverlay({ kind: 'help' })],
+    ['3', 'View', () => folder && files[fileIdx] && openView(folder.dir, files[fileIdx]!)],
+    ['6', 'Run', () => folder && tryRun(folder)],
+    ['9', 'Full', fullscreen],
+    ['10', 'Quit', () => setOverlay({ kind: 'quit' })],
+  ];
+
+  const row = (
+    cols: [string, string, string],
+    opts: { cursor?: boolean; dir?: boolean; key: string; onClick: () => void; onOpen: () => void },
+  ) => (
+    <div
+      key={opts.key}
+      onClick={opts.onClick}
+      onDoubleClick={opts.onOpen}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0,1fr) 8ch 11ch',
+        gap: '1ch',
+        padding: '0 1ch',
+        cursor: 'pointer',
+        whiteSpace: 'nowrap',
+        background: opts.cursor ? C.cursorBg : 'transparent',
+        color: opts.cursor ? C.cursorFg : opts.dir ? C.dir : C.text,
+      }}
+    >
+      <span style={{ overflow: 'hidden', textOverflow: 'clip' }}>{cols[0]}</span>
+      <span style={{ textAlign: 'right' }}>{cols[1]}</span>
+      <span style={{ textAlign: 'right' }}>{cols[2]}</span>
+    </div>
+  );
+
+  const panelBox = (title: string, active: boolean, body: React.ReactNode, footer: string) => (
+    <section
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        border: `2px double ${C.frame}`,
+        background: C.panelBg,
+        margin: '2px',
+      }}
+    >
+      <header style={{ textAlign: 'center', marginTop: '-1px' }}>
+        <span style={{ background: active ? C.cursorBg : C.panelBg, color: active ? C.cursorFg : C.dir, padding: '0 1ch' }}>
+          {title}
+        </span>
+      </header>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0,1fr) 8ch 11ch',
+          gap: '1ch',
+          padding: '0 1ch',
+          color: C.hi,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        <span style={{ textAlign: 'center' }}>{locale === 'ua' ? 'Імʼя' : 'Name'}</span>
+        <span style={{ textAlign: 'center' }}>{locale === 'ua' ? 'Розмір' : 'Size'}</span>
+        <span style={{ textAlign: 'center' }}>{locale === 'ua' ? 'Дата' : 'Date'}</span>
+      </div>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>{body}</div>
+      <footer style={{ borderTop: `1px solid ${C.frame}`, color: C.text, padding: '0 1ch', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+        {footer}
+      </footer>
+    </section>
+  );
+
+  if (error)
+    return (
+      <div style={{ fontFamily: FONT, background: C.screenBg, color: C.text, padding: '2ch', minHeight: '24rem' }}>
+        manifest.json: read error. Abort, Retry, Ignore?
+      </div>
+    );
+
+  return (
+    <div
+      ref={rootRef}
+      style={{
+        fontFamily: FONT,
+        fontSize: '16px',
+        lineHeight: '20px',
+        height: 'calc(100vh - 9rem)',
+        minHeight: '30rem',
+        display: 'flex',
+        flexDirection: 'column',
+        background: C.screenBg,
+        userSelect: 'none',
+        // Overlays (viewer / game / dialogs) anchor HERE — the site header above
+        // must stay visible and untouched (explicit review feedback).
+        position: 'relative',
+      }}
+    >
+      <style>{`
+        @font-face { font-family: 'IBM VGA'; src: url('/retro/fonts/WebPlus_IBM_VGA_8x16.woff') format('woff'); font-display: swap; }
+        /* One panel on narrow screens (the active one), the classic pair from
+           768px. !important: the sections carry an inline display:flex. */
+        .nc-panels { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr; }
+        .nc-panels.nc-active-0 > section:nth-of-type(2) { display: none !important; }
+        .nc-panels.nc-active-1 > section:nth-of-type(1) { display: none !important; }
+        @media (min-width: 768px) {
+          .nc-panels { grid-template-columns: 1fr 1fr; }
+          .nc-panels.nc-active-0 > section:nth-of-type(2),
+          .nc-panels.nc-active-1 > section:nth-of-type(1) { display: flex !important; }
+        }
+      `}</style>
+
+      {/* the two panels */}
+      <div className={`nc-panels nc-active-${panel}`}>
+        {panelBox(
+            'C:\\GAMES',
+            panel === 0,
+            manifest
+              ? manifest.folders.map((f, i) =>
+                  row([f.dir, '▸ПАПКА◂', f.year], {
+                    key: f.dir,
+                    cursor: i === folderIdx && panel === 0,
+                    dir: true,
+                    onClick: () => {
+                      setPanel(0);
+                      setFolderIdx(i);
+                    },
+                    onOpen: () => {
+                      setFolderIdx(i);
+                      setPanel(1);
+                    },
+                  }),
+                )
+              : ((<div style={{ color: C.text, padding: '0 1ch' }}>Читаю диск…</div>) as React.ReactNode),
+            folder ? `${folder.title} · ${folder.note}` : '',
+          )}
+        {panelBox(
+            folder ? `C:\\GAMES\\${folder.dir}` : 'C:\\GAMES\\…',
+            panel === 1,
+            files.map((f, i) =>
+              row([f.name, fmtSize(f), f.mtime], {
+                key: f.name,
+                cursor: i === fileIdx && panel === 1,
+                dir: false,
+                onClick: () => {
+                  setPanel(1);
+                  setFileIdx(i);
+                },
+                onOpen: () => (/\.exe$/i.test(f.name) ? folder && tryRun(folder, f) : folder && openView(folder.dir, f)),
+              }),
+            ),
+            folder?.run
+              ? locale === 'ua'
+                ? 'Enter на .EXE — грати (порт pas2js)'
+                : 'Enter on a .EXE runs the pas2js port'
+              : locale === 'ua'
+                ? 'F3 — дивитись сорси'
+                : 'F3 views the sources',
+          )}
+      </div>
+
+      {/* function-key bar */}
+      <div style={{ display: 'flex', gap: '1ch', background: C.screenBg, padding: '0 1ch', whiteSpace: 'nowrap', overflowX: 'auto' }}>
+        {fkeys.map(([n, label, fn]) => (
+          <button
+            key={n}
+            onClick={fn}
+            style={{
+              all: 'unset',
+              cursor: 'pointer',
+              display: 'flex',
+            }}
+          >
+            <span style={{ color: C.keyFg }}>{n}</span>
+            <span style={{ background: C.barBg, color: C.barFg, padding: '0 1ch', minWidth: '6ch' }}>{label}</span>
+          </button>
+        ))}
+        <span style={{ color: C.text, marginLeft: 'auto' }}>{manifest ? `${manifest.folders.length} dirs` : ''}</span>
+      </div>
+
+      {/* overlays */}
+      {overlay?.kind === 'view' && (
+        <div style={{ position: 'absolute', inset: 0, background: C.viewBg, display: 'flex', flexDirection: 'column', zIndex: 10 }}>
+          <header style={{ background: C.barBg, color: C.barFg, padding: '0 1ch', display: 'flex', justifyContent: 'space-between' }}>
+            <span>
+              {overlay.dir}\{overlay.file}
+            </span>
+            <span>Esc — назад</span>
+          </header>
+          <div ref={viewRef} style={{ flex: 1, overflow: 'auto', padding: '1ch' }}>
+            {/* explicit colors: the site's prose CSS styles bare <pre> (paper bg) */}
+            <pre style={{ margin: 0, fontFamily: FONT, whiteSpace: 'pre', background: 'transparent', color: C.dir, fontSize: 'inherit', lineHeight: 'inherit' }}>
+              {overlay.text}
+            </pre>
+          </div>
+        </div>
+      )}
+      {overlay?.kind === 'run' && (
+        <div style={{ position: 'absolute', inset: 0, background: C.screenBg, display: 'flex', flexDirection: 'column', zIndex: 10 }}>
+          <header style={{ background: C.barBg, color: C.barFg, padding: '0 1ch', display: 'flex', justifyContent: 'space-between' }}>
+            <span>{overlay.title}.EXE</span>
+            <span>{overlay.controls ?? ''} · Esc — назад до NC</span>
+          </header>
+          {/* Tier-3 boundary: the game runs in its own browsing context; closing
+              the overlay destroys the iframe and with it every rtl.js global. */}
+          <iframe
+            ref={frameRef}
+            src={`/retro/games/${overlay.slug}/index.html`}
+            sandbox="allow-scripts"
+            title={overlay.title}
+            style={{ flex: 1, border: 0, width: '100%' }}
+          />
+        </div>
+      )}
+      {(overlay?.kind === 'help' || overlay?.kind === 'quit' || overlay?.kind === 'msg') && (
+        <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', zIndex: 10 }} onClick={() => setOverlay(null)}>
+          <div
+            style={{
+              background: C.dlgBg,
+              color: C.dlgFg,
+              border: `2px double ${C.dlgFg}`,
+              padding: '1ch 2ch',
+              maxWidth: 'min(64ch, 92%)',
+              maxHeight: '80%',
+              overflowY: 'auto',
+              boxShadow: '1ch 1ch 0 rgba(0,0,0,.5)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {overlay.kind === 'quit' ? (
+              <>
+                <p style={{ margin: 0, textAlign: 'center' }}>Do you want to quit Norton Commander?</p>
+                <p style={{ margin: '1ch 0 0', textAlign: 'center', display: 'flex', gap: '2ch', justifyContent: 'center' }}>
+                  <button style={{ all: 'unset', cursor: 'pointer', background: C.cursorBg, padding: '0 2ch' }} onClick={() => window.location.assign(`/${locale}/lab/`)}>
+                    Yes
+                  </button>
+                  <button style={{ all: 'unset', cursor: 'pointer', padding: '0 2ch' }} onClick={() => setOverlay(null)}>
+                    No
+                  </button>
+                </p>
+              </>
+            ) : overlay.kind === 'msg' ? (
+              <>
+                <p style={{ margin: 0, textAlign: 'center', fontWeight: 'bold' }}>{overlay.title}</p>
+                {overlay.lines.map((l) => (
+                  <p key={l} style={{ margin: 0, textAlign: 'center' }}>
+                    {l}
+                  </p>
+                ))}
+                <p style={{ margin: '1ch 0 0', textAlign: 'center', color: '#545454' }}>Esc</p>
+              </>
+            ) : (
+              <>
+                <p style={{ margin: 0, fontWeight: 'bold', textAlign: 'center' }}>
+                  {locale === 'ua' ? 'Мої ігри на Turbo Pascal, 2005–2009' : 'My Turbo Pascal games, 2005–2009'}
+                </p>
+                <p style={{ margin: '1ch 0 0' }}>
+                  {locale === 'ua'
+                    ? 'Оригінальні сорси зі шкільних дискет. Портуються в браузер через pas2js — без емулятора, без переписування: чотири рядки діфу на гру.'
+                    : 'The original sources from my school floppies, recompiled for the browser with pas2js — no emulator, no rewrite: a four-line diff per game.'}
+                </p>
+                <ul style={{ margin: '1ch 0 0', paddingLeft: '3ch' }}>
+                  {manifest?.folders.map((f) => (
+                    <li key={f.dir}>
+                      {f.dir} — {f.note} {f.run ? '· ГОТОВО, Enter на .EXE' : ''}
+                    </li>
+                  ))}
+                </ul>
+                <p style={{ margin: '1ch 0 0' }}>↑↓ / Tab / Enter · F3 View · F9 Fullscreen · F10 Quit</p>
+                <p style={{ margin: '1ch 0 0', color: '#545454' }}>Шрифт: IBM VGA 8x16 © VileR (int10h.org), CC BY-SA 4.0</p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

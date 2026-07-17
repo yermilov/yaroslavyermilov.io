@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <title>PINGPONG — pas2js</title>
+  <style>
+    html, body { margin:0; height:100%; background:#000; overflow:hidden; }
+    body { display:flex; align-items:center; justify-content:center; }
+    canvas { image-rendering:pixelated; width:min(100vw, calc(100vh * 4 / 3)); height:auto; aspect-ratio:4/3; }
+  </style>
+</head>
+<body>
+  <canvas id="screen" width="640" height="480"></canvas>
+  <script src="pingpong.js"></script>
+  <script>
+    addEventListener('load', function () { rtl.run(); });
+    addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') parent.postMessage({ type: 'retro:quit' }, '*');
+    });
+    // The NC parent relays its keydowns here (retro:key): keyboard focus can sit
+    // on the parent document (or an automation layer may not route into a
+    // sandboxed frame), so direct input is not guaranteed. The synthetic event
+    // feeds the crt shim's document-level listener exactly like a real key.
+    addEventListener('message', function (e) {
+      var d = e.data || {};
+      if (d.type === 'retro:key' && typeof d.key === 'string')
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: d.key }));
+    });
+  </script>
+</body>
+</html>

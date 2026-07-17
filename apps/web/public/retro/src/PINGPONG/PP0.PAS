@@ -1,0 +1,173 @@
+program PingPong0;
+uses crt,graph,jarik;
+type coordinates = record
+     x,y:integer;
+     end;
+const duration = 500;
+      ballspeed = 10;
+      herospeed = 10;
+      pi180 = pi/180;
+var ball,fly,ud:coordinates;
+    alfa,c,HeroX:integer;
+    right,left:boolean;
+    n0:byte;
+    ng,nv:shortint;
+    key:char;
+    radian:real;
+
+    procedure MakeBall(x,y:integer; radius,color:byte);
+{Рисует мяч с координатами центра (x;y) радиусом radius и цветом color}
+    begin
+         SetColor(color);
+         SetFillStyle(1,color);
+         Circle(x,y,radius);
+         FloodFill(x,y,color);
+    end;
+
+    procedure MakeHero(color:byte);
+{Рисует доску цветом color и с координатами левого верхнего края (HerroX;425}
+    begin
+         SetColor(color);
+         SetFillStyle(1,color);
+         Bar(HeroX,425,HeroX+100,440);
+    end;
+
+    function udar:boolean;
+{Проверяет был ли удар со стенкой и доской. Результаты:
+ *true* - удар состоялся; *false* - удара не было}
+    var x:shortint;
+        s:string;
+        flag:boolean;
+    begin
+         Udar:=false;
+         if ball.x<=7 then {Left}
+            begin
+                 Udar:=true;
+                 ng:=1;
+                 MakeBall(ball.x,ball.y,5,0);
+                 ball.x:=8;
+            end;
+         if ball.x>=633 then {Right}
+            begin
+                 Udar:=true;
+                 ng:=-1;
+                 MakeBall(ball.x,ball.y,5,0);
+                 ball.x:=632;
+            end;
+         if ball.y<=7 then   {Up}
+            begin
+                 Udar:=true;
+                 nv:=1;
+                 MakeBall(ball.x,ball.y,5,0);
+                 ball.y:=11;
+            end;
+         if ball.y>=450 then {Down}
+            begin
+                 Udar:=true;
+                 nv:=-1;
+                 MakeBall(ball.x,ball.y,5,0);
+                 ball.y:=449;
+            end;
+ {Doska} if (abs(ball.y-425)<=5) and (ball.x>=herox) and (ball.x<=herox+100) then
+            begin
+                 Udar:=true;
+                 MakeBall(ball.x,ball.y,5,0);
+                 nv:=-1;
+                 ball.y:=419;
+                 If Left then
+                    if ng=1 then alfa:=alfa+5
+                            else alfa:=alfa-5;
+                 If Right then
+                    if ng=-1 then alfa:=alfa+5
+                             else alfa:=alfa-5;
+            end;
+    end;
+
+    procedure Game;
+{Процедура, отвечающая за основную игру}
+    begin
+         randomize;
+         HeroX:=100;
+         nv:=-1;
+         alfa:=random(179)+1;
+         if alfa>90 then begin alfa:=alfa-90; ng:=-1; end
+                    else ng:=1;
+         ball.x:=150;
+         ball.y:=350;
+         herox:=100;
+         right:=false;
+         left:=false;
+         delay(duration*60);
+         repeat
+               c:=1;
+               MakeBall(ball.x,ball.y,5,0);
+               if alfa>90 then begin alfa:=alfa-90; ng:=-ng; end;
+               if alfa<1 then begin alfa:=180-alfa; nv:=-nv; end;
+               ud.x:=ball.x;
+               ud.y:=ball.y;
+               repeat
+                     MakeBall(ball.x,ball.y,5,0);
+                     radian:=pi180*alfa;
+                     fly.y:=trunc(c*sin(radian));
+                     fly.x:=trunc(c*cos(radian));
+                     ball.x:=ud.x+fly.x*ng;
+                     ball.y:=ud.y+fly.y*nv;
+                     MakeBall(ball.x,ball.y,5,4);
+                     c:=c+ballspeed;
+                     key:=inkey;
+                     case key of
+                     #75:begin
+                              Left:=true;
+                              Right:=false;
+                         end;
+                     #77:begin
+                              Right:=true;
+                              Left:=false;
+                         end;
+                     end;
+                     MakeHero(0);
+                     If Left then herox:=herox-herospeed;
+                     if right then herox:=herox+herospeed;
+                     If HeroX<=1 then HeroX:=1;
+                     If HeroX>=540 then HeroX:=540;
+                     If (HeroX<=1) or (HeroX>=540) then
+                        begin
+                             Left:=false;
+                             Right:=false;
+                        end;
+                     if key=#27 then Halt;
+                     MakeHero(14);
+                     delay(duration*3);
+               until Udar;
+         until key=#27;
+    end;
+
+procedure MainMenu;
+
+
+procedure InitPingPong;
+{Инициализация графики и игры}
+var errorcode,gd,gm:integer;
+    result:byte;
+begin
+     gd:=detect;
+     InitGraph(gd,gm,'');
+     ErrorCode:=GraphResult;
+     If ErrorCode=GrOk then
+                           begin
+                       repeat
+                             Result:=MainMenu;
+                       until Result=0;
+                       CloseGraph;
+                           end
+                       else
+                           begin
+                       ClrScr;
+                       Writeln('Error:',GraphErrorMsg(ErrorCode));
+                       Readln;
+                           end;
+end;
+
+begin
+InitPingPong;
+end.
