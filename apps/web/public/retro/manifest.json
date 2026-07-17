@@ -874,7 +874,12 @@
    "dir": "FOOTBALL",
    "title": "Football",
    "year": "2005–2009",
-   "note": "Футбольний менеджер: NEWTEAM, MATCH, EMATCH.",
+   "note": "Симулятор матчу: 121 гравець, 8 команд. Двигун недописаний — чесні 0:0.",
+   "controls": "введи дві команди (напр. Dynamo і Milan) + Enter · Esc — вийти",
+   "run": "match",
+   "runs": {
+    "MATCH.EXE": "match"
+   },
    "files": [
     {
      "name": "EMATCH.BAK",

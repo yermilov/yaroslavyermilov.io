@@ -12,6 +12,7 @@ unit dos;
 interface
 
 procedure GetTime(var hour, minute, second, sec100: word);
+procedure GetDate(var year, month, day, dow: word);
 
 implementation
 
@@ -28,6 +29,19 @@ begin
   minute := m;
   second := s;
   sec100 := ms div 10;
+end;
+
+procedure GetDate(var year, month, day, dow: word);
+var
+  now: TDateTime;
+  y, m, d: word;
+begin
+  now := Date;
+  DecodeDate(now, y, m, d);
+  year := y;
+  month := m;
+  day := d;
+  dow := DayOfWeek(now) - 1; // DOS: 0 = Sunday
 end;
 
 end.

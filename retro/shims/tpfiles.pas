@@ -34,6 +34,7 @@ type
   Text = record
     name: string;   // normalized basename
     cursor: integer;
+    col: integer;   // char offset within the current line (TP token reads)
     mode: integer;  // 0 closed, 1 reading, 2 appending
   end;
 
@@ -42,8 +43,16 @@ procedure Reset(var f: Text);
 procedure Append(var f: Text);
 procedure ReadlnT(var f: Text; var s: string);
 procedure ReadlnLong(var f: Text; var n: longint);
+{ TP `read(f, n)` — skip whitespace INCLUDING line breaks, consume one integer
+  token, leave the cursor right after it (FOOTBALL's FBT rosters pack 30
+  numbers on one line). Function form so ports read `x := ReadNum(f)` without
+  var-type juggling across byte/word/shortint targets. }
+function ReadNum(var f: Text): longint;
+{ TP `readln(f, n)` — ReadNum, then skip the rest of the line. }
+function ReadLnNum(var f: Text): longint;
 procedure WritelnT(var f: Text; const s: string);
 procedure WritelnLong(var f: Text; n: longint);
+procedure Close(var f: Text);
 function EofT(var f: Text): boolean;
 { TP's parameterless Eof means Eof(Input) — the DOS console, which never
   reaches EOF while a program waits on the keyboard. Always false. }
@@ -100,6 +109,7 @@ procedure Assign(var f: Text; const path: string);
 begin
   f.name := NormName(path);
   f.cursor := 0;
+  f.col := 0;
   f.mode := 0;
 end;
 
@@ -107,6 +117,7 @@ procedure Reset(var f: Text);
 begin
   if GetLines(f.name) = nil then RTE(2);
   f.cursor := 0;
+  f.col := 0;
   f.mode := 1;
 end;
 
@@ -125,9 +136,43 @@ begin
   if lines = nil then RTE(2);
   asm
     if (f.cursor >= lines.length) { $impl.RTE(100); }
-    s.set(lines[f.cursor]);
+    s.set(lines[f.cursor].substring(f.col));
   end;
   f.cursor := f.cursor + 1;
+  f.col := 0;
+end;
+
+function ReadNum(var f: Text): longint;
+var
+  lines: JSValue;
+  v: double;
+begin
+  if f.mode <> 1 then RTE(104);
+  lines := GetLines(f.name);
+  if lines = nil then RTE(2);
+  v := 0;
+  asm
+    // Skip whitespace and line breaks to the next token — TP numeric read.
+    for (;;) {
+      if (f.cursor >= lines.length) { $impl.RTE(100); }
+      var line = lines[f.cursor];
+      while (f.col < line.length && (line[f.col] === ' ' || line[f.col] === '\t')) f.col++;
+      if (f.col >= line.length) { f.cursor++; f.col = 0; continue; }
+      var m = /^[+-]?\d+/.exec(line.substring(f.col));
+      if (!m) { $impl.RTE(106); }
+      v = Number(m[0]);
+      f.col += m[0].length;
+      break;
+    }
+  end;
+  Result := trunc(v);
+end;
+
+function ReadLnNum(var f: Text): longint;
+begin
+  Result := ReadNum(f);
+  f.cursor := f.cursor + 1;
+  f.col := 0;
 end;
 
 procedure ReadlnLong(var f: Text; var n: longint);
@@ -165,6 +210,11 @@ begin
     s = String(n);
   end;
   WritelnT(f, s);
+end;
+
+procedure Close(var f: Text);
+begin
+  f.mode := 0;
 end;
 
 function EofT(var f: Text): boolean;
