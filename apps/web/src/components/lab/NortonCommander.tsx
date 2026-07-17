@@ -47,7 +47,8 @@ const C = {
   frame: '#00a8a8', // cyan lines + file names
   dir: '#ffffff',
   text: '#00a8a8',
-  open: '#54fcfc', // bright cyan — files that actually open (run or F3-view)
+  open: '#54fcfc', // bright cyan — F3-viewable source files
+  run: '#54fc54', // bright green — the runnable .exe (a pas2js port), sorted first
   dim: '#545454', // dark gray — inert files (binary assets), not selectable
   hi: '#ffff54', // yellow — column titles
   cursorBg: '#00a8a8',
@@ -102,7 +103,18 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
   }, []);
 
   const folder = manifest?.folders[folderIdx];
-  const files = useMemo(() => folder?.files ?? [], [folder]);
+  // Runnable .exe files sort to the top (Yarik's request) — the thing you came
+  // to do is first. Array.sort is stable, so each group keeps its manifest
+  // order; a folder with no port keeps its files as-is.
+  const files = useMemo(() => {
+    const raw = folder?.files ?? [];
+    if (!folder) return raw;
+    return [...raw].sort((a, b) => (runSlugFor(folder, b) ? 1 : 0) - (runSlugFor(folder, a) ? 1 : 0));
+  }, [folder]);
+  const runnable = useMemo(
+    () => files.map((f) => (folder ? Boolean(runSlugFor(folder, f)) : false)),
+    [files, folder],
+  );
   // Which files open — used to dim the rest AND to skip them while navigating.
   const openable = useMemo(
     () => files.map((f) => (folder ? isOpenable(folder, f) : false)),
@@ -291,7 +303,7 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
 
   const row = (
     cols: [string, string, string],
-    opts: { cursor?: boolean; dir?: boolean; dim?: boolean; key: string; onClick: () => void; onOpen: () => void },
+    opts: { cursor?: boolean; dir?: boolean; dim?: boolean; run?: boolean; key: string; onClick: () => void; onOpen: () => void },
   ) => (
     <div
       key={opts.key}
@@ -306,9 +318,9 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
         cursor: opts.dim ? 'default' : 'pointer',
         whiteSpace: 'nowrap',
         background: opts.cursor ? C.cursorBg : 'transparent',
-        // Openable files pop in bright cyan; inert ones fade to gray and take
-        // no cursor. Folders stay white; the selection bar overrides both.
-        color: opts.cursor ? C.cursorFg : opts.dim ? C.dim : opts.dir ? C.dir : C.open,
+        // Runnable .exe = bright green (run me!); F3-viewable = bright cyan;
+        // inert = gray and cursor-less. Folders stay white; the bar overrides.
+        color: opts.cursor ? C.cursorFg : opts.dim ? C.dim : opts.run ? C.run : opts.dir ? C.dir : C.open,
       }}
     >
       <span style={{ overflow: 'hidden', textOverflow: 'clip' }}>{cols[0]}</span>
@@ -426,6 +438,7 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
                 cursor: i === fileIdx && panel === 1 && openable[i],
                 dir: false,
                 dim: !openable[i],
+                run: runnable[i],
                 onClick: () => {
                   setPanel(1);
                   setFileIdx(i);
