@@ -25,13 +25,35 @@ const href = alternatePath ? localePath(other, alternatePath) : localePath(other
       <span class="other muted">{other.toUpperCase()}</span>
     </span>
   ) : (
-    <a class="locale-switch" href={href} aria-label={strings.labels.switchLanguage} title={otherStrings.site.languageName}>
+    <a
+      class="locale-switch"
+      href={href}
+      data-target-locale={other}
+      data-counterpart={alternatePath ? 'exact' : 'home'}
+      aria-label={strings.labels.switchLanguage}
+      title={otherStrings.site.languageName}
+    >
       <span class="current">{locale.toUpperCase()}</span>
       <span class="sep">/</span>
       <span class="other">{other.toUpperCase()}</span>
     </a>
   )
 }
+
+<script>
+  // An EXPLICIT switch is the only thing that sets the language preference —
+  // landing on a shared link never does. The root / redirect and the
+  // "also available in …" hint (BaseLayout) both read yy-lang.
+  document.querySelectorAll<HTMLAnchorElement>('a.locale-switch[data-target-locale]').forEach((a) => {
+    a.addEventListener('click', () => {
+      try {
+        localStorage.setItem('yy-lang', a.dataset.targetLocale!);
+      } catch {
+        /* storage blocked — the switch still navigates */
+      }
+    });
+  });
+</script>
 
 <style>
   .locale-switch {

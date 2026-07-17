@@ -1,18 +1,34 @@
 ---
 export const prerender = true;
-// Root /  →  /en/. Implemented as a meta-refresh + JS redirect so static
-// hosting (GitHub Pages) handles it without SSR. The same fallback path is
-// also declared in astro.config.ts under `redirects` for completeness.
+// Root /  →  the visitor's language. The JS picks the locale from the
+// remembered switcher choice (localStorage yy-lang, see LocaleSwitcher),
+// falling back to the browser language; crawlers and noscript fall back to
+// /en/ via the (slightly delayed, so JS wins) meta refresh. Content URLs stay
+// locale-prefixed and canonical — this only routes the bare domain.
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta http-equiv="refresh" content="0; url=/en/" />
+    <meta http-equiv="refresh" content="1; url=/en/" />
     <link rel="canonical" href="https://yaroslavyermilov.io/en/" />
     <title>yaroslavyermilov.io</title>
-    <script>window.location.replace('/en/');</script>
+    <script is:inline>
+      var pref = null;
+      try {
+        pref = localStorage.getItem('yy-lang');
+      } catch (e) {
+        /* storage may be blocked — fall through to browser language */
+      }
+      var lang =
+        pref === 'ua' || pref === 'en'
+          ? pref
+          : (navigator.language || '').toLowerCase().indexOf('uk') === 0
+            ? 'ua'
+            : 'en';
+      window.location.replace('/' + lang + '/');
+    </script>
   </head>
   <body>
     <p>Redirecting to <a href="/en/">/en/</a>…</p>

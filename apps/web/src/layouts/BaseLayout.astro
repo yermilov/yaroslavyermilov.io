@@ -92,5 +92,87 @@ const ogImageUrl = new URL(ogImage ?? `/og/home-${locale}.png`, Astro.site).toSt
     </main>
     {!hideFooter && <Footer locale={locale} />}
     <PhotoLightbox locale={locale} />
+    <script is:inline data-locale={locale}>
+      // «Also available in …» hint: shown when the page's language differs
+      // from the visitor's preference (remembered switcher choice, falling
+      // back to the browser language) AND a translation exists — detected via
+      // the switcher's live link, so there is zero per-page wiring. Google's
+      // i18n guidance: offer the choice, never auto-redirect content pages.
+      (function () {
+        var cur = document.currentScript.dataset.locale;
+        var pref = null;
+        try {
+          pref = localStorage.getItem('yy-lang');
+        } catch (e) {}
+        if (pref !== 'ua' && pref !== 'en')
+          pref = (navigator.language || '').toLowerCase().indexOf('uk') === 0 ? 'ua' : 'en';
+        if (pref === cur) return;
+        try {
+          if (sessionStorage.getItem('yy-lang-hint-dismissed')) return;
+        } catch (e) {}
+        var alt = document.querySelector('a.locale-switch[data-target-locale="' + pref + '"]');
+        if (!alt) return;
+        // Only promise a translation when one actually EXISTS: the switcher
+        // falls back to the other locale's homepage when a page has no
+        // counterpart (404 and friends) — hinting there would mislead. The
+        // homepages themselves are exact counterparts of each other.
+        var isHome = /^\/(en|ua)\/?$/.test(location.pathname);
+        if (alt.dataset.counterpart !== 'exact' && !isHome) return;
+        var bar = document.createElement('div');
+        bar.className = 'lang-hint';
+        var link = document.createElement('a');
+        link.href = alt.getAttribute('href');
+        link.textContent = pref === 'ua' ? 'Ця сторінка є українською →' : 'This page is also available in English →';
+        var close = document.createElement('button');
+        close.type = 'button';
+        close.setAttribute('aria-label', pref === 'ua' ? 'Закрити' : 'Dismiss');
+        close.textContent = '×';
+        close.addEventListener('click', function () {
+          try {
+            sessionStorage.setItem('yy-lang-hint-dismissed', '1');
+          } catch (e) {}
+          bar.remove();
+        });
+        bar.appendChild(link);
+        bar.appendChild(close);
+        document.body.appendChild(bar);
+      })();
+    </script>
+    <style is:global>
+      .lang-hint {
+        position: fixed;
+        bottom: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--bg-elevated);
+        border: 1px solid var(--rule);
+        border-radius: 999px;
+        padding: 8px 8px 8px 16px;
+        box-shadow: 4px 6px 0 0 var(--rule); /* the site's hard offset shadow (TweetCard) */
+        z-index: 60;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        letter-spacing: 0.02em;
+      }
+      .lang-hint a {
+        color: var(--green-deep);
+        text-decoration: none;
+      }
+      .lang-hint a:hover {
+        text-decoration: underline;
+      }
+      .lang-hint button {
+        border: 0;
+        background: transparent;
+        color: var(--ink-muted);
+        font-size: 1rem;
+        line-height: 1;
+        padding: 4px 8px;
+        cursor: pointer;
+      }
+    </style>
   </body>
 </html>
