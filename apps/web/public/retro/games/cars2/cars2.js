@@ -1867,7 +1867,7 @@ rtl.module("t_graph",["System","crt"],function () {
      else if (x1 === x2) {
       $mod.vertical(y1,x1,y2,uc,dc)}
      else {
-      pas.System.Writeln("В текстовом режиме невозможно выводить косые линии");
+      pas.System.Writeln("Text mode cannot draw diagonal lines");
       return;
     };
   };

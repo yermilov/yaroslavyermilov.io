@@ -2254,7 +2254,24 @@ rtl.module("tpfiles",["System"],function () {
     throw new Error('halt');
   };
 },["crt"]);
-rtl.module("program",["System","JS","graph","crt","jarik","mouse","tpfiles"],function () {
+rtl.module("nls",["System"],function () {
+  "use strict";
+  var $mod = this;
+  this.GameLang = function () {
+    var Result = "";
+    Result = "ua";
+    Result = (typeof window !== 'undefined' && window.__retroLang === 'en') ? 'en' : 'ua';
+    return Result;
+  };
+  this.Loc = function (en, ua) {
+    var Result = "";
+    if ($mod.GameLang() === "en") {
+      Result = en}
+     else Result = ua;
+    return Result;
+  };
+});
+rtl.module("program",["System","JS","graph","crt","jarik","mouse","tpfiles","nls"],function () {
   "use strict";
   var $mod = this;
   this.duration = 1000;
@@ -2301,8 +2318,8 @@ rtl.module("program",["System","JS","graph","crt","jarik","mouse","tpfiles"],fun
     for (i = 1; i <= 50; i++) {
       pas.mouse.ShowMouse();
       pas.graph.SetColor(pas.System.Random(14) + 1);
-      pas.graph.OutTextXY(1,25,"Game Over");
-      pas.graph.OutTextXY(1,135,"Your score");
+      pas.graph.OutTextXY(1,25,pas.nls.Loc("Game Over","Гру закінчено"));
+      pas.graph.OutTextXY(1,135,pas.nls.Loc("Your score","Твій рахунок"));
       pas.graph.OutTextXY(250,250,s);
       pas.crt.Sound(pas.System.Random(5000) + 100);
       await pas.crt.Delay(1000);
@@ -2774,11 +2791,11 @@ rtl.module("program",["System","JS","graph","crt","jarik","mouse","tpfiles"],fun
       pas.graph.SetColor(15);
       pas.graph.SetTextStyle(1,0,1);
       $mod.height = "" + ((300 - $mod.pmy) * 50);
-      pas.graph.OutTextXY(10,425,"Height - ");
+      pas.graph.OutTextXY(10,425,pas.nls.Loc("Height - ","Висота - "));
       pas.graph.OutTextXY(100,425,$mod.height);
-      pas.graph.OutTextXY(165,425," metres");
-      pas.graph.OutTextXY(350,425,"Score - ");
-      pas.graph.OutTextXY(245,450,"Level - ");
+      pas.graph.OutTextXY(165,425,pas.nls.Loc(" metres"," метрів"));
+      pas.graph.OutTextXY(350,425,pas.nls.Loc("Score - ","Рахунок - "));
+      pas.graph.OutTextXY(245,450,pas.nls.Loc("Level - ","Рівень - "));
       s = "" + $mod.score;
       pas.graph.OutTextXY(500,425,s);
       s = "" + $mod.level;
@@ -2874,9 +2891,9 @@ rtl.module("program",["System","JS","graph","crt","jarik","mouse","tpfiles"],fun
     pas.graph.Bar(200,250,400,300);
     pas.graph.SetColor(7);
     pas.graph.SetTextStyle(3,0,4);
-    pas.graph.OutTextXY(220,50,"Start game");
-    pas.graph.OutTextXY(220,150,"Information");
-    pas.graph.OutTextXY(270,250,"Quit");
+    pas.graph.OutTextXY(220,50,pas.nls.Loc("Start game","Почати гру"));
+    pas.graph.OutTextXY(220,150,pas.nls.Loc("Information","Інформація"));
+    pas.graph.OutTextXY(270,250,pas.nls.Loc("Quit","Вийти"));
     choice = 0;
     do {
       await pas.crt.Yield();
@@ -2907,7 +2924,7 @@ rtl.module("program",["System","JS","graph","crt","jarik","mouse","tpfiles"],fun
     pas.graph.SetFillStyle(1,7);
     pas.graph.Bar(80,400,480,450);
     pas.graph.SetColor(8);
-    pas.graph.OutTextXY(140,385,"MAIN MENU");
+    pas.graph.OutTextXY(140,385,pas.nls.Loc("MAIN MENU","ГОЛОВНЕ МЕНЮ"));
     pas.mouse.ShowMouse();
     do {
       await pas.crt.Yield();
@@ -2965,7 +2982,7 @@ rtl.module("program",["System","JS","graph","crt","jarik","mouse","tpfiles"],fun
       pas.graph.OutTextXY(10,200,"CopyRight By Yermilov Yaroslav");
       pas.graph.OutTextXY(75,300,"Version 1.0 April 2005");
       pas.graph.SetTextStyle(8,0,5);
-      pas.graph.OutTextXY(140,385,"MAIN MENU");
+      pas.graph.OutTextXY(140,385,pas.nls.Loc("MAIN MENU","ГОЛОВНЕ МЕНЮ"));
       pas.crt.Sound(pas.System.Random(5000) + 100);
       await pas.crt.Delay(1000 * 3);
       pas.crt.NoSound();
@@ -3012,7 +3029,7 @@ rtl.module("program",["System","JS","graph","crt","jarik","mouse","tpfiles"],fun
       pas.crt.TextBackground(0);
       pas.crt.TextColor(15);
       pas.crt.ClrScr();
-      pas.System.Write("Error:",pas.graph.GraphErrorMsg(ErrorCode));
+      pas.System.Write(pas.nls.Loc("Error:","Помилка:"),pas.graph.GraphErrorMsg(ErrorCode));
       pas.crt.Readln();
     };
     await pas.crt.Delay(10000);

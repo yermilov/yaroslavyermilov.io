@@ -55,7 +55,7 @@ begin
                                vertical(y1,x1,y2,uc,dc)
                            else
                                begin
-                                    writeln('В текстовом режиме невозможно выводить косые линии');
+                                    writeln('Text mode cannot draw diagonal lines');
                                     exit;
                                end;
 end;

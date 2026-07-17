@@ -15,7 +15,7 @@
   - все інше — 1:1, включно з блимаючим титулом, Sound-какофонією і
     Game Over-екраном на 50 ітерацій. }
 program GraphWarWork; {5.04.2005 19:17 - 5.04.2005 21:27 |2:10| }
-uses JS,graph,crt,jarik,mouse,tpfiles;
+uses JS,graph,crt,jarik,mouse,tpfiles,nls;
 const duration=1000;
       zenitka=2;
       plane=1;
@@ -44,8 +44,8 @@ begin
      for i:=1 to 50 do begin
            ShowMouse;
            SetColor(random(14)+1);
-           OutTextXy(1,25,'Game Over');
-           OutTextXy(1,135,'Your score');
+           OutTextXy(1,25,Loc('Game Over','Гру закінчено'));
+           OutTextXy(1,135,Loc('Your score','Твій рахунок'));
            OutTextXy(250,250,s);
            Sound(random(5000)+100);
            await(Delay(1000));
@@ -563,11 +563,11 @@ begin
     SetColor(15);
     SetTextStyle(1,HorizDir,1);
     Str((300-pmy)*50,height);
-    OutTextXy(10,425,'Height - ');
+    OutTextXy(10,425,Loc('Height - ','Висота - '));
     OutTextXy(100,425,height);
-    OutTextXy(165,425,' metres');
-    OutTextXy(350,425,'Score - ');
-    OutTextXy(245,450,'Level - ');
+    OutTextXy(165,425,Loc(' metres',' метрів'));
+    OutTextXy(350,425,Loc('Score - ','Рахунок - '));
+    OutTextXy(245,450,Loc('Level - ','Рівень - '));
     str(score,s);
     OutTextXy(500,425,s);
     str(level,s);
@@ -681,9 +681,9 @@ begin
      Bar(200,250,400,300);
      SetColor(7);
      SetTextStyle(3,HorizDir,4);
-     OutTextXy(220,50,'Start game');
-     OutTextXy(220,150,'Information');
-     OutTextXy(270,250,'Quit');
+     OutTextXy(220,50,Loc('Start game','Почати гру'));
+     OutTextXy(220,150,Loc('Information','Інформація'));
+     OutTextXy(270,250,Loc('Quit','Вийти'));
      choice:=0;
      repeat
            await(Yield); { РЕМОНТ для браузера: без yield стан миші не оновиться }
@@ -716,7 +716,7 @@ begin
      SetFillStyle(1,LightGray);
      Bar(80,400,480,450);
      SetColor(8);
-     OutTextXy(140,385,'MAIN MENU');
+     OutTextXy(140,385,Loc('MAIN MENU','ГОЛОВНЕ МЕНЮ'));
      ShowMouse;
      Repeat await(Yield); { РЕМОНТ для браузера — див. шапку }
      until (MouseX>80) and (MouseX<480) and (MouseY>400) and (MouseY<450) and (LeftButton);
@@ -777,7 +777,7 @@ begin
      OutTextXy(10,200,'CopyRight By Yermilov Yaroslav');
      OutTextXy(75,300,'Version 1.0 April 2005');
      SetTextStyle(8,HorizDir,5);
-     OutTextXy(140,385,'MAIN MENU');
+     OutTextXy(140,385,Loc('MAIN MENU','ГОЛОВНЕ МЕНЮ'));
      Sound(Random(5000)+100);
      await(Delay(Duration*3));
      NoSound;
@@ -817,7 +817,7 @@ If ErrorCode=GrOk then
         TextBackGround(0);
         TextColor(15);
         ClrScr;
-        write('Error:',GraphErrorMsg(ErrorCode));
+        write(Loc('Error:','Помилка:'),GraphErrorMsg(ErrorCode));
         readln;
    end;
    await(Delay(10000));
