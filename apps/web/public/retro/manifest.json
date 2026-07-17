@@ -787,7 +787,13 @@
    "dir": "QUIDDITC",
    "title": "Quidditch",
    "year": "2008",
-   "note": "Квідич: RANDOM і SNITCH.",
+   "note": "Квідичні матч-симулятори: SNITCH (інтерактивний) і RANDOM (авто).",
+   "controls": "введи команди/ловців/числа + Enter · у SNITCH: a та s — голи · Esc — вийти",
+   "run": "snitch",
+   "runs": {
+    "SNITCH.EXE": "snitch",
+    "RANDOM.EXE": "randommatch"
+   },
    "files": [
     {
      "name": "RANDOM.BAK",

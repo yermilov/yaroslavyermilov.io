@@ -36,6 +36,15 @@ function Delay(ms: integer): TJSPromise;
   works both with real keyboard focus and with the NC parent's retro:key relay
   (which synthesizes document events — a focused <input> would never see those). }
 function AskReal(const prompt: string): TJSPromise;
+{ Same prompt, but resolves with the typed TEXT (team names etc). }
+function AskString(const prompt: string): TJSPromise;
+{ Resolves when the NEXT key arrives (the key is consumed) — the blocking
+  `ReadKey;` of DOS, awaitable. }
+function WaitKey: TJSPromise;
+{ PC-speaker: a square-wave beep at hz until NoSound. Best-effort — browser
+  autoplay policy may keep it silent until a real user gesture. }
+procedure Sound(hz: word);
+procedure NoSound;
 { Fast macrotask yield for busy compute loops — see the implementation note. }
 function Yield: TJSPromise;
 { ---- DOS text mode (80×25) ----------------------------------------------
@@ -77,6 +86,14 @@ uses Web, graph;
 var
   Queue: array of char;
   Installed: boolean = false;
+  { True while an Ask* prompt owns the keyboard. The NC parent's retro:key
+    relay dispatches synthetic keydowns ON document — the same EventTarget both
+    the prompt listener and OnKeyDown are registered on — where stopPropagation
+    cannot suppress fellow listeners. Without this flag every relayed prompt
+    key would ALSO enter the queue and be replayed into the next prompt by the
+    type-ahead drain. (DOS semantics agree: keys typed during readln go to
+    readln, not to the type-ahead buffer.) }
+  PromptActive: boolean = false;
 
 procedure Push(c: char);
 begin
@@ -86,6 +103,11 @@ end;
 
 function OnKeyDown(aEvent: TJSKeyboardEvent): boolean;
 begin
+  if PromptActive then
+  begin
+    Result := true;
+    exit;
+  end;
   case aEvent.key of
     // Extended keys: #0 then the DOS scan code, exactly as INT 16h delivered them.
     'ArrowLeft':  begin Push(#0); Push(#75); end;
@@ -172,8 +194,9 @@ begin
     end);
 end;
 
-function AskReal(const prompt: string): TJSPromise;
+function AskPrompt(const prompt: string; numeric: boolean): TJSPromise;
 begin
+  Install; // the queue collects keys typed BETWEEN prompts (DOS type-ahead)
   Result := TJSPromise.New(
     procedure(resolve, reject: TJSPromiseResolver)
     begin
@@ -184,30 +207,116 @@ begin
         line.style.cssText = 'background:#000;color:#fff;font:16px/24px ui-monospace,Menlo,monospace;padding:8px 16px;border:1px solid #545454;white-space:pre;';
         box.appendChild(line);
         let buf = '';
+        let done = false;
         const paint = () => { line.textContent = prompt + ' ' + buf + '▎'; };
-        paint();
-        document.body.appendChild(box);
+        // feed() is shared by live keydowns and the type-ahead drain below.
+        const feed = (key) => {
+          if (key === 'Enter') {
+            if (numeric) {
+              const n = parseFloat(buf);
+              if (!isFinite(n)) { buf = ''; paint(); return false; }
+              done = true;
+              $impl.PromptActive = false;
+              document.removeEventListener('keydown', onKey, true);
+              box.remove();
+              resolve(n);
+              return true;
+            }
+            done = true;
+            $impl.PromptActive = false;
+            document.removeEventListener('keydown', onKey, true);
+            box.remove();
+            resolve(buf);
+            return true;
+          }
+          if (key === 'Backspace') { buf = buf.slice(0, -1); paint(); return false; }
+          if (numeric ? /^[0-9.\-]$/.test(key) : key.length === 1) { buf += key; paint(); }
+          return false;
+        };
         const onKey = (e) => {
           // Esc must stay quittable mid-prompt: let it propagate to the
           // bundle's page-level listener (retro:quit to the NC parent).
           if (e.key === 'Escape') return;
-          if (e.key === 'Enter') {
-            const n = parseFloat(buf);
-            if (!isFinite(n)) { buf = ''; paint(); return; }
-            document.removeEventListener('keydown', onKey, true);
-            box.remove();
-            resolve(n);
-          } else if (e.key === 'Backspace') {
-            buf = buf.slice(0, -1); paint();
-          } else if (/^[0-9.\-]$/.test(e.key)) {
-            buf += e.key; paint();
-          }
+          feed(e.key);
           e.stopPropagation();
         };
-        // capture phase: the prompt owns the keyboard while it is up
-        document.addEventListener('keydown', onKey, true);
+        paint();
+        document.body.appendChild(box);
+        // DOS type-ahead: keys typed before this prompt appeared are waiting in
+        // the crt queue — drain them first (a fast typist never loses input).
+        while (!done && pas.crt.KeyPressed()) {
+          const c = pas.crt.ReadKey();
+          const code = c.charCodeAt(0);
+          if (code === 0) { if (pas.crt.KeyPressed()) pas.crt.ReadKey(); continue; } // ext scancode pair
+          if (code === 27) continue; // a queued Esc quits (page listener), never joins a name
+          feed(code === 13 ? 'Enter' : (code === 8 ? 'Backspace' : c));
+        }
+        if (!done) {
+          $impl.PromptActive = true; // the queue must NOT also record prompt keys (see var)
+          document.addEventListener('keydown', onKey, true); // capture: the prompt owns the keyboard
+        }
       end;
     end);
+end;
+
+function AskReal(const prompt: string): TJSPromise;
+begin
+  Result := AskPrompt(prompt, true);
+end;
+
+function AskString(const prompt: string): TJSPromise;
+begin
+  Result := AskPrompt(prompt, false);
+end;
+
+function WaitKey: TJSPromise;
+begin
+  Install;
+  Result := TJSPromise.New(
+    procedure(resolve, reject: TJSPromiseResolver)
+    begin
+      asm
+        const poll = () => {
+          if (pas.crt.KeyPressed()) { pas.crt.ReadKey(); resolve(0); }
+          else setTimeout(poll, 50);
+        };
+        poll();
+      end;
+    end);
+end;
+
+procedure Sound(hz: word);
+begin
+  asm
+    try {
+      if (!window.__retroAudio) {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const gain = ctx.createGain();
+        gain.gain.value = 0.04;
+        gain.connect(ctx.destination);
+        window.__retroAudio = { ctx, gain, osc: null };
+      }
+      const a = window.__retroAudio;
+      if (a.osc) { a.osc.stop(); a.osc = null; }
+      a.ctx.resume && a.ctx.resume();
+      const osc = a.ctx.createOscillator();
+      osc.type = 'square';
+      osc.frequency.value = hz;
+      osc.connect(a.gain);
+      osc.start();
+      a.osc = osc;
+    } catch (e) { /* no audio — fine */ }
+  end;
+end;
+
+procedure NoSound;
+begin
+  asm
+    try {
+      const a = window.__retroAudio;
+      if (a && a.osc) { a.osc.stop(); a.osc = null; }
+    } catch (e) {}
+  end;
 end;
 
 { ---- text mode ---------------------------------------------------------- }
@@ -424,6 +533,11 @@ begin
 end;
 
 initialization
+  // Pin KeyPressed/ReadKey against pas2js dead-code elimination: AskPrompt's
+  // type-ahead drain and WaitKey call them from asm blocks only, which DCE
+  // cannot see — a program that never calls keypressed from Pascal (RANDOM)
+  // otherwise ships without them and crashes at the first prompt.
+  if KeyPressed then ReadKey;
   // Writes boot the text screen unless graphics owns the canvas — this is what
   // makes pure-Write programs (SUPER) render without any prior crt call.
   SetWriteCallBack(

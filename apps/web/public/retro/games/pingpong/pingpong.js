@@ -1881,6 +1881,7 @@ rtl.module("crt",["System","JS"],function () {
   };
   this.DelayScale = 0.004;
   $mod.$init = function () {
+    if ($mod.KeyPressed()) $mod.ReadKey();
     pas.System.SetWriteCallBack(function (S, NewLine) {
       if (pas.graph.GraphActive()) return;
       $impl.TextEnsure();
@@ -1893,12 +1894,17 @@ rtl.module("crt",["System","JS"],function () {
   var $impl = $mod.$impl;
   $impl.Queue = [];
   $impl.Installed = false;
+  $impl.PromptActive = false;
   $impl.Push = function (c) {
     $impl.Queue = rtl.arraySetLength($impl.Queue,"",rtl.length($impl.Queue) + 1);
     $impl.Queue[rtl.length($impl.Queue) - 1] = c;
   };
   $impl.OnKeyDown = function (aEvent) {
     var Result = false;
+    if ($impl.PromptActive) {
+      Result = true;
+      return Result;
+    };
     var $tmp = aEvent.key;
     if ($tmp === "ArrowLeft") {
       $impl.Push("\x00");

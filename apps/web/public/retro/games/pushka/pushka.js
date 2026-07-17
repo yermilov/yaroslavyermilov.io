@@ -1649,36 +1649,7 @@ rtl.module("crt",["System","JS"],function () {
   };
   this.AskReal = function (prompt) {
     var Result = null;
-    Result = new Promise(function (resolve, reject) {
-      const box = document.createElement('div');
-      box.style.cssText = 'position:fixed;inset:auto 0 40% 0;display:flex;justify-content:center;z-index:99;';
-      const line = document.createElement('div');
-      line.style.cssText = 'background:#000;color:#fff;font:16px/24px ui-monospace,Menlo,monospace;padding:8px 16px;border:1px solid #545454;white-space:pre;';
-      box.appendChild(line);
-      let buf = '';
-      const paint = () => { line.textContent = prompt + ' ' + buf + '▎'; };
-      paint();
-      document.body.appendChild(box);
-      const onKey = (e) => {
-        // Esc must stay quittable mid-prompt: let it propagate to the
-        // bundle's page-level listener (retro:quit to the NC parent).
-        if (e.key === 'Escape') return;
-        if (e.key === 'Enter') {
-          const n = parseFloat(buf);
-          if (!isFinite(n)) { buf = ''; paint(); return; }
-          document.removeEventListener('keydown', onKey, true);
-          box.remove();
-          resolve(n);
-        } else if (e.key === 'Backspace') {
-          buf = buf.slice(0, -1); paint();
-        } else if (/^[0-9.\-]$/.test(e.key)) {
-          buf += e.key; paint();
-        }
-        e.stopPropagation();
-      };
-      // capture phase: the prompt owns the keyboard while it is up
-      document.addEventListener('keydown', onKey, true);
-    });
+    Result = $impl.AskPrompt(prompt,true);
     return Result;
   };
   this.Yield = function () {
@@ -1714,6 +1685,7 @@ rtl.module("crt",["System","JS"],function () {
     $impl.CurY = 1;
   };
   $mod.$init = function () {
+    if ($mod.KeyPressed()) $mod.ReadKey();
     pas.System.SetWriteCallBack(function (S, NewLine) {
       if (pas.graph.GraphActive()) return;
       $impl.TextEnsure();
@@ -1726,12 +1698,17 @@ rtl.module("crt",["System","JS"],function () {
   var $impl = $mod.$impl;
   $impl.Queue = [];
   $impl.Installed = false;
+  $impl.PromptActive = false;
   $impl.Push = function (c) {
     $impl.Queue = rtl.arraySetLength($impl.Queue,"",rtl.length($impl.Queue) + 1);
     $impl.Queue[rtl.length($impl.Queue) - 1] = c;
   };
   $impl.OnKeyDown = function (aEvent) {
     var Result = false;
+    if ($impl.PromptActive) {
+      Result = true;
+      return Result;
+    };
     var $tmp = aEvent.key;
     if ($tmp === "ArrowLeft") {
       $impl.Push("\x00");
@@ -1762,6 +1739,67 @@ rtl.module("crt",["System","JS"],function () {
     if ($impl.Installed) return;
     $impl.Installed = true;
     document.addEventListener("keydown",$impl.OnKeyDown);
+  };
+  $impl.AskPrompt = function (prompt, numeric) {
+    var Result = null;
+    $impl.Install();
+    Result = new Promise(function (resolve, reject) {
+      const box = document.createElement('div');
+      box.style.cssText = 'position:fixed;inset:auto 0 40% 0;display:flex;justify-content:center;z-index:99;';
+      const line = document.createElement('div');
+      line.style.cssText = 'background:#000;color:#fff;font:16px/24px ui-monospace,Menlo,monospace;padding:8px 16px;border:1px solid #545454;white-space:pre;';
+      box.appendChild(line);
+      let buf = '';
+      let done = false;
+      const paint = () => { line.textContent = prompt + ' ' + buf + '▎'; };
+      // feed() is shared by live keydowns and the type-ahead drain below.
+      const feed = (key) => {
+        if (key === 'Enter') {
+          if (numeric) {
+            const n = parseFloat(buf);
+            if (!isFinite(n)) { buf = ''; paint(); return false; }
+            done = true;
+            $impl.PromptActive = false;
+            document.removeEventListener('keydown', onKey, true);
+            box.remove();
+            resolve(n);
+            return true;
+          }
+          done = true;
+          $impl.PromptActive = false;
+          document.removeEventListener('keydown', onKey, true);
+          box.remove();
+          resolve(buf);
+          return true;
+        }
+        if (key === 'Backspace') { buf = buf.slice(0, -1); paint(); return false; }
+        if (numeric ? /^[0-9.\-]$/.test(key) : key.length === 1) { buf += key; paint(); }
+        return false;
+      };
+      const onKey = (e) => {
+        // Esc must stay quittable mid-prompt: let it propagate to the
+        // bundle's page-level listener (retro:quit to the NC parent).
+        if (e.key === 'Escape') return;
+        feed(e.key);
+        e.stopPropagation();
+      };
+      paint();
+      document.body.appendChild(box);
+      // DOS type-ahead: keys typed before this prompt appeared are waiting in
+      // the crt queue — drain them first (a fast typist never loses input).
+      while (!done && pas.crt.KeyPressed()) {
+        const c = pas.crt.ReadKey();
+        const code = c.charCodeAt(0);
+        if (code === 0) { if (pas.crt.KeyPressed()) pas.crt.ReadKey(); continue; } // ext scancode pair
+        if (code === 27) continue; // a queued Esc quits (page listener), never joins a name
+        feed(code === 13 ? 'Enter' : (code === 8 ? 'Backspace' : c));
+      }
+      if (!done) {
+        $impl.PromptActive = true; // the queue must NOT also record prompt keys (see var)
+        document.addEventListener('keydown', onKey, true); // capture: the prompt owns the keyboard
+      };
+    });
+    return Result;
   };
   $impl.Cols = 80;
   $impl.Rows = 25;

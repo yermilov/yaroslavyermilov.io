@@ -79,7 +79,17 @@ const GAMES: GameDef[] = [
     controls: 'введи n + Enter (1–3 розумно, далі — вічність) · Esc — вийти',
     ports: [{ slug: 'super', main: 'SUPER.pas' }],
   },
-  { dir: 'QUIDDITC', title: 'Quidditch', year: '2008', note: 'Квідич: RANDOM і SNITCH.' },
+  {
+    dir: 'QUIDDITC',
+    title: 'Quidditch',
+    year: '2008',
+    note: 'Квідичні матч-симулятори: SNITCH (інтерактивний) і RANDOM (авто).',
+    controls: 'введи команди/ловців/числа + Enter · у SNITCH: a та s — голи · Esc — вийти',
+    ports: [
+      { slug: 'snitch', main: 'SNITCH.pas', file: 'SNITCH.EXE' },
+      { slug: 'randommatch', main: 'RANDOM.pas', file: 'RANDOM.EXE' },
+    ],
+  },
   { dir: 'BAKKARA', title: 'Бакара', year: '2005', note: 'Карткова гра проти компʼютера.' },
   { dir: 'FOOTBALL', title: 'Football', year: '2005–2009', note: 'Футбольний менеджер: NEWTEAM, MATCH, EMATCH.' },
   { dir: 'WARWORK', title: 'WarWork', year: '2005', note: 'Воєнна гра: літаки, прапори, WW2/WW3.' },

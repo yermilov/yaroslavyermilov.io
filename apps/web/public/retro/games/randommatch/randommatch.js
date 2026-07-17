@@ -1475,9 +1475,117 @@ rtl.module("System",[],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
+  rtl.createClass($mod,"TObject",null,function () {
+    this.$init = function () {
+    };
+    this.$final = function () {
+    };
+    this.AfterConstruction = function () {
+    };
+    this.BeforeDestruction = function () {
+    };
+  });
+  this.vtInteger = 0;
+  this.vtExtended = 3;
+  this.vtWideChar = 9;
+  this.vtCurrency = 12;
+  this.vtUnicodeString = 18;
+  this.vtNativeInt = 19;
+  rtl.recNewT($mod,"TVarRec",function () {
+    this.VType = 0;
+    this.VJSValue = undefined;
+    this.$eq = function (b) {
+      return (this.VType === b.VType) && (this.VJSValue === b.VJSValue) && (this.VJSValue === b.VJSValue) && (this.VJSValue === b.VJSValue) && (this.VJSValue === b.VJSValue) && (this.VJSValue === b.VJSValue) && (this.VJSValue === b.VJSValue) && (this.VJSValue === b.VJSValue);
+    };
+    this.$assign = function (s) {
+      this.VType = s.VType;
+      this.VJSValue = s.VJSValue;
+      this.VJSValue = s.VJSValue;
+      this.VJSValue = s.VJSValue;
+      this.VJSValue = s.VJSValue;
+      this.VJSValue = s.VJSValue;
+      this.VJSValue = s.VJSValue;
+      this.VJSValue = s.VJSValue;
+      return this;
+    };
+  });
+  this.VarRecs = function () {
+    var Result = [];
+    var i = 0;
+    var v = null;
+    Result = [];
+    while (i < arguments.length) {
+      v = $mod.TVarRec.$new();
+      v.VType = Math.floor(arguments[i]);
+      i += 1;
+      v.VJSValue = arguments[i];
+      i += 1;
+      Result.push($mod.TVarRec.$clone(v));
+    };
+    return Result;
+  };
+  this.Random = function (Range) {
+    return Math.floor(Math.random()*Range);
+  };
+  this.Trunc = function (A) {
+    if (!Math.trunc) {
+      Math.trunc = function(v) {
+        v = +v;
+        if (!isFinite(v)) return v;
+        return (v - v % 1) || (v < 0 ? -0 : v === 0 ? v : 0);
+      };
+    }
+    $mod.Trunc = Math.trunc;
+    return Math.trunc(A);
+  };
+  this.Int = function (A) {
+    var Result = 0.0;
+    Result = $mod.Trunc(A);
+    return Result;
+  };
   this.Copy = function (S, Index, Size) {
     if (Index<1) Index = 1;
     return (Size>0) ? S.substring(Index-1,Index+Size-1) : "";
+  };
+  this.Copy$1 = function (S, Index) {
+    if (Index<1) Index = 1;
+    return S.substr(Index-1);
+  };
+  this.Delete = function (S, Index, Size) {
+    var h = "";
+    if ((Index < 1) || (Index > S.get().length) || (Size <= 0)) return;
+    h = S.get();
+    S.set($mod.Copy(h,1,Index - 1) + $mod.Copy$1(h,Index + Size));
+  };
+  this.Pos = function (Search, InString) {
+    return InString.indexOf(Search)+1;
+  };
+  this.Insert = function (Insertion, Target, Index) {
+    var t = "";
+    if (Insertion === "") return;
+    t = Target.get();
+    if (Index < 1) {
+      Target.set(Insertion + t)}
+     else if (Index > t.length) {
+      Target.set(t + Insertion)}
+     else Target.set($mod.Copy(t,1,Index - 1) + Insertion + $mod.Copy(t,Index,t.length));
+  };
+  this.upcase = function (c) {
+    return c.toUpperCase();
+  };
+  this.val = function (S, NI, Code) {
+    NI.set($impl.valint(S,-9007199254740991,9007199254740991,Code));
+  };
+  this.StringOfChar = function (c, l) {
+    var Result = "";
+    var i = 0;
+    if ((l>0) && c.repeat) return c.repeat(l);
+    Result = "";
+    for (var $l = 1, $end = l; $l <= $end; $l++) {
+      i = $l;
+      Result = Result + c;
+    };
+    return Result;
   };
   this.Write = function () {
     var i = 0;
@@ -1523,6 +1631,37 @@ rtl.module("System",[],function () {
   var $impl = $mod.$impl;
   $impl.WriteBuf = "";
   $impl.WriteCallBack = null;
+  $impl.valint = function (S, MinVal, MaxVal, Code) {
+    var Result = 0;
+    var x = 0.0;
+    if (S === "") {
+      Code.set(1);
+      return Result;
+    };
+    x = Number(S);
+    if (isNaN(x)) {
+      var $tmp = $mod.Copy(S,1,1);
+      if ($tmp === "$") {
+        x = Number("0x" + $mod.Copy$1(S,2))}
+       else if ($tmp === "&") {
+        x = Number("0o" + $mod.Copy$1(S,2))}
+       else if ($tmp === "%") {
+        x = Number("0b" + $mod.Copy$1(S,2))}
+       else {
+        Code.set(1);
+        return Result;
+      };
+    };
+    if (isNaN(x) || (x !== $mod.Int(x))) {
+      Code.set(1)}
+     else if ((x < MinVal) || (x > MaxVal)) {
+      Code.set(2)}
+     else {
+      Result = $mod.Trunc(x);
+      Code.set(0);
+    };
+    return Result;
+  };
 });
 rtl.module("JS",["System"],function () {
   "use strict";
@@ -1535,6 +1674,862 @@ rtl.module("weborworker",["System","JS"],function () {
 rtl.module("Web",["System","JS","weborworker"],function () {
   "use strict";
   var $mod = this;
+});
+rtl.module("RTLConsts",["System"],function () {
+  "use strict";
+  var $mod = this;
+  $mod.$resourcestrings = {SArgumentMissing: {org: 'Missing argument in format "%s"'}, SInvalidFormat: {org: 'Invalid format specifier : "%s"'}, SInvalidArgIndex: {org: 'Invalid argument index in format: "%s"'}};
+});
+rtl.module("SysUtils",["System","RTLConsts","JS"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  rtl.recNewT($mod,"TFormatSettings",function () {
+    this.CurrencyDecimals = 0;
+    this.CurrencyFormat = 0;
+    this.CurrencyString = "";
+    this.DateSeparator = "";
+    this.DecimalSeparator = "";
+    this.LongDateFormat = "";
+    this.LongTimeFormat = "";
+    this.NegCurrFormat = 0;
+    this.ShortDateFormat = "";
+    this.ShortTimeFormat = "";
+    this.ThousandSeparator = "";
+    this.TimeAMString = "";
+    this.TimePMString = "";
+    this.TimeSeparator = "";
+    this.TwoDigitYearCenturyWindow = 0;
+    this.InitLocaleHandler = null;
+    this.$new = function () {
+      var r = Object.create(this);
+      r.DateTimeToStrFormat = rtl.arraySetLength(null,"",2);
+      r.LongDayNames = rtl.arraySetLength(null,"",7);
+      r.LongMonthNames = rtl.arraySetLength(null,"",12);
+      r.ShortDayNames = rtl.arraySetLength(null,"",7);
+      r.ShortMonthNames = rtl.arraySetLength(null,"",12);
+      return r;
+    };
+    this.$eq = function (b) {
+      return (this.CurrencyDecimals === b.CurrencyDecimals) && (this.CurrencyFormat === b.CurrencyFormat) && (this.CurrencyString === b.CurrencyString) && (this.DateSeparator === b.DateSeparator) && rtl.arrayEq(this.DateTimeToStrFormat,b.DateTimeToStrFormat) && (this.DecimalSeparator === b.DecimalSeparator) && (this.LongDateFormat === b.LongDateFormat) && rtl.arrayEq(this.LongDayNames,b.LongDayNames) && rtl.arrayEq(this.LongMonthNames,b.LongMonthNames) && (this.LongTimeFormat === b.LongTimeFormat) && (this.NegCurrFormat === b.NegCurrFormat) && (this.ShortDateFormat === b.ShortDateFormat) && rtl.arrayEq(this.ShortDayNames,b.ShortDayNames) && rtl.arrayEq(this.ShortMonthNames,b.ShortMonthNames) && (this.ShortTimeFormat === b.ShortTimeFormat) && (this.ThousandSeparator === b.ThousandSeparator) && (this.TimeAMString === b.TimeAMString) && (this.TimePMString === b.TimePMString) && (this.TimeSeparator === b.TimeSeparator) && (this.TwoDigitYearCenturyWindow === b.TwoDigitYearCenturyWindow);
+    };
+    this.$assign = function (s) {
+      this.CurrencyDecimals = s.CurrencyDecimals;
+      this.CurrencyFormat = s.CurrencyFormat;
+      this.CurrencyString = s.CurrencyString;
+      this.DateSeparator = s.DateSeparator;
+      this.DateTimeToStrFormat = s.DateTimeToStrFormat.slice(0);
+      this.DecimalSeparator = s.DecimalSeparator;
+      this.LongDateFormat = s.LongDateFormat;
+      this.LongDayNames = s.LongDayNames.slice(0);
+      this.LongMonthNames = s.LongMonthNames.slice(0);
+      this.LongTimeFormat = s.LongTimeFormat;
+      this.NegCurrFormat = s.NegCurrFormat;
+      this.ShortDateFormat = s.ShortDateFormat;
+      this.ShortDayNames = s.ShortDayNames.slice(0);
+      this.ShortMonthNames = s.ShortMonthNames.slice(0);
+      this.ShortTimeFormat = s.ShortTimeFormat;
+      this.ThousandSeparator = s.ThousandSeparator;
+      this.TimeAMString = s.TimeAMString;
+      this.TimePMString = s.TimePMString;
+      this.TimeSeparator = s.TimeSeparator;
+      this.TwoDigitYearCenturyWindow = s.TwoDigitYearCenturyWindow;
+      return this;
+    };
+    this.GetJSLocale = function () {
+      return Intl.DateTimeFormat().resolvedOptions().locale;
+    };
+    this.Create = function () {
+      var Result = $mod.TFormatSettings.$new();
+      Result.$assign($mod.TFormatSettings.Create$1($mod.TFormatSettings.GetJSLocale()));
+      return Result;
+    };
+    this.Create$1 = function (ALocale) {
+      var Result = $mod.TFormatSettings.$new();
+      Result.LongDayNames = $impl.DefaultLongDayNames.slice(0);
+      Result.ShortDayNames = $impl.DefaultShortDayNames.slice(0);
+      Result.ShortMonthNames = $impl.DefaultShortMonthNames.slice(0);
+      Result.LongMonthNames = $impl.DefaultLongMonthNames.slice(0);
+      Result.DateTimeToStrFormat[0] = "c";
+      Result.DateTimeToStrFormat[1] = "f";
+      Result.DateSeparator = "-";
+      Result.TimeSeparator = ":";
+      Result.ShortDateFormat = "yyyy-mm-dd";
+      Result.LongDateFormat = "ddd, yyyy-mm-dd";
+      Result.ShortTimeFormat = "hh:nn";
+      Result.LongTimeFormat = "hh:nn:ss";
+      Result.DecimalSeparator = ".";
+      Result.ThousandSeparator = ",";
+      Result.TimeAMString = "AM";
+      Result.TimePMString = "PM";
+      Result.TwoDigitYearCenturyWindow = 50;
+      Result.CurrencyFormat = 0;
+      Result.NegCurrFormat = 0;
+      Result.CurrencyDecimals = 2;
+      Result.CurrencyString = "$";
+      if ($mod.TFormatSettings.InitLocaleHandler != null) $mod.TFormatSettings.InitLocaleHandler($mod.UpperCase(ALocale),$mod.TFormatSettings.$clone(Result));
+      return Result;
+    };
+  },true);
+  rtl.createClass($mod,"Exception",pas.System.TObject,function () {
+    this.LogMessageOnCreate = false;
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.fMessage = "";
+      this.FJSError = null;
+    };
+    this.$final = function () {
+      this.FJSError = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Create$1 = function (Msg) {
+      this.fMessage = Msg;
+      this.FJSError = new Error();
+      if (this.LogMessageOnCreate) pas.System.Writeln("Created exception ",this.$classname," with message: ",Msg);
+      return this;
+    };
+    this.CreateFmt = function (Msg, Args) {
+      this.Create$1($mod.Format(Msg,Args));
+      return this;
+    };
+  });
+  rtl.createClass($mod,"EExternal",$mod.Exception,function () {
+  });
+  rtl.createClass($mod,"EInvalidCast",$mod.Exception,function () {
+  });
+  rtl.createClass($mod,"EConvertError",$mod.Exception,function () {
+  });
+  rtl.createClass($mod,"EIntError",$mod.EExternal,function () {
+  });
+  rtl.createClass($mod,"ERangeError",$mod.EIntError,function () {
+  });
+  rtl.createClass($mod,"EAbstractError",$mod.Exception,function () {
+  });
+  this.TrimLeft = function (S) {
+    return S.replace(/^[\s\uFEFF\xA0\x00-\x1f]+/,'');
+  };
+  this.UpperCase = function (s) {
+    return s.toUpperCase();
+  };
+  this.Format = function (Fmt, Args) {
+    var Result = "";
+    Result = $mod.Format$1(Fmt,Args,$mod.FormatSettings);
+    return Result;
+  };
+  this.Format$1 = function (Fmt, Args, aSettings) {
+    var Result = "";
+    var ChPos = 0;
+    var OldPos = 0;
+    var ArgPos = 0;
+    var DoArg = 0;
+    var Len = 0;
+    var Hs = "";
+    var ToAdd = "";
+    var Index = 0;
+    var Width = 0;
+    var Prec = 0;
+    var Left = false;
+    var Fchar = "";
+    var vq = 0;
+    function ReadFormat() {
+      var Result = "";
+      var Value = 0;
+      function ReadInteger() {
+        var Code = 0;
+        var ArgN = 0;
+        if (Value !== -1) return;
+        OldPos = ChPos;
+        while ((ChPos <= Len) && (Fmt.charAt(ChPos - 1) <= "9") && (Fmt.charAt(ChPos - 1) >= "0")) ChPos += 1;
+        if (ChPos > Len) $impl.DoFormatError(1,Fmt);
+        if (Fmt.charAt(ChPos - 1) === "*") {
+          if (Index === 255) {
+            ArgN = ArgPos}
+           else {
+            ArgN = Index;
+            Index += 1;
+          };
+          if ((ChPos > OldPos) || (ArgN > (rtl.length(Args) - 1))) $impl.DoFormatError(1,Fmt);
+          ArgPos = ArgN + 1;
+          var $tmp = Args[ArgN].VType;
+          if ($tmp === 0) {
+            Value = Args[ArgN].VJSValue}
+           else if ($tmp === 19) {
+            Value = Args[ArgN].VJSValue}
+           else {
+            $impl.DoFormatError(1,Fmt);
+          };
+          ChPos += 1;
+        } else {
+          if (OldPos < ChPos) {
+            pas.System.val(pas.System.Copy(Fmt,OldPos,ChPos - OldPos),{get: function () {
+                return Value;
+              }, set: function (v) {
+                Value = v;
+              }},{get: function () {
+                return Code;
+              }, set: function (v) {
+                Code = v;
+              }});
+            if (Code > 0) $impl.DoFormatError(1,Fmt);
+          } else Value = -1;
+        };
+      };
+      function ReadIndex() {
+        if (Fmt.charAt(ChPos - 1) !== ":") {
+          ReadInteger()}
+         else Value = 0;
+        if (Fmt.charAt(ChPos - 1) === ":") {
+          if (Value === -1) $impl.DoFormatError(2,Fmt);
+          Index = Value;
+          Value = -1;
+          ChPos += 1;
+        };
+      };
+      function ReadLeft() {
+        if (Fmt.charAt(ChPos - 1) === "-") {
+          Left = true;
+          ChPos += 1;
+        } else Left = false;
+      };
+      function ReadWidth() {
+        ReadInteger();
+        if (Value !== -1) {
+          Width = Value;
+          Value = -1;
+        };
+      };
+      function ReadPrec() {
+        if (Fmt.charAt(ChPos - 1) === ".") {
+          ChPos += 1;
+          ReadInteger();
+          if (Value === -1) Value = 0;
+          Prec = Value;
+        };
+      };
+      Index = 255;
+      Width = -1;
+      Prec = -1;
+      Value = -1;
+      ChPos += 1;
+      if (Fmt.charAt(ChPos - 1) === "%") {
+        Result = "%";
+        return Result;
+      };
+      ReadIndex();
+      ReadLeft();
+      ReadWidth();
+      ReadPrec();
+      Result = pas.System.upcase(Fmt.charAt(ChPos - 1));
+      return Result;
+    };
+    function Checkarg(AT, err) {
+      var Result = false;
+      Result = false;
+      if (Index === 255) {
+        DoArg = ArgPos}
+       else DoArg = Index;
+      ArgPos = DoArg + 1;
+      if ((DoArg > (rtl.length(Args) - 1)) || (Args[DoArg].VType !== AT)) {
+        if (err) $impl.DoFormatError(3,Fmt);
+        ArgPos -= 1;
+        return Result;
+      };
+      Result = true;
+      return Result;
+    };
+    Result = "";
+    Len = Fmt.length;
+    ChPos = 1;
+    OldPos = 1;
+    ArgPos = 0;
+    while (ChPos <= Len) {
+      while ((ChPos <= Len) && (Fmt.charAt(ChPos - 1) !== "%")) ChPos += 1;
+      if (ChPos > OldPos) Result = Result + pas.System.Copy(Fmt,OldPos,ChPos - OldPos);
+      if (ChPos < Len) {
+        Fchar = ReadFormat();
+        var $tmp = Fchar;
+        if ($tmp === "D") {
+          if (Checkarg(0,false)) {
+            ToAdd = $mod.IntToStr(Args[DoArg].VJSValue)}
+           else if (Checkarg(19,true)) ToAdd = $mod.IntToStr(Args[DoArg].VJSValue);
+          Width = Math.abs(Width);
+          Index = Prec - ToAdd.length;
+          if (ToAdd.charAt(0) !== "-") {
+            ToAdd = pas.System.StringOfChar("0",Index) + ToAdd}
+           else pas.System.Insert(pas.System.StringOfChar("0",Index + 1),{get: function () {
+              return ToAdd;
+            }, set: function (v) {
+              ToAdd = v;
+            }},2);
+        } else if ($tmp === "U") {
+          if (Checkarg(0,false)) {
+            ToAdd = $mod.IntToStr(Args[DoArg].VJSValue >>> 0)}
+           else if (Checkarg(19,true)) ToAdd = $mod.IntToStr(Args[DoArg].VJSValue);
+          Width = Math.abs(Width);
+          Index = Prec - ToAdd.length;
+          ToAdd = pas.System.StringOfChar("0",Index) + ToAdd;
+        } else if ($tmp === "E") {
+          if (Checkarg(12,false)) {
+            ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue / 10000,$mod.TFloatFormat.ffExponent,3,Prec,aSettings)}
+           else if (Checkarg(3,true)) ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue,$mod.TFloatFormat.ffExponent,3,Prec,aSettings);
+        } else if ($tmp === "F") {
+          if (Checkarg(12,false)) {
+            ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue / 10000,$mod.TFloatFormat.ffFixed,9999,Prec,aSettings)}
+           else if (Checkarg(3,true)) ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue,$mod.TFloatFormat.ffFixed,9999,Prec,aSettings);
+        } else if ($tmp === "G") {
+          if (Checkarg(12,false)) {
+            ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue / 10000,$mod.TFloatFormat.ffGeneral,Prec,3,aSettings)}
+           else if (Checkarg(3,true)) ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue,$mod.TFloatFormat.ffGeneral,Prec,3,aSettings);
+        } else if ($tmp === "N") {
+          if (Checkarg(12,false)) {
+            ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue / 10000,$mod.TFloatFormat.ffNumber,9999,Prec,aSettings)}
+           else if (Checkarg(3,true)) ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue,$mod.TFloatFormat.ffNumber,9999,Prec,aSettings);
+        } else if ($tmp === "M") {
+          if (Checkarg(12,false)) {
+            ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue / 10000,$mod.TFloatFormat.ffCurrency,9999,Prec,aSettings)}
+           else if (Checkarg(3,true)) ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue,$mod.TFloatFormat.ffCurrency,9999,Prec,aSettings);
+        } else if ($tmp === "S") {
+          if (Checkarg(18,false)) {
+            Hs = Args[DoArg].VJSValue}
+           else if (Checkarg(9,true)) Hs = Args[DoArg].VJSValue;
+          Index = Hs.length;
+          if ((Prec !== -1) && (Index > Prec)) Index = Prec;
+          ToAdd = pas.System.Copy(Hs,1,Index);
+        } else if ($tmp === "P") {
+          if (Checkarg(0,false)) {
+            ToAdd = $mod.IntToHex(Args[DoArg].VJSValue,8)}
+           else if (Checkarg(0,true)) ToAdd = $mod.IntToHex(Args[DoArg].VJSValue,16);
+        } else if ($tmp === "X") {
+          if (Checkarg(0,false)) {
+            vq = Args[DoArg].VJSValue;
+            Index = 16;
+          } else if (Checkarg(19,true)) {
+            vq = Args[DoArg].VJSValue;
+            Index = 31;
+          };
+          if (Prec > Index) {
+            ToAdd = $mod.IntToHex(vq,Index)}
+           else {
+            Index = 1;
+            while ((rtl.shl(1,Index * 4) <= vq) && (Index < 16)) Index += 1;
+            if (Index > Prec) Prec = Index;
+            ToAdd = $mod.IntToHex(vq,Prec);
+          };
+        } else if ($tmp === "%") ToAdd = "%";
+        if (Width !== -1) if (ToAdd.length < Width) if (!Left) {
+          ToAdd = pas.System.StringOfChar(" ",Width - ToAdd.length) + ToAdd}
+         else ToAdd = ToAdd + pas.System.StringOfChar(" ",Width - ToAdd.length);
+        Result = Result + ToAdd;
+      };
+      ChPos += 1;
+      OldPos = ChPos;
+    };
+    return Result;
+  };
+  this.IntToStr = function (Value) {
+    var Result = "";
+    Result = "" + Value;
+    return Result;
+  };
+  this.IntToHex = function (Value, Digits) {
+    var Result = "";
+    Result = "";
+    if (Value < 0) if (Value<0) Value = 0xFFFFFFFF + Value + 1;
+    Result=Value.toString(16);
+    Result = $mod.UpperCase(Result);
+    while (Result.length < Digits) Result = "0" + Result;
+    return Result;
+  };
+  this.TFloatFormat = {"0": "ffFixed", ffFixed: 0, "1": "ffGeneral", ffGeneral: 1, "2": "ffExponent", ffExponent: 2, "3": "ffNumber", ffNumber: 3, "4": "ffCurrency", ffCurrency: 4};
+  this.FloatToStrF$1 = function (Value, format, Precision, Digits, aSettings) {
+    var Result = "";
+    var TS = "";
+    var DS = "";
+    DS = aSettings.DecimalSeparator;
+    TS = aSettings.ThousandSeparator;
+    var $tmp = format;
+    if ($tmp === $mod.TFloatFormat.ffGeneral) {
+      Result = $impl.FormatGeneralFloat(Value,Precision,DS)}
+     else if ($tmp === $mod.TFloatFormat.ffExponent) {
+      Result = $impl.FormatExponentFloat(Value,Precision,Digits,DS)}
+     else if ($tmp === $mod.TFloatFormat.ffFixed) {
+      Result = $impl.FormatFixedFloat(Value,Digits,DS)}
+     else if ($tmp === $mod.TFloatFormat.ffNumber) {
+      Result = $impl.FormatNumberFloat(Value,Digits,DS,TS)}
+     else if ($tmp === $mod.TFloatFormat.ffCurrency) Result = $impl.FormatNumberCurrency(Value * 10000,Digits,aSettings);
+    if ((format !== $mod.TFloatFormat.ffCurrency) && (Result.length > 1) && (Result.charAt(0) === "-")) $impl.RemoveLeadingNegativeSign({get: function () {
+        return Result;
+      }, set: function (v) {
+        Result = v;
+      }},DS,TS);
+    return Result;
+  };
+  rtl.recNewT($mod,"TTimeStamp",function () {
+    this.Time = 0;
+    this.Date = 0;
+    this.$eq = function (b) {
+      return (this.Time === b.Time) && (this.Date === b.Date);
+    };
+    this.$assign = function (s) {
+      this.Time = s.Time;
+      this.Date = s.Date;
+      return this;
+    };
+  });
+  this.TimeSeparator = "";
+  this.DateSeparator = "";
+  this.ShortDateFormat = "";
+  this.LongDateFormat = "";
+  this.ShortTimeFormat = "";
+  this.LongTimeFormat = "";
+  this.DecimalSeparator = "";
+  this.ThousandSeparator = "";
+  this.TimeAMString = "";
+  this.TimePMString = "";
+  this.HoursPerDay = 24;
+  this.MinsPerHour = 60;
+  this.SecsPerMin = 60;
+  this.MSecsPerSec = 1000;
+  this.MinsPerDay = 24 * 60;
+  this.SecsPerDay = 1440 * 60;
+  this.MSecsPerDay = 86400 * 1000;
+  this.DateDelta = 693594;
+  this.MonthDays = [[31,28,31,30,31,30,31,31,30,31,30,31],[31,29,31,30,31,30,31,31,30,31,30,31]];
+  this.ShortMonthNames = rtl.arraySetLength(null,"",12);
+  this.LongMonthNames = rtl.arraySetLength(null,"",12);
+  this.ShortDayNames = rtl.arraySetLength(null,"",7);
+  this.LongDayNames = rtl.arraySetLength(null,"",7);
+  this.FormatSettings = $mod.TFormatSettings.$new();
+  this.JSDateToDateTime = function (aDate, asUTC) {
+    var Result = 0.0;
+    if (asUTC) {
+      Result = $mod.EncodeDate(aDate.getUTCFullYear(),aDate.getUTCMonth() + 1,aDate.getUTCDate()) + $mod.EncodeTime(aDate.getUTCHours(),aDate.getUTCMinutes(),aDate.getUTCSeconds(),aDate.getUTCMilliseconds())}
+     else Result = $mod.EncodeDate(aDate.getFullYear(),aDate.getMonth() + 1,aDate.getDate()) + $mod.EncodeTime(aDate.getHours(),aDate.getMinutes(),aDate.getSeconds(),aDate.getMilliseconds());
+    return Result;
+  };
+  this.DateTimeToTimeStamp = function (DateTime) {
+    var Result = $mod.TTimeStamp.$new();
+    var D = 0.0;
+    D = DateTime * 86400000;
+    if (D < 0) {
+      D = D - 0.5}
+     else D = D + 0.5;
+    Result.Time = pas.System.Trunc(Math.abs(pas.System.Trunc(D)) % 86400000);
+    Result.Date = 693594 + Math.floor(pas.System.Trunc(D) / 86400000);
+    return Result;
+  };
+  this.TryEncodeDate = function (Year, Month, Day, date) {
+    var Result = false;
+    var c = 0;
+    var ya = 0;
+    Result = (Year > 0) && (Year < 10000) && (Month >= 1) && (Month <= 12) && (Day > 0) && (Day <= $mod.MonthDays[+$mod.IsLeapYear(Year)][Month - 1]);
+    if (Result) {
+      if (Month > 2) {
+        Month -= 3}
+       else {
+        Month += 9;
+        Year -= 1;
+      };
+      c = Math.floor(Year / 100);
+      ya = Year - (100 * c);
+      date.set(((146097 * c) >>> 2) + ((1461 * ya) >>> 2) + Math.floor(((153 * Month) + 2) / 5) + Day);
+      date.set(date.get() - 693900);
+    };
+    return Result;
+  };
+  this.TryEncodeTime = function (Hour, Min, Sec, MSec, Time) {
+    var Result = false;
+    Result = (Hour < 24) && (Min < 60) && (Sec < 60) && (MSec < 1000);
+    if (Result) Time.set(((Hour * 3600000) + (Min * 60000) + (Sec * 1000) + MSec) / 86400000);
+    return Result;
+  };
+  this.EncodeDate = function (Year, Month, Day) {
+    var Result = 0.0;
+    if (!$mod.TryEncodeDate(Year,Month,Day,{get: function () {
+        return Result;
+      }, set: function (v) {
+        Result = v;
+      }})) throw $mod.EConvertError.$create("CreateFmt",["%s-%s-%s is not a valid date specification",pas.System.VarRecs(18,$mod.IntToStr(Year),18,$mod.IntToStr(Month),18,$mod.IntToStr(Day))]);
+    return Result;
+  };
+  this.EncodeTime = function (Hour, Minute, Second, MilliSecond) {
+    var Result = 0.0;
+    if (!$mod.TryEncodeTime(Hour,Minute,Second,MilliSecond,{get: function () {
+        return Result;
+      }, set: function (v) {
+        Result = v;
+      }})) throw $mod.EConvertError.$create("CreateFmt",["%s:%s:%s.%s is not a valid time specification",pas.System.VarRecs(18,$mod.IntToStr(Hour),18,$mod.IntToStr(Minute),18,$mod.IntToStr(Second),18,$mod.IntToStr(MilliSecond))]);
+    return Result;
+  };
+  this.DecodeTime = function (Time, Hour, Minute, Second, MilliSecond) {
+    var l = 0;
+    l = $mod.DateTimeToTimeStamp(Time).Time;
+    Hour.set(Math.floor(l / 3600000));
+    l = l % 3600000;
+    Minute.set(Math.floor(l / 60000));
+    l = l % 60000;
+    Second.set(Math.floor(l / 1000));
+    l = l % 1000;
+    MilliSecond.set(l);
+  };
+  this.Date = function () {
+    var Result = 0.0;
+    Result = pas.System.Trunc($mod.Now());
+    return Result;
+  };
+  this.Time = function () {
+    var Result = 0.0;
+    Result = $mod.Now() - $mod.Date();
+    return Result;
+  };
+  this.Now = function () {
+    var Result = 0.0;
+    Result = $mod.JSDateToDateTime(new Date(),false);
+    return Result;
+  };
+  this.IsLeapYear = function (Year) {
+    var Result = false;
+    Result = ((Year % 4) === 0) && (((Year % 100) !== 0) || ((Year % 400) === 0));
+    return Result;
+  };
+  this.CurrencyFormat = 0;
+  this.NegCurrFormat = 0;
+  this.CurrencyDecimals = 0;
+  this.CurrencyString = "";
+  $mod.$init = function () {
+    (function () {
+      $impl.InitGlobalFormatSettings();
+    })();
+    $impl.DoClassRef($mod.EInvalidCast);
+    $impl.DoClassRef($mod.EAbstractError);
+    $impl.DoClassRef($mod.ERangeError);
+    $mod.ShortMonthNames = $impl.DefaultShortMonthNames.slice(0);
+    $mod.LongMonthNames = $impl.DefaultLongMonthNames.slice(0);
+    $mod.ShortDayNames = $impl.DefaultShortDayNames.slice(0);
+    $mod.LongDayNames = $impl.DefaultLongDayNames.slice(0);
+  };
+},null,function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  $impl.DefaultShortMonthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  $impl.DefaultLongMonthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  $impl.DefaultShortDayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  $impl.DefaultLongDayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  $impl.feInvalidFormat = 1;
+  $impl.feMissingArgument = 2;
+  $impl.feInvalidArgIndex = 3;
+  $impl.DoFormatError = function (ErrCode, fmt) {
+    var $tmp = ErrCode;
+    if ($tmp === 1) {
+      throw $mod.EConvertError.$create("CreateFmt",[rtl.getResStr(pas.RTLConsts,"SInvalidFormat"),pas.System.VarRecs(18,fmt)])}
+     else if ($tmp === 2) {
+      throw $mod.EConvertError.$create("CreateFmt",[rtl.getResStr(pas.RTLConsts,"SArgumentMissing"),pas.System.VarRecs(18,fmt)])}
+     else if ($tmp === 3) throw $mod.EConvertError.$create("CreateFmt",[rtl.getResStr(pas.RTLConsts,"SInvalidArgIndex"),pas.System.VarRecs(18,fmt)]);
+  };
+  $impl.maxdigits = 15;
+  $impl.ReplaceDecimalSep = function (S, DS) {
+    var Result = "";
+    var P = 0;
+    P = pas.System.Pos(".",S);
+    if (P > 0) {
+      Result = pas.System.Copy(S,1,P - 1) + DS + pas.System.Copy(S,P + 1,S.length - P)}
+     else Result = S;
+    return Result;
+  };
+  $impl.FormatGeneralFloat = function (Value, Precision, DS) {
+    var Result = "";
+    var P = 0;
+    var PE = 0;
+    var Q = 0;
+    var Exponent = 0;
+    if ((Precision === -1) || (Precision > 15)) Precision = 15;
+    Result = rtl.floatToStr(Value,Precision + 7);
+    Result = $mod.TrimLeft(Result);
+    P = pas.System.Pos(".",Result);
+    if (P === 0) return Result;
+    PE = pas.System.Pos("E",Result);
+    if (PE === 0) {
+      Result = $impl.ReplaceDecimalSep(Result,DS);
+      return Result;
+    };
+    Q = PE + 2;
+    Exponent = 0;
+    while (Q <= Result.length) {
+      Exponent = ((Exponent * 10) + Result.charCodeAt(Q - 1)) - 48;
+      Q += 1;
+    };
+    if (Result.charAt((PE + 1) - 1) === "-") Exponent = -Exponent;
+    if (((P + Exponent) < PE) && (Exponent > -6)) {
+      Result = rtl.strSetLength(Result,PE - 1);
+      if (Exponent >= 0) {
+        for (var $l = 0, $end = Exponent - 1; $l <= $end; $l++) {
+          Q = $l;
+          Result = rtl.setCharAt(Result,P - 1,Result.charAt((P + 1) - 1));
+          P += 1;
+        };
+        Result = rtl.setCharAt(Result,P - 1,".");
+        P = 1;
+        if (Result.charAt(P - 1) === "-") P += 1;
+        while ((Result.charAt(P - 1) === "0") && (P < Result.length) && (pas.System.Copy(Result,P + 1,DS.length) !== DS)) pas.System.Delete({get: function () {
+            return Result;
+          }, set: function (v) {
+            Result = v;
+          }},P,1);
+      } else {
+        pas.System.Insert(pas.System.Copy("00000",1,-Exponent),{get: function () {
+            return Result;
+          }, set: function (v) {
+            Result = v;
+          }},P - 1);
+        Result = rtl.setCharAt(Result,P - Exponent - 1,Result.charAt(P - Exponent - 1 - 1));
+        Result = rtl.setCharAt(Result,P - 1,".");
+        if (Exponent !== -1) Result = rtl.setCharAt(Result,P - Exponent - 1 - 1,"0");
+      };
+      Q = Result.length;
+      while ((Q > 0) && (Result.charAt(Q - 1) === "0")) Q -= 1;
+      if (Result.charAt(Q - 1) === ".") Q -= 1;
+      if ((Q === 0) || ((Q === 1) && (Result.charAt(0) === "-"))) {
+        Result = "0"}
+       else Result = rtl.strSetLength(Result,Q);
+    } else {
+      while (Result.charAt(PE - 1 - 1) === "0") {
+        pas.System.Delete({get: function () {
+            return Result;
+          }, set: function (v) {
+            Result = v;
+          }},PE - 1,1);
+        PE -= 1;
+      };
+      if (Result.charAt(PE - 1 - 1) === DS) {
+        pas.System.Delete({get: function () {
+            return Result;
+          }, set: function (v) {
+            Result = v;
+          }},PE - 1,1);
+        PE -= 1;
+      };
+      if (Result.charAt((PE + 1) - 1) === "+") {
+        pas.System.Delete({get: function () {
+            return Result;
+          }, set: function (v) {
+            Result = v;
+          }},PE + 1,1)}
+       else PE += 1;
+      while (Result.charAt((PE + 1) - 1) === "0") pas.System.Delete({get: function () {
+          return Result;
+        }, set: function (v) {
+          Result = v;
+        }},PE + 1,1);
+    };
+    Result = $impl.ReplaceDecimalSep(Result,DS);
+    return Result;
+  };
+  $impl.FormatExponentFloat = function (Value, Precision, Digits, DS) {
+    var Result = "";
+    var P = 0;
+    DS = $mod.FormatSettings.DecimalSeparator;
+    if ((Precision === -1) || (Precision > 15)) Precision = 15;
+    Result = rtl.floatToStr(Value,Precision + 7);
+    while (Result.charAt(0) === " ") pas.System.Delete({get: function () {
+        return Result;
+      }, set: function (v) {
+        Result = v;
+      }},1,1);
+    P = pas.System.Pos("E",Result);
+    if (P === 0) {
+      Result = $impl.ReplaceDecimalSep(Result,DS);
+      return Result;
+    };
+    P += 2;
+    if (Digits > 4) Digits = 4;
+    Digits = (Result.length - P - Digits) + 1;
+    if (Digits < 0) {
+      pas.System.Insert(pas.System.Copy("0000",1,-Digits),{get: function () {
+          return Result;
+        }, set: function (v) {
+          Result = v;
+        }},P)}
+     else while ((Digits > 0) && (Result.charAt(P - 1) === "0")) {
+      pas.System.Delete({get: function () {
+          return Result;
+        }, set: function (v) {
+          Result = v;
+        }},P,1);
+      if (P > Result.length) {
+        pas.System.Delete({get: function () {
+            return Result;
+          }, set: function (v) {
+            Result = v;
+          }},P - 2,2);
+        break;
+      };
+      Digits -= 1;
+    };
+    Result = $impl.ReplaceDecimalSep(Result,DS);
+    return Result;
+  };
+  $impl.FormatFixedFloat = function (Value, Digits, DS) {
+    var Result = "";
+    if (Digits === -1) {
+      Digits = 2}
+     else if (Digits > 18) Digits = 18;
+    Result = rtl.floatToStr(Value,0,Digits);
+    if ((Result !== "") && (Result.charAt(0) === " ")) pas.System.Delete({get: function () {
+        return Result;
+      }, set: function (v) {
+        Result = v;
+      }},1,1);
+    Result = $impl.ReplaceDecimalSep(Result,DS);
+    return Result;
+  };
+  $impl.FormatNumberFloat = function (Value, Digits, DS, TS) {
+    var Result = "";
+    var P = 0;
+    if (Digits === -1) {
+      Digits = 2}
+     else if (Digits > 15) Digits = 15;
+    Result = rtl.floatToStr(Value,0,Digits);
+    if ((Result !== "") && (Result.charAt(0) === " ")) pas.System.Delete({get: function () {
+        return Result;
+      }, set: function (v) {
+        Result = v;
+      }},1,1);
+    P = pas.System.Pos(".",Result);
+    if (P <= 0) P = Result.length + 1;
+    Result = $impl.ReplaceDecimalSep(Result,DS);
+    P -= 3;
+    if ((TS !== "") && (TS !== "\x00")) while (P > 1) {
+      if (Result.charAt(P - 1 - 1) !== "-") pas.System.Insert(TS,{get: function () {
+          return Result;
+        }, set: function (v) {
+          Result = v;
+        }},P);
+      P -= 3;
+    };
+    return Result;
+  };
+  $impl.RemoveLeadingNegativeSign = function (AValue, DS, aThousandSeparator) {
+    var Result = false;
+    var i = 0;
+    var TS = "";
+    var StartPos = 0;
+    Result = false;
+    StartPos = 2;
+    TS = aThousandSeparator;
+    for (var $l = StartPos, $end = AValue.get().length; $l <= $end; $l++) {
+      i = $l;
+      Result = (AValue.get().charCodeAt(i - 1) in rtl.createSet(48,DS.charCodeAt(),69,43)) || (AValue.get().charAt(i - 1) === TS);
+      if (!Result) break;
+    };
+    if (Result && (AValue.get().charAt(0) === "-")) pas.System.Delete(AValue,1,1);
+    return Result;
+  };
+  $impl.FormatNumberCurrency = function (Value, Digits, aSettings) {
+    var Result = "";
+    var Negative = false;
+    var P = 0;
+    var CS = "";
+    var DS = "";
+    var TS = "";
+    DS = aSettings.DecimalSeparator;
+    TS = aSettings.ThousandSeparator;
+    CS = aSettings.CurrencyString;
+    if (Digits === -1) {
+      Digits = aSettings.CurrencyDecimals}
+     else if (Digits > 18) Digits = 18;
+    Result = rtl.floatToStr(Value / 10000,0,Digits);
+    Negative = Result.charAt(0) === "-";
+    if (Negative) pas.System.Delete({get: function () {
+        return Result;
+      }, set: function (v) {
+        Result = v;
+      }},1,1);
+    P = pas.System.Pos(".",Result);
+    if (TS !== "") {
+      if (P !== 0) {
+        Result = $impl.ReplaceDecimalSep(Result,DS)}
+       else P = Result.length + 1;
+      P -= 3;
+      while (P > 1) {
+        pas.System.Insert(TS,{get: function () {
+            return Result;
+          }, set: function (v) {
+            Result = v;
+          }},P);
+        P -= 3;
+      };
+    };
+    if (Negative) $impl.RemoveLeadingNegativeSign({get: function () {
+        return Result;
+      }, set: function (v) {
+        Result = v;
+      }},DS,TS);
+    if (!Negative) {
+      var $tmp = aSettings.CurrencyFormat;
+      if ($tmp === 0) {
+        Result = CS + Result}
+       else if ($tmp === 1) {
+        Result = Result + CS}
+       else if ($tmp === 2) {
+        Result = CS + " " + Result}
+       else if ($tmp === 3) Result = Result + " " + CS;
+    } else {
+      var $tmp1 = aSettings.NegCurrFormat;
+      if ($tmp1 === 0) {
+        Result = "(" + CS + Result + ")"}
+       else if ($tmp1 === 1) {
+        Result = "-" + CS + Result}
+       else if ($tmp1 === 2) {
+        Result = CS + "-" + Result}
+       else if ($tmp1 === 3) {
+        Result = CS + Result + "-"}
+       else if ($tmp1 === 4) {
+        Result = "(" + Result + CS + ")"}
+       else if ($tmp1 === 5) {
+        Result = "-" + Result + CS}
+       else if ($tmp1 === 6) {
+        Result = Result + "-" + CS}
+       else if ($tmp1 === 7) {
+        Result = Result + CS + "-"}
+       else if ($tmp1 === 8) {
+        Result = "-" + Result + " " + CS}
+       else if ($tmp1 === 9) {
+        Result = "-" + CS + " " + Result}
+       else if ($tmp1 === 10) {
+        Result = Result + " " + CS + "-"}
+       else if ($tmp1 === 11) {
+        Result = CS + " " + Result + "-"}
+       else if ($tmp1 === 12) {
+        Result = CS + " " + "-" + Result}
+       else if ($tmp1 === 13) {
+        Result = Result + "-" + " " + CS}
+       else if ($tmp1 === 14) {
+        Result = "(" + CS + " " + Result + ")"}
+       else if ($tmp1 === 15) Result = "(" + Result + " " + CS + ")";
+    };
+    return Result;
+  };
+  $impl.InitGlobalFormatSettings = function () {
+    $mod.FormatSettings.$assign($mod.TFormatSettings.Create());
+    $mod.TimeSeparator = $mod.FormatSettings.TimeSeparator;
+    $mod.DateSeparator = $mod.FormatSettings.DateSeparator;
+    $mod.ShortDateFormat = $mod.FormatSettings.ShortDateFormat;
+    $mod.LongDateFormat = $mod.FormatSettings.LongDateFormat;
+    $mod.ShortTimeFormat = $mod.FormatSettings.ShortTimeFormat;
+    $mod.LongTimeFormat = $mod.FormatSettings.LongTimeFormat;
+    $mod.DecimalSeparator = $mod.FormatSettings.DecimalSeparator;
+    $mod.ThousandSeparator = $mod.FormatSettings.ThousandSeparator;
+    $mod.TimeAMString = $mod.FormatSettings.TimeAMString;
+    $mod.TimePMString = $mod.FormatSettings.TimePMString;
+    $mod.CurrencyFormat = $mod.FormatSettings.CurrencyFormat;
+    $mod.NegCurrFormat = $mod.FormatSettings.NegCurrFormat;
+    $mod.CurrencyDecimals = $mod.FormatSettings.CurrencyDecimals;
+    $mod.CurrencyString = $mod.FormatSettings.CurrencyString;
+  };
+  $impl.DoClassRef = function (C) {
+    if (C === null) ;
+  };
 });
 rtl.module("graph",["System"],function () {
   "use strict";
@@ -1552,7 +2547,7 @@ rtl.module("graph",["System"],function () {
     if (rtl.length($impl.FB) === 0) return;
     for (i = 0; i <= 307199; i++) $impl.FB[i] = 0;
   };
-},["JS","Web","weborworker","crt"],function () {
+},["JS","Web","weborworker","SysUtils","crt"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
@@ -1597,26 +2592,53 @@ rtl.module("crt",["System","JS"],function () {
     });
     return Result;
   };
-  this.Yield = function () {
+  this.AskReal = function (prompt) {
     var Result = null;
+    Result = $impl.AskPrompt(prompt,true);
+    return Result;
+  };
+  this.AskString = function (prompt) {
+    var Result = null;
+    Result = $impl.AskPrompt(prompt,false);
+    return Result;
+  };
+  this.WaitKey = function () {
+    var Result = null;
+    $impl.Install();
     Result = new Promise(function (resolve, reject) {
-      if (!window.__retroYield) {
-        const ch = new MessageChannel();
-        const q = [];
-        ch.port1.onmessage = () => { const f = q.shift(); if (f) f(0); };
-        window.__retroYield = (cb) => { q.push(cb); ch.port2.postMessage(0); };
-      }
-      window.__retroYield(resolve);
+      const poll = () => {
+        if (pas.crt.KeyPressed()) { pas.crt.ReadKey(); resolve(0); }
+        else setTimeout(poll, 50);
+      };
+      poll();
     });
     return Result;
   };
-  this.TextBackground = function (c) {
-    $impl.TextEnsure();
-    $impl.CurBg = c & 15;
+  this.Sound = function (hz) {
+    try {
+      if (!window.__retroAudio) {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const gain = ctx.createGain();
+        gain.gain.value = 0.04;
+        gain.connect(ctx.destination);
+        window.__retroAudio = { ctx, gain, osc: null };
+      }
+      const a = window.__retroAudio;
+      if (a.osc) { a.osc.stop(); a.osc = null; }
+      a.ctx.resume && a.ctx.resume();
+      const osc = a.ctx.createOscillator();
+      osc.type = 'square';
+      osc.frequency.value = hz;
+      osc.connect(a.gain);
+      osc.start();
+      a.osc = osc;
+    } catch (e) { /* no audio — fine */ };
   };
-  this.TextColor = function (c) {
-    $impl.TextEnsure();
-    $impl.CurFg = c & 15;
+  this.NoSound = function () {
+    try {
+      const a = window.__retroAudio;
+      if (a && a.osc) { a.osc.stop(); a.osc = null; }
+    } catch (e) {};
   };
   this.GotoXY = function (x, y) {
     $impl.TextEnsure();
@@ -1638,6 +2660,8 @@ rtl.module("crt",["System","JS"],function () {
     };
     $impl.CurX = 1;
     $impl.CurY = 1;
+  };
+  this.Randomize = function () {
   };
   this.DelayScale = 0.004;
   $mod.$init = function () {
@@ -1695,6 +2719,67 @@ rtl.module("crt",["System","JS"],function () {
     if ($impl.Installed) return;
     $impl.Installed = true;
     document.addEventListener("keydown",$impl.OnKeyDown);
+  };
+  $impl.AskPrompt = function (prompt, numeric) {
+    var Result = null;
+    $impl.Install();
+    Result = new Promise(function (resolve, reject) {
+      const box = document.createElement('div');
+      box.style.cssText = 'position:fixed;inset:auto 0 40% 0;display:flex;justify-content:center;z-index:99;';
+      const line = document.createElement('div');
+      line.style.cssText = 'background:#000;color:#fff;font:16px/24px ui-monospace,Menlo,monospace;padding:8px 16px;border:1px solid #545454;white-space:pre;';
+      box.appendChild(line);
+      let buf = '';
+      let done = false;
+      const paint = () => { line.textContent = prompt + ' ' + buf + '▎'; };
+      // feed() is shared by live keydowns and the type-ahead drain below.
+      const feed = (key) => {
+        if (key === 'Enter') {
+          if (numeric) {
+            const n = parseFloat(buf);
+            if (!isFinite(n)) { buf = ''; paint(); return false; }
+            done = true;
+            $impl.PromptActive = false;
+            document.removeEventListener('keydown', onKey, true);
+            box.remove();
+            resolve(n);
+            return true;
+          }
+          done = true;
+          $impl.PromptActive = false;
+          document.removeEventListener('keydown', onKey, true);
+          box.remove();
+          resolve(buf);
+          return true;
+        }
+        if (key === 'Backspace') { buf = buf.slice(0, -1); paint(); return false; }
+        if (numeric ? /^[0-9.\-]$/.test(key) : key.length === 1) { buf += key; paint(); }
+        return false;
+      };
+      const onKey = (e) => {
+        // Esc must stay quittable mid-prompt: let it propagate to the
+        // bundle's page-level listener (retro:quit to the NC parent).
+        if (e.key === 'Escape') return;
+        feed(e.key);
+        e.stopPropagation();
+      };
+      paint();
+      document.body.appendChild(box);
+      // DOS type-ahead: keys typed before this prompt appeared are waiting in
+      // the crt queue — drain them first (a fast typist never loses input).
+      while (!done && pas.crt.KeyPressed()) {
+        const c = pas.crt.ReadKey();
+        const code = c.charCodeAt(0);
+        if (code === 0) { if (pas.crt.KeyPressed()) pas.crt.ReadKey(); continue; } // ext scancode pair
+        if (code === 27) continue; // a queued Esc quits (page listener), never joins a name
+        feed(code === 13 ? 'Enter' : (code === 8 ? 'Backspace' : c));
+      }
+      if (!done) {
+        $impl.PromptActive = true; // the queue must NOT also record prompt keys (see var)
+        document.addEventListener('keydown', onKey, true); // capture: the prompt owns the keyboard
+      };
+    });
+    return Result;
   };
   $impl.Cols = 80;
   $impl.Rows = 25;
@@ -1843,101 +2928,226 @@ rtl.module("crt",["System","JS"],function () {
     window.requestAnimationFrame($impl.TextPaint);
   };
 });
-rtl.module("t_graph",["System","crt"],function () {
+rtl.module("dos",["System"],function () {
   "use strict";
   var $mod = this;
-  this.gorizontal = function (x1, y, x2, uc, dc) {
-    var n = 0;
-    pas.crt.TextColor(uc);
-    pas.crt.TextBackground(dc);
-    pas.crt.GotoXY(x1,y);
-    for (var $l = x1, $end = x2; $l <= $end; $l++) {
-      n = $l;
-      pas.System.Write("-");
-    };
+  this.GetTime = function (hour, minute, second, sec100) {
+    var now = 0.0;
+    var h = 0;
+    var m = 0;
+    var s = 0;
+    var ms = 0;
+    now = pas.SysUtils.Time();
+    pas.SysUtils.DecodeTime(now,{get: function () {
+        return h;
+      }, set: function (v) {
+        h = v;
+      }},{get: function () {
+        return m;
+      }, set: function (v) {
+        m = v;
+      }},{get: function () {
+        return s;
+      }, set: function (v) {
+        s = v;
+      }},{get: function () {
+        return ms;
+      }, set: function (v) {
+        ms = v;
+      }});
+    hour.set(h);
+    minute.set(m);
+    second.set(s);
+    sec100.set(Math.floor(ms / 10));
   };
-  this.vertical = function (y1, x, y2, uc, dc) {
-    var n = 0;
-    pas.crt.TextColor(uc);
-    pas.crt.TextBackground(dc);
-    for (var $l = y1, $end = y2; $l <= $end; $l++) {
-      n = $l;
-      pas.crt.GotoXY(x,n);
-      pas.System.Write("|");
-    };
-  };
-  this.line = function (x1, y1, x2, y2, uc, dc) {
-    pas.crt.TextColor(uc);
-    pas.crt.TextBackground(dc);
-    if (y1 === y2) {
-      $mod.gorizontal(x1,y1,x2,uc,dc)}
-     else if (x1 === x2) {
-      $mod.vertical(y1,x1,y2,uc,dc)}
-     else {
-      pas.System.Writeln("В текстовом режиме невозможно выводить косые линии");
-      return;
-    };
-  };
-  this.box = function (x1, y1, x2, y2, uc, dc) {
-    var x = 0;
-    var y = 0;
-    pas.crt.TextColor(uc);
-    pas.crt.TextBackground(0);
-    $mod.line(x1,y1,x1,y2,uc,0);
-    $mod.line(x1,y1,x2,y1,uc,0);
-    $mod.line(x1,y2,x2,y2,uc,0);
-    $mod.line(x2,y1,x2,y2,uc,0);
-    pas.crt.GotoXY(x1,y1);
-    pas.System.Write("Ú");
-    pas.crt.GotoXY(x2,y1);
-    pas.System.Write("¿");
-    pas.crt.GotoXY(x1,y2);
-    pas.System.Write("À");
-    pas.crt.GotoXY(x2,y2);
-    pas.System.Write("Ù");
-    pas.crt.TextBackground(dc);
-    for (var $l = y1, $end = y2; $l <= $end; $l++) {
-      y = $l;
-      for (var $l1 = x1, $end1 = x2; $l1 <= $end1; $l1++) {
-        x = $l1;
-        pas.crt.GotoXY(x,y);
-        pas.System.Write(" ");
-      };
-    };
-  };
-});
-rtl.module("program",["System","t_graph","crt"],function () {
+},["SysUtils"]);
+rtl.module("program",["System","crt","dos"],function () {
   "use strict";
   var $mod = this;
-  this.duration = 1000;
-  this.cx = 0;
-  this.ch = 0;
+  this.p = 5000;
+  this.q = 5000;
+  this.g = 1000;
+  this.n = 0;
+  this.q1 = 0;
+  this.q2 = 0;
+  this.h = 0;
+  this.m = 0;
+  this.s = 0;
+  this.d = 0;
+  this.t = 0;
+  this.t0 = 0;
+  this.s1 = 0;
+  this.s2 = 0;
+  this.r1 = 0;
+  this.r2 = 0;
+  this.g1 = 0;
+  this.g2 = 0;
+  this.h1 = 0;
+  this.h2 = 0;
+  this.t1 = "";
+  this.t2 = "";
+  this.p1 = "";
+  this.p2 = "";
   this.Main = async function () {
-    pas.crt.TextBackground(0);
+    pas.crt.NoSound();
     pas.crt.ClrScr();
-    $mod.cx = 40;
-    pas.t_graph.box(20,1,60,24,15,10);
-    pas.crt.TextColor(0);
+    $mod.s1 = 0;
+    $mod.s2 = 0;
+    pas.crt.Randomize();
+    $mod.t1 = await pas.crt.AskString("Назва команди 1");
+    $mod.p1 = await pas.crt.AskString("Ловець команди 1");
+    $mod.r1 = pas.System.Trunc(await pas.crt.AskReal("Реакція ловця 1 (число, напр. 300)"));
+    $mod.h1 = pas.System.Trunc(await pas.crt.AskReal("Влучність команди 1 (число, напр. 500)"));
+    $mod.t2 = await pas.crt.AskString("Назва команди 2");
+    $mod.p2 = await pas.crt.AskString("Ловець команди 2");
+    $mod.r2 = pas.System.Trunc(await pas.crt.AskReal("Реакція ловця 2 (число, напр. 300)"));
+    $mod.h2 = pas.System.Trunc(await pas.crt.AskReal("Влучність команди 2 (число, напр. 500)"));
+    pas.crt.ClrScr();
+    $mod.n = pas.System.Random(6 * 5000);
+    pas.dos.GetTime({p: $mod, get: function () {
+        return this.p.h;
+      }, set: function (v) {
+        this.p.h = v;
+      }},{p: $mod, get: function () {
+        return this.p.m;
+      }, set: function (v) {
+        this.p.m = v;
+      }},{p: $mod, get: function () {
+        return this.p.s;
+      }, set: function (v) {
+        this.p.s = v;
+      }},{p: $mod, get: function () {
+        return this.p.d;
+      }, set: function (v) {
+        this.p.d = v;
+      }});
+    $mod.t0 = ($mod.h * 3600) + ($mod.m * 60) + $mod.s;
     do {
-      await pas.crt.Yield();
-      pas.crt.TextBackground(10);
-      $mod.ch = pas.crt.ReadKey().charCodeAt();
-      if (($mod.ch === 75) || ($mod.ch === 77)) {
-        pas.crt.GotoXY($mod.cx,23);
-        pas.System.Write(" ");
-        var $tmp = $mod.ch;
-        if ($tmp === 75) {
-          $mod.cx = $mod.cx - 1}
-         else if ($tmp === 77) $mod.cx = $mod.cx + 1;
-        await pas.crt.Delay(1000 * 3);
+      $mod.q1 = pas.System.Random(6 * 5000);
+      $mod.q2 = pas.System.Random(6 * 5000);
+      pas.dos.GetTime({p: $mod, get: function () {
+          return this.p.h;
+        }, set: function (v) {
+          this.p.h = v;
+        }},{p: $mod, get: function () {
+          return this.p.m;
+        }, set: function (v) {
+          this.p.m = v;
+        }},{p: $mod, get: function () {
+          return this.p.s;
+        }, set: function (v) {
+          this.p.s = v;
+        }},{p: $mod, get: function () {
+          return this.p.d;
+        }, set: function (v) {
+          this.p.d = v;
+        }});
+      $mod.t = ($mod.h * 3600) + ($mod.m * 60) + $mod.s;
+      if (((($mod.t - $mod.t0) % (pas.System.Random(5) + 1)) === 0) && (($mod.t - $mod.t0) !== 0)) {
+        pas.crt.ClrScr();
+        if ((($mod.t - $mod.t0) % 60) < 10) {
+          pas.System.Writeln(Math.floor(($mod.t - $mod.t0) / 60),":0",($mod.t - $mod.t0) % 60)}
+         else pas.System.Writeln(Math.floor(($mod.t - $mod.t0) / 60),":",($mod.t - $mod.t0) % 60);
+        pas.System.Writeln($mod.t1);
+        pas.System.Write($mod.t2);
+        pas.crt.GotoXY(40,2);
+        pas.System.Write($mod.s1);
+        pas.crt.GotoXY(40,3);
+        pas.System.Writeln($mod.s2);
+        pas.System.Write("Ловец команды ",$mod.t1," ",$mod.p1);
+        var $tmp = Math.abs($mod.q1 - $mod.n);
+        if (($tmp >= 0) && ($tmp <= Math.floor(5000 / 100))) {
+          pas.System.Writeln(" близок к снитчу")}
+         else if (($tmp >= (Math.floor(5000 / 100) + 1)) && ($tmp <= Math.floor(5000 / 10))) {
+          pas.System.Writeln(" похоже заметил снитч")}
+         else {
+          pas.System.Writeln(" ищет снитч");
+        };
+        pas.System.Write("Ловец команды ",$mod.t2," ",$mod.p2);
+        var $tmp1 = Math.abs($mod.q2 - $mod.n);
+        if (($tmp1 >= 0) && ($tmp1 <= 1000)) {
+          pas.System.Writeln(" близок к снитчу")}
+         else if (($tmp1 >= 1001) && ($tmp1 <= 10000)) {
+          pas.System.Writeln(" похоже заметил снитч")}
+         else {
+          pas.System.Writeln(" ищет снитч");
+        };
       };
-      if ($mod.cx === 20) $mod.cx = 21;
-      if ($mod.cx === 60) $mod.cx = 59;
-      pas.crt.GotoXY($mod.cx,23);
-      pas.System.Write("\x1E");
-      pas.crt.GotoXY(1,1);
-      pas.crt.TextBackground(0);
-    } while (!($mod.ch === 27));
+      await pas.crt.Delay(pas.System.Random(6) * 5000);
+      $mod.g1 = ($mod.n - pas.System.Random(1000 - $mod.h1)) + pas.System.Random(1000 - $mod.h1);
+      $mod.g2 = ($mod.n - pas.System.Random(1000 - $mod.h2)) + pas.System.Random(1000 - $mod.h2);
+      if (Math.abs($mod.n - $mod.g1) <= $mod.h1) {
+        pas.crt.ClrScr();
+        if ((($mod.t - $mod.t0) % 60) < 10) {
+          pas.System.Writeln(Math.floor(($mod.t - $mod.t0) / 60),":0",($mod.t - $mod.t0) % 60)}
+         else pas.System.Writeln(Math.floor(($mod.t - $mod.t0) / 60),":",($mod.t - $mod.t0) % 60);
+        pas.System.Writeln($mod.t1);
+        pas.System.Write($mod.t2);
+        pas.crt.GotoXY(40,2);
+        $mod.s1 = $mod.s1 + 10;
+        pas.System.Write($mod.s1);
+        pas.crt.GotoXY(40,3);
+        pas.System.Writeln($mod.s2);
+        pas.System.Writeln("Команда ",$mod.t1," забивает гол");
+      };
+      if (Math.abs($mod.n - $mod.g2) <= $mod.h2) {
+        pas.crt.ClrScr();
+        if ((($mod.t - $mod.t0) % 60) < 10) {
+          pas.System.Writeln(Math.floor(($mod.t - $mod.t0) / 60),":0",($mod.t - $mod.t0) % 60)}
+         else pas.System.Writeln(Math.floor(($mod.t - $mod.t0) / 60),":",($mod.t - $mod.t0) % 60);
+        pas.System.Writeln($mod.t1);
+        pas.System.Write($mod.t2);
+        pas.crt.GotoXY(40,2);
+        $mod.s2 = $mod.s2 + 10;
+        pas.System.Write($mod.s1);
+        pas.crt.GotoXY(40,3);
+        pas.System.Writeln($mod.s2);
+        pas.System.Writeln("Команда ",$mod.t2," забивает гол");
+      };
+      await pas.crt.Delay(60000);
+      if (Math.floor(($mod.t - $mod.t0) / 60) >= 2) {
+        $mod.n = pas.System.Random($mod.r1 + $mod.r2);
+        if ($mod.n > $mod.r1) {
+          $mod.q2 = $mod.n}
+         else $mod.q1 = $mod.n;
+      };
+    } while (!((Math.abs($mod.q1 - $mod.n) <= $mod.r1) || (Math.abs($mod.q2 - $mod.n) <= $mod.r2)));
+    if ((Math.abs($mod.q1 - $mod.n) <= $mod.r1) && (Math.abs($mod.q2 - $mod.n) <= $mod.r2)) {
+      if (Math.abs($mod.q1 - $mod.n) > Math.abs($mod.q2 - $mod.n)) {
+        $mod.q1 = $mod.n}
+       else $mod.q2 = $mod.n;
+    } else if (Math.abs($mod.q1 - $mod.n) <= $mod.r1) {
+      $mod.q1 = $mod.n}
+     else $mod.q2 = $mod.n;
+    if ($mod.q1 === $mod.n) {
+      pas.crt.ClrScr();
+      pas.System.Writeln(Math.floor(($mod.t - $mod.t0) / 60),":",($mod.t - $mod.t0) % 60);
+      pas.System.Writeln($mod.t1);
+      pas.System.Write($mod.t2);
+      pas.crt.GotoXY(40,2);
+      $mod.s1 = $mod.s1 + 150;
+      pas.System.Write($mod.s1);
+      pas.crt.GotoXY(40,3);
+      pas.System.Writeln($mod.s2);
+      pas.System.Writeln("Ловец команды ",$mod.t1," ",$mod.p1," словил снитч!");
+      pas.System.Write("Ловец команды ",$mod.t2," ",$mod.p2," выглядет разочарованым");
+    };
+    if ($mod.q2 === $mod.n) {
+      pas.crt.ClrScr();
+      pas.System.Writeln(Math.floor(($mod.t - $mod.t0) / 60),":",($mod.t - $mod.t0) % 60);
+      pas.System.Writeln($mod.t1);
+      pas.System.Write($mod.t2);
+      pas.crt.GotoXY(40,2);
+      $mod.s2 = $mod.s2 + 150;
+      pas.System.Write($mod.s1);
+      pas.crt.GotoXY(40,3);
+      pas.System.Writeln($mod.s2);
+      pas.System.Writeln("Ловец команды ",$mod.t2," ",$mod.p2," словил снитч!");
+      pas.System.Write("Ловец команды ",$mod.t1," ",$mod.p1," выглядет разочарованым");
+    };
+    pas.crt.Sound(5000);
+    await pas.crt.WaitKey();
+    pas.crt.NoSound();
   };
   $mod.$main = function () {
     $mod.Main();
