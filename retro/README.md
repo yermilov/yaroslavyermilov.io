@@ -58,6 +58,33 @@ with a real Pascal reference in the unit's `initialization` (see crt.pas), and
 test EVERY port's bundle, not just the one you were working on — QUIDDITC's
 RANDOM crashed at its first prompt while SNITCH ran fine, same crt unit.
 
+## Bilingual EN/UA (localization)
+
+Every game is bilingual, switched by the **site locale** (the NC gets `locale`
+and launches each game as `index.html?lang=en|ua`; build.ts sets
+`window.__retroLang` from that query param before the bundle runs).
+
+- **Inline literals** → the `nls` shim: `Loc('English','Українською')` returns
+  the string for the active language (`GameLang` is the raw `'en'`/`'ua'`). A
+  game only `uses nls` when it shows text, so graphical-only ports stay
+  byte-identical. NB: the selector is **`Loc`**, not `T` — a bare `T` parses as
+  a generic type param in pas2js and won't compile.
+- **Data-file games** (BAKKARA, FOOTBALL) → a sibling **`data.en/`** dir holds
+  the English versions of the text screens; build.ts inlines it as
+  `window.__retroFilesEn`, and the tpfiles shim returns the EN copy when
+  `__retroLang==='en'`, else the base. `data/` is the **Ukrainian base**;
+  language-neutral files (BAKKARA card art, FOOTBALL numeric stats) need no
+  override. Keep the fixed line counts the read loops expect (BAKKARA screens
+  23/5; FOOTBALL FBP/FBT/STD/STT layout).
+- **NC chrome** (`NortonCommander.tsx`) uses a `t(ua, en)` helper; the F1
+  `note`/`controls` are `{en, ua}` in build.ts's `GameDef` and flow through the
+  manifest. Game **titles** stay as their proper names (WarWork, BAKKARA, Пушка).
+- **Russian removed** from all playable text (QUIDDITC commentary, BAKKARA,
+  FOOTBALL were Russian; the rest were Ukrainian/English). The **original
+  F3-viewable sources are left byte-for-byte** as the historical exhibit — only
+  the ported/playable text is localised. Verify a game by RUNNING it in both
+  `?lang=en` and `?lang=ua`.
+
 ## Porting order (simplest → hardest)
 
 PINGPONG ✓ → PUSHKA ✓ → ANIMGAME/CARS ✓ → SUPER ✓ → QUIDDITC ✓ → BAKKARA ✓ → FOOTBALL ✓ →

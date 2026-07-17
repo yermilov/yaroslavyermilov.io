@@ -29,13 +29,16 @@ const PAS2JS = process.env.PAS2JS ?? 'pas2js';
 /** pas2js RTL sources checkout matching the compiler (see retro/README.md). */
 const PAS2JS_RTL = process.env.PAS2JS_RTL ?? '';
 
+/** A UI string in both site locales (en default, ua). */
+interface LocStr { en: string; ua: string }
+
 /** Which original folders appear in the NC, in panel order, with port status. */
 interface GameDef {
   dir: string; // folder name under GAMES_DIR (and public/retro/src/)
   title: string; // human title for F1 help
   year: string;
-  note: string; // one-liner for F1 help (what the program is)
-  controls?: string; // shown before launch / in F1
+  note: LocStr; // one-liner for F1 help (what the program is)
+  controls?: LocStr; // shown before launch / in F1
   /** Ported programs of this folder: slug under public/retro/games/ + main .pas
    *  in retro/games/<dir>/ + the manifest file whose Enter launches it (for
    *  folders without .EXEs, e.g. the CARS sources). Any .EXE still launches
@@ -48,24 +51,24 @@ const GAMES: GameDef[] = [
     dir: 'PINGPONG',
     title: 'Ping-Pong',
     year: '2005',
-    note: 'Арканоїд: платформа, мʼяч і стіна блоків.',
-    controls: '← → — рухати платформу · Esc — вийти',
+    note: { ua: 'Арканоїд: платформа, мʼяч і стіна блоків.', en: 'Breakout: paddle, ball, wall of bricks.' },
+    controls: { ua: '← → — рухати платформу · Esc — вийти', en: '← → move the paddle · Esc to exit' },
     ports: [{ slug: 'pingpong', main: 'PINGPONG.pas' }],
   },
   {
     dir: 'PUSHKA',
     title: 'Пушка',
     year: '2008',
-    note: 'Балістика: політ снаряда під кутом.',
-    controls: 'введи кут/швидкість/координати + Enter · будь-яка клавіша — стоп · Esc — вийти',
+    note: { ua: 'Балістика: політ снаряда під кутом.', en: "Ballistics: a projectile's flight at an angle." },
+    controls: { ua: 'введи кут/швидкість/координати + Enter · будь-яка клавіша — стоп · Esc — вийти', en: 'enter angle/speed/coords + Enter · any key stops · Esc to exit' },
     ports: [{ slug: 'pushka', main: 'PUSHKA.pas' }],
   },
   {
     dir: 'ANIMGAME',
     title: 'Cars',
     year: '2005',
-    note: 'Текстові анімації: машинка ▲ і зорепад (CARS1/CARS2).',
-    controls: '← → — рухати машинку · Esc — вийти',
+    note: { ua: 'Текстові анімації: машинка ▲ і зорепад (CARS1/CARS2).', en: 'Text animations: a car ▲ and a starfall (CARS1/CARS2).' },
+    controls: { ua: '← → — рухати машинку · Esc — вийти', en: '← → move the car · Esc to exit' },
     ports: [
       { slug: 'cars2', main: 'CARS2.pas', file: 'CARS/CARS2.PAS' },
       { slug: 'cars1', main: 'CARS1.pas', file: 'CARS/CARS1.PAS' },
@@ -75,16 +78,16 @@ const GAMES: GameDef[] = [
     dir: 'SUPER',
     title: 'Super',
     year: '2008',
-    note: 'Вавилонська бібліотека: перебір УСІХ рядків довжини n (47 символів).',
-    controls: 'введи n + Enter (1–3 розумно, далі — вічність) · Esc — вийти',
+    note: { ua: 'Вавилонська бібліотека: перебір УСІХ рядків довжини n (47 символів).', en: 'Library of Babel: enumerate ALL strings of length n (47 chars).' },
+    controls: { ua: 'введи n + Enter (1–3 розумно, далі — вічність) · Esc — вийти', en: 'enter n + Enter (1–3 is sane, more is eternity) · Esc to exit' },
     ports: [{ slug: 'super', main: 'SUPER.pas' }],
   },
   {
     dir: 'QUIDDITC',
     title: 'Quidditch',
     year: '2008',
-    note: 'Квідичні матч-симулятори: SNITCH (інтерактивний) і RANDOM (авто).',
-    controls: 'введи команди/ловців/числа + Enter · у SNITCH: a та s — голи · Esc — вийти',
+    note: { ua: 'Квідичні матч-симулятори: SNITCH (інтерактивний) і RANDOM (авто).', en: 'Quidditch match sims: SNITCH (interactive) and RANDOM (auto).' },
+    controls: { ua: 'введи команди/ловців/числа + Enter · у SNITCH: a та s — голи · Esc — вийти', en: 'enter teams/seekers/numbers + Enter · in SNITCH a and s score · Esc to exit' },
     ports: [
       { slug: 'snitch', main: 'SNITCH.pas', file: 'SNITCH.EXE' },
       { slug: 'randommatch', main: 'RANDOM.pas', file: 'RANDOM.EXE' },
@@ -94,24 +97,24 @@ const GAMES: GameDef[] = [
     dir: 'BAKKARA',
     title: 'Бакара',
     year: '2005',
-    note: 'Карткова гра: ставка на гравця 1/2/нічию. Арт карт — реконструкція.',
-    controls: 'Enter · s/i/o/q у меню · f/s/n — ставка · Esc — вийти',
+    note: { ua: 'Карткова гра: ставка на гравця 1/2/нічию. Арт карт — реконструкція.', en: 'Card game: bet on player 1/2/draw. Card art is a reconstruction.' },
+    controls: { ua: 'Enter · s/i/o/q у меню · f/s/n — ставка · Esc — вийти', en: 'Enter · s/i/o/q in the menu · f/s/n to bet · Esc to exit' },
     ports: [{ slug: 'bakkara', main: 'BAKKARA.pas', file: 'BAKKARA.EXE' }],
   },
   {
     dir: 'FOOTBALL',
     title: 'Football',
     year: '2005–2009',
-    note: 'Симулятор матчу: 121 гравець, 8 команд. Двигун недописаний — чесні 0:0.',
-    controls: 'введи дві команди (напр. Dynamo і Milan) + Enter · Esc — вийти',
+    note: { ua: 'Симулятор матчу: 121 гравець, 8 команд. Двигун недописаний — чесні 0:0.', en: 'Match sim: 121 players, 8 teams. The engine is unfinished — honest 0:0.' },
+    controls: { ua: 'введи дві команди (напр. Dynamo і Milan) + Enter · Esc — вийти', en: 'enter two teams (e.g. Dynamo and Milan) + Enter · Esc to exit' },
     ports: [{ slug: 'match', main: 'MATCH.pas', file: 'MATCH.EXE' }],
   },
   {
     dir: 'WARWORK',
     title: 'WarWork',
     year: '2005',
-    note: 'Екшн: літак проти зеніток і танків. Меню — мишею.',
-    controls: 'меню — миша · стрілки — рух · b бомба, r ракета · Esc — вийти',
+    note: { ua: 'Екшн: літак проти зеніток і танків. Меню — мишею.', en: 'Action: a plane vs flak and tanks. Menu by mouse.' },
+    controls: { ua: 'меню — миша · стрілки — рух · b бомба, r ракета · Esc — вийти', en: 'menu by mouse · arrows move · b bomb, r rocket · Esc to exit' },
     ports: [{ slug: 'warwork', main: 'WW3.pas', file: 'WW3.EXE' }],
   },
   {
@@ -121,10 +124,10 @@ const GAMES: GameDef[] = [
     // Not portable: not Yarik's game (K. Balitsky + A. Yakovenko), the MENU_KB/
     // ZASTAVA unit sources are lost (TPU-only in every backup), and it targets
     // 800×600 SVGA-256 — see retro/README.md. Browsable only.
-    note: 'Шутер K.Balitsky+A.Yakovenko (не Ярикова гра); юніти меню втрачено — лише перегляд.',
+    note: { ua: 'Шутер K.Balitsky+A.Yakovenko (не Ярикова гра); юніти меню втрачено — лише перегляд.', en: "Shooter by K.Balitsky+A.Yakovenko (not Yarik's game); menu units lost — view only." },
   },
-  { dir: 'SAPER', title: 'Сапер', year: '2006', note: 'Мінер. Сорс лише C++ (SAPER.CPP) — pas2js не застосовний.' },
-  { dir: 'game', title: 'game', year: '2005–2009', note: 'Олімпіадна задачка (теорія ігор, file I/O) — не гра.' },
+  { dir: 'SAPER', title: 'Сапер', year: '2006', note: { ua: 'Мінер. Сорс лише C++ (SAPER.CPP) — pas2js не застосовний.', en: 'Minesweeper. Source is C++ only (SAPER.CPP) — pas2js N/A.' } },
+  { dir: 'game', title: 'game', year: '2005–2009', note: { ua: 'Олімпіадна задачка (теорія ігор, file I/O) — не гра.', en: 'An olympiad exercise (game theory, file I/O) — not a game.' } },
 ];
 
 /** Extensions treated as viewable text (decoded CP866 → UTF-8, served for F3). */

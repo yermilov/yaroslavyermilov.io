@@ -5,8 +5,14 @@
    "dir": "PINGPONG",
    "title": "Ping-Pong",
    "year": "2005",
-   "note": "Арканоїд: платформа, мʼяч і стіна блоків.",
-   "controls": "← → — рухати платформу · Esc — вийти",
+   "note": {
+    "ua": "Арканоїд: платформа, мʼяч і стіна блоків.",
+    "en": "Breakout: paddle, ball, wall of bricks."
+   },
+   "controls": {
+    "ua": "← → — рухати платформу · Esc — вийти",
+    "en": "← → move the paddle · Esc to exit"
+   },
    "run": "pingpong",
    "files": [
     {
@@ -495,8 +501,14 @@
    "dir": "PUSHKA",
    "title": "Пушка",
    "year": "2008",
-   "note": "Балістика: політ снаряда під кутом.",
-   "controls": "введи кут/швидкість/координати + Enter · будь-яка клавіша — стоп · Esc — вийти",
+   "note": {
+    "ua": "Балістика: політ снаряда під кутом.",
+    "en": "Ballistics: a projectile's flight at an angle."
+   },
+   "controls": {
+    "ua": "введи кут/швидкість/координати + Enter · будь-яка клавіша — стоп · Esc — вийти",
+    "en": "enter angle/speed/coords + Enter · any key stops · Esc to exit"
+   },
    "run": "pushka",
    "files": [
     {
@@ -703,8 +715,14 @@
    "dir": "ANIMGAME",
    "title": "Cars",
    "year": "2005",
-   "note": "Текстові анімації: машинка ▲ і зорепад (CARS1/CARS2).",
-   "controls": "← → — рухати машинку · Esc — вийти",
+   "note": {
+    "ua": "Текстові анімації: машинка ▲ і зорепад (CARS1/CARS2).",
+    "en": "Text animations: a car ▲ and a starfall (CARS1/CARS2)."
+   },
+   "controls": {
+    "ua": "← → — рухати машинку · Esc — вийти",
+    "en": "← → move the car · Esc to exit"
+   },
    "run": "cars2",
    "runs": {
     "CARS/CARS2.PAS": "cars2",
@@ -747,8 +765,14 @@
    "dir": "SUPER",
    "title": "Super",
    "year": "2008",
-   "note": "Вавилонська бібліотека: перебір УСІХ рядків довжини n (47 символів).",
-   "controls": "введи n + Enter (1–3 розумно, далі — вічність) · Esc — вийти",
+   "note": {
+    "ua": "Вавилонська бібліотека: перебір УСІХ рядків довжини n (47 символів).",
+    "en": "Library of Babel: enumerate ALL strings of length n (47 chars)."
+   },
+   "controls": {
+    "ua": "введи n + Enter (1–3 розумно, далі — вічність) · Esc — вийти",
+    "en": "enter n + Enter (1–3 is sane, more is eternity) · Esc to exit"
+   },
    "run": "super",
    "files": [
     {
@@ -787,8 +811,14 @@
    "dir": "QUIDDITC",
    "title": "Quidditch",
    "year": "2008",
-   "note": "Квідичні матч-симулятори: SNITCH (інтерактивний) і RANDOM (авто).",
-   "controls": "введи команди/ловців/числа + Enter · у SNITCH: a та s — голи · Esc — вийти",
+   "note": {
+    "ua": "Квідичні матч-симулятори: SNITCH (інтерактивний) і RANDOM (авто).",
+    "en": "Quidditch match sims: SNITCH (interactive) and RANDOM (auto)."
+   },
+   "controls": {
+    "ua": "введи команди/ловців/числа + Enter · у SNITCH: a та s — голи · Esc — вийти",
+    "en": "enter teams/seekers/numbers + Enter · in SNITCH a and s score · Esc to exit"
+   },
    "run": "snitch",
    "runs": {
     "SNITCH.EXE": "snitch",
@@ -843,8 +873,14 @@
    "dir": "BAKKARA",
    "title": "Бакара",
    "year": "2005",
-   "note": "Карткова гра: ставка на гравця 1/2/нічию. Арт карт — реконструкція.",
-   "controls": "Enter · s/i/o/q у меню · f/s/n — ставка · Esc — вийти",
+   "note": {
+    "ua": "Карткова гра: ставка на гравця 1/2/нічию. Арт карт — реконструкція.",
+    "en": "Card game: bet on player 1/2/draw. Card art is a reconstruction."
+   },
+   "controls": {
+    "ua": "Enter · s/i/o/q у меню · f/s/n — ставка · Esc — вийти",
+    "en": "Enter · s/i/o/q in the menu · f/s/n to bet · Esc to exit"
+   },
    "run": "bakkara",
    "runs": {
     "BAKKARA.EXE": "bakkara"
@@ -874,8 +910,14 @@
    "dir": "FOOTBALL",
    "title": "Football",
    "year": "2005–2009",
-   "note": "Симулятор матчу: 121 гравець, 8 команд. Двигун недописаний — чесні 0:0.",
-   "controls": "введи дві команди (напр. Dynamo і Milan) + Enter · Esc — вийти",
+   "note": {
+    "ua": "Симулятор матчу: 121 гравець, 8 команд. Двигун недописаний — чесні 0:0.",
+    "en": "Match sim: 121 players, 8 teams. The engine is unfinished — honest 0:0."
+   },
+   "controls": {
+    "ua": "введи дві команди (напр. Dynamo і Milan) + Enter · Esc — вийти",
+    "en": "enter two teams (e.g. Dynamo and Milan) + Enter · Esc to exit"
+   },
    "run": "match",
    "runs": {
     "MATCH.EXE": "match"
@@ -2663,8 +2705,14 @@
    "dir": "WARWORK",
    "title": "WarWork",
    "year": "2005",
-   "note": "Екшн: літак проти зеніток і танків. Меню — мишею.",
-   "controls": "меню — миша · стрілки — рух · b бомба, r ракета · Esc — вийти",
+   "note": {
+    "ua": "Екшн: літак проти зеніток і танків. Меню — мишею.",
+    "en": "Action: a plane vs flak and tanks. Menu by mouse."
+   },
+   "controls": {
+    "ua": "меню — миша · стрілки — рух · b бомба, r ракета · Esc — вийти",
+    "en": "menu by mouse · arrows move · b bomb, r rocket · Esc to exit"
+   },
    "run": "warwork",
    "runs": {
     "WW3.EXE": "warwork"
@@ -2850,7 +2898,10 @@
    "dir": "STARWARS",
    "title": "Star Wars",
    "year": "2005",
-   "note": "Шутер K.Balitsky+A.Yakovenko (не Ярикова гра); юніти меню втрачено — лише перегляд.",
+   "note": {
+    "ua": "Шутер K.Balitsky+A.Yakovenko (не Ярикова гра); юніти меню втрачено — лише перегляд.",
+    "en": "Shooter by K.Balitsky+A.Yakovenko (not Yarik's game); menu units lost — view only."
+   },
    "files": [
     {
      "name": "BOLD.CHR",
@@ -3098,7 +3149,10 @@
    "dir": "SAPER",
    "title": "Сапер",
    "year": "2006",
-   "note": "Мінер. Сорс лише C++ (SAPER.CPP) — pas2js не застосовний.",
+   "note": {
+    "ua": "Мінер. Сорс лише C++ (SAPER.CPP) — pas2js не застосовний.",
+    "en": "Minesweeper. Source is C++ only (SAPER.CPP) — pas2js N/A."
+   },
    "files": [
     {
      "name": "SAPER.CPP",
@@ -3118,7 +3172,10 @@
    "dir": "game",
    "title": "game",
    "year": "2005–2009",
-   "note": "Олімпіадна задачка (теорія ігор, file I/O) — не гра.",
+   "note": {
+    "ua": "Олімпіадна задачка (теорія ігор, file I/O) — не гра.",
+    "en": "An olympiad exercise (game theory, file I/O) — not a game."
+   },
    "files": [
     {
      "name": "GAME.BAK",

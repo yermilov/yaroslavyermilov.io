@@ -13,6 +13,11 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+/** A UI string in both site locales. */
+interface LocStr {
+  en: string;
+  ua: string;
+}
 interface ManifestFile {
   name: string;
   size: number;
@@ -23,8 +28,8 @@ interface ManifestFolder {
   dir: string;
   title: string;
   year: string;
-  note: string;
-  controls?: string;
+  note: LocStr;
+  controls?: LocStr;
   run?: string; // folder default (F6 / any .EXE)
   runs?: Record<string, string>; // specific file → its own port slug
   files: ManifestFile[];
@@ -81,6 +86,8 @@ function isOpenable(folder: ManifestFolder, file: ManifestFile): boolean {
 }
 
 export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua' }) {
+  // The site locale drives every NC string; games get it via ?lang= on the iframe.
+  const t = (ua: string, en: string) => (locale === 'ua' ? ua : en);
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [error, setError] = useState(false);
   const [panel, setPanel] = useState<0 | 1>(0);
@@ -144,14 +151,17 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
         setOverlay({
           kind: 'msg',
           title: file.name,
-          lines: ['Двійковий файл — перегляд недоступний.', 'F3 працює для .PAS/.TXT/.BAT/.CPP.'],
+          lines: [
+            t('Двійковий файл — перегляд недоступний.', 'Binary file — preview unavailable.'),
+            t('F3 працює для .PAS/.TXT/.BAT/.CPP.', 'F3 works for .PAS/.TXT/.BAT/.CPP.'),
+          ],
         });
         return;
       }
       fetch(`/retro/src/${dir}/${file.name}`)
         .then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
         .then((text) => setOverlay({ kind: 'view', dir, file: file.name, text }))
-        .catch(() => setOverlay({ kind: 'msg', title: file.name, lines: ['Не вдалося прочитати файл.'] }));
+        .catch(() => setOverlay({ kind: 'msg', title: file.name, lines: [t('Не вдалося прочитати файл.', 'Could not read the file.')] }));
     },
     [],
   );
@@ -160,7 +170,7 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
     (f: ManifestFolder, file?: ManifestFile) => {
       const slug = (file && f.runs?.[file.name]) || f.run;
       if (slug) {
-        setOverlay({ kind: 'run', slug, title: f.title, controls: f.controls });
+        setOverlay({ kind: 'run', slug, title: f.title, controls: f.controls?.[locale] });
         return;
       }
       setOverlay({
@@ -168,11 +178,13 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
         title: file?.name ?? f.dir,
         lines: [
           f.dir === 'SAPER'
-            ? 'Сорс лише C++ — pas2js не застосовний.'
+            ? t('Сорс лише C++ — pas2js не застосовний.', 'Source is C++ only — pas2js N/A.')
             : f.dir === 'game'
-              ? 'Це олімпіадна задачка з file I/O, не гра.'
-              : 'Ще не портовано. Портуються по одній,',
-          f.dir === 'SAPER' || f.dir === 'game' ? 'Кинь F3 на сорс — він читається.' : 'від простіших до складніших (F1 — черга).',
+              ? t('Це олімпіадна задачка з file I/O, не гра.', 'An olympiad file-I/O exercise, not a game.')
+              : t('Ще не портовано. Портуються по одній,', 'Not ported yet. Ported one by one,'),
+          f.dir === 'SAPER' || f.dir === 'game'
+            ? t('Кинь F3 на сорс — він читається.', 'Hit F3 on the source — it reads fine.')
+            : t('від простіших до складніших (F1 — черга).', 'from simplest to hardest (F1 — the queue).'),
         ],
       });
     },
@@ -412,7 +424,7 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
             panel === 0,
             manifest
               ? manifest.folders.map((f, i) =>
-                  row([f.dir, '▸ПАПКА◂', f.year], {
+                  row([f.dir, t('▸ПАПКА◂', '▸DIR◂'), f.year], {
                     key: f.dir,
                     cursor: i === folderIdx && panel === 0,
                     dir: true,
@@ -427,7 +439,7 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
                   }),
                 )
               : ((<div style={{ color: C.text, padding: '0 1ch' }}>Читаю диск…</div>) as React.ReactNode),
-            folder ? `${folder.title} · ${folder.note}` : '',
+            folder ? `${folder.title} · ${folder.note[locale]}` : '',
           )}
         {panelBox(
             folder ? `C:\\GAMES\\${folder.dir}` : 'C:\\GAMES\\…',
@@ -485,7 +497,7 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
             <span>
               {overlay.dir}\{overlay.file}
             </span>
-            <span>Esc — назад</span>
+            <span>{t('Esc — назад', 'Esc — back')}</span>
           </header>
           <div ref={viewRef} style={{ flex: 1, overflow: 'auto', padding: '1ch' }}>
             {/* explicit colors: the site's prose CSS styles bare <pre> (paper bg) */}
@@ -499,7 +511,7 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
         <div style={{ position: 'absolute', inset: 0, background: C.screenBg, display: 'flex', flexDirection: 'column', zIndex: 10 }}>
           <header style={{ background: C.barBg, color: C.barFg, padding: '0 1ch', display: 'flex', justifyContent: 'space-between' }}>
             <span>{overlay.title}.EXE</span>
-            <span>{overlay.controls ?? ''} · Esc — назад до NC</span>
+            <span>{overlay.controls ?? ''} · {t('Esc — назад до NC', 'Esc — back to NC')}</span>
           </header>
           {/* Tier-3 boundary: the game runs in its own browsing context; closing
               the overlay destroys the iframe and with it every rtl.js global. */}
@@ -562,7 +574,7 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
                 <ul style={{ margin: '1ch 0 0', paddingLeft: '3ch' }}>
                   {manifest?.folders.map((f) => (
                     <li key={f.dir}>
-                      {f.dir} — {f.note} {f.run ? '· ГОТОВО, Enter на .EXE' : ''}
+                      {f.dir} — {f.note[locale]} {f.run ? t('· ГОТОВО, Enter на .EXE', '· READY, Enter on the .EXE') : ''}
                     </li>
                   ))}
                 </ul>
