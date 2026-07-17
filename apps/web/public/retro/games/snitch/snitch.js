@@ -2961,7 +2961,24 @@ rtl.module("dos",["System"],function () {
     sec100.set(Math.floor(ms / 10));
   };
 },["SysUtils"]);
-rtl.module("program",["System","crt","dos"],function () {
+rtl.module("nls",["System"],function () {
+  "use strict";
+  var $mod = this;
+  this.GameLang = function () {
+    var Result = "";
+    Result = "ua";
+    Result = (typeof window !== 'undefined' && window.__retroLang === 'en') ? 'en' : 'ua';
+    return Result;
+  };
+  this.Loc = function (en, ua) {
+    var Result = "";
+    if ($mod.GameLang() === "en") {
+      Result = en}
+     else Result = ua;
+    return Result;
+  };
+});
+rtl.module("program",["System","crt","dos","nls"],function () {
   "use strict";
   var $mod = this;
   this.p = 5000;
@@ -2990,12 +3007,12 @@ rtl.module("program",["System","crt","dos"],function () {
     $mod.s1 = 0;
     $mod.s2 = 0;
     pas.crt.Randomize();
-    $mod.t1 = await pas.crt.AskString("Назва команди 1");
-    $mod.p1 = await pas.crt.AskString("Ловець команди 1");
-    $mod.r1 = pas.System.Trunc(await pas.crt.AskReal("Реакція ловця 1 (число, напр. 300)"));
-    $mod.t2 = await pas.crt.AskString("Назва команди 2");
-    $mod.p2 = await pas.crt.AskString("Ловець команди 2");
-    $mod.r2 = pas.System.Trunc(await pas.crt.AskReal("Реакція ловця 2 (число, напр. 300)"));
+    $mod.t1 = await pas.crt.AskString(pas.nls.Loc("Team 1 name","Назва команди 1"));
+    $mod.p1 = await pas.crt.AskString(pas.nls.Loc("Team 1 seeker","Ловець команди 1"));
+    $mod.r1 = pas.System.Trunc(await pas.crt.AskReal(pas.nls.Loc("Seeker 1 reaction (number, e.g. 300)","Реакція ловця 1 (число, напр. 300)")));
+    $mod.t2 = await pas.crt.AskString(pas.nls.Loc("Team 2 name","Назва команди 2"));
+    $mod.p2 = await pas.crt.AskString(pas.nls.Loc("Team 2 seeker","Ловець команди 2"));
+    $mod.r2 = pas.System.Trunc(await pas.crt.AskReal(pas.nls.Loc("Seeker 2 reaction (number, e.g. 300)","Реакція ловця 2 (число, напр. 300)")));
     pas.crt.ClrScr();
     $mod.n = pas.System.Random(6 * 5000);
     pas.dos.GetTime({p: $mod, get: function () {
@@ -3048,23 +3065,23 @@ rtl.module("program",["System","crt","dos"],function () {
         pas.System.Write($mod.s1);
         pas.crt.GotoXY(40,3);
         pas.System.Writeln($mod.s2);
-        pas.System.Write("Ловец команды ",$mod.t1," ",$mod.p1);
+        pas.System.Write(pas.nls.Loc("Seeker of team ","Ловець команди "),$mod.t1," ",$mod.p1);
         var $tmp = Math.abs($mod.q1 - $mod.n);
         if (($tmp >= 0) && ($tmp <= Math.floor(5000 / 100))) {
-          pas.System.Writeln(" близок к снитчу")}
+          pas.System.Writeln(pas.nls.Loc(" is close to the snitch"," близький до снитча"))}
          else if (($tmp >= (Math.floor(5000 / 100) + 1)) && ($tmp <= Math.floor(5000 / 10))) {
-          pas.System.Writeln(" похоже заметил снитч")}
+          pas.System.Writeln(pas.nls.Loc(" seems to have spotted the snitch"," схоже, помітив снитч"))}
          else {
-          pas.System.Writeln(" ищет снитч");
+          pas.System.Writeln(pas.nls.Loc(" is looking for the snitch"," шукає снитч"));
         };
-        pas.System.Write("Ловец команды ",$mod.t2," ",$mod.p2);
+        pas.System.Write(pas.nls.Loc("Seeker of team ","Ловець команди "),$mod.t2," ",$mod.p2);
         var $tmp1 = Math.abs($mod.q2 - $mod.n);
         if (($tmp1 >= 0) && ($tmp1 <= 1000)) {
-          pas.System.Writeln(" близок к снитчу")}
+          pas.System.Writeln(pas.nls.Loc(" is close to the snitch"," близький до снитча"))}
          else if (($tmp1 >= 1001) && ($tmp1 <= 10000)) {
-          pas.System.Writeln(" похоже заметил снитч")}
+          pas.System.Writeln(pas.nls.Loc(" seems to have spotted the snitch"," схоже, помітив снитч"))}
          else {
-          pas.System.Writeln(" ищет снитч");
+          pas.System.Writeln(pas.nls.Loc(" is looking for the snitch"," шукає снитч"));
         };
       };
       $mod.ch = " ";
@@ -3082,7 +3099,7 @@ rtl.module("program",["System","crt","dos"],function () {
         pas.System.Write($mod.s1);
         pas.crt.GotoXY(40,3);
         pas.System.Writeln($mod.s2);
-        pas.System.Writeln("Команда ",$mod.t1," забивает гол");
+        pas.System.Writeln(pas.nls.Loc("Team ","Команда "),$mod.t1,pas.nls.Loc(" scores a goal"," забиває гол"));
       };
       if (($mod.ch === "s") || ($mod.ch === "S")) {
         pas.crt.ClrScr();
@@ -3096,7 +3113,7 @@ rtl.module("program",["System","crt","dos"],function () {
         pas.System.Write($mod.s1);
         pas.crt.GotoXY(40,3);
         pas.System.Writeln($mod.s2);
-        pas.System.Writeln("Команда ",$mod.t2," забивает гол");
+        pas.System.Writeln(pas.nls.Loc("Team ","Команда "),$mod.t2,pas.nls.Loc(" scores a goal"," забиває гол"));
       };
       if (Math.floor(($mod.t - $mod.t0) / 60) > 5) {
         $mod.n = pas.System.Random($mod.r1 + $mod.r2);
@@ -3123,8 +3140,8 @@ rtl.module("program",["System","crt","dos"],function () {
       pas.System.Write($mod.s1);
       pas.crt.GotoXY(40,3);
       pas.System.Writeln($mod.s2);
-      pas.System.Writeln("Ловец команды ",$mod.t1," ",$mod.p1," словил снитч!");
-      pas.System.Write("Ловец команды ",$mod.t2," ",$mod.p2," выглядет разочарованым");
+      pas.System.Writeln(pas.nls.Loc("Seeker of team ","Ловець команди "),$mod.t1," ",$mod.p1,pas.nls.Loc(" caught the snitch!"," спіймав снитч!"));
+      pas.System.Write(pas.nls.Loc("Seeker of team ","Ловець команди "),$mod.t2," ",$mod.p2,pas.nls.Loc(" looks disappointed"," виглядає розчарованим"));
     };
     if ($mod.q2 === $mod.n) {
       pas.crt.ClrScr();
@@ -3136,8 +3153,8 @@ rtl.module("program",["System","crt","dos"],function () {
       pas.System.Write($mod.s1);
       pas.crt.GotoXY(40,3);
       pas.System.Writeln($mod.s2);
-      pas.System.Writeln("Ловец команды ",$mod.t2," ",$mod.p2," словил снитч!");
-      pas.System.Write("Ловец команды ",$mod.t1," ",$mod.p1," выглядет разочарованым");
+      pas.System.Writeln(pas.nls.Loc("Seeker of team ","Ловець команди "),$mod.t2," ",$mod.p2,pas.nls.Loc(" caught the snitch!"," спіймав снитч!"));
+      pas.System.Write(pas.nls.Loc("Seeker of team ","Ловець команди "),$mod.t1," ",$mod.p1,pas.nls.Loc(" looks disappointed"," виглядає розчарованим"));
     };
     pas.crt.Sound(5000);
     await pas.crt.WaitKey();

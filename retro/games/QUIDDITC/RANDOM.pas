@@ -11,7 +11,7 @@
   Everything else — the match logic, the timing via GetTime, Sound/NoSound —
   compiles as written in 2008. }
 program randommatch;
-uses crt,dos;
+uses crt,dos,nls;
 const p=5000;
       q=5000;
       g=1000;
@@ -25,14 +25,14 @@ begin
      s1:=0;
      s2:=0;
      randomize;
-     t1:=await(string, AskString('Назва команди 1'));
-     p1:=await(string, AskString('Ловець команди 1'));
-     r1:=trunc(await(double, AskReal('Реакція ловця 1 (число, напр. 300)')));
-     h1:=trunc(await(double, AskReal('Влучність команди 1 (число, напр. 500)')));
-     t2:=await(string, AskString('Назва команди 2'));
-     p2:=await(string, AskString('Ловець команди 2'));
-     r2:=trunc(await(double, AskReal('Реакція ловця 2 (число, напр. 300)')));
-     h2:=trunc(await(double, AskReal('Влучність команди 2 (число, напр. 500)')));
+     t1:=await(string, AskString(Loc('Team 1 name','Назва команди 1')));
+     p1:=await(string, AskString(Loc('Team 1 seeker','Ловець команди 1')));
+     r1:=trunc(await(double, AskReal(Loc('Seeker 1 reaction (number, e.g. 300)','Реакція ловця 1 (число, напр. 300)'))));
+     h1:=trunc(await(double, AskReal(Loc('Team 1 accuracy (number, e.g. 500)','Влучність команди 1 (число, напр. 500)'))));
+     t2:=await(string, AskString(Loc('Team 2 name','Назва команди 2')));
+     p2:=await(string, AskString(Loc('Team 2 seeker','Ловець команди 2')));
+     r2:=trunc(await(double, AskReal(Loc('Seeker 2 reaction (number, e.g. 300)','Реакція ловця 2 (число, напр. 300)'))));
+     h2:=trunc(await(double, AskReal(Loc('Team 2 accuracy (number, e.g. 500)','Влучність команди 2 (число, напр. 500)'))));
      clrscr;
      n:=random(6*p);
      GetTime(h,m,s,d);
@@ -53,17 +53,17 @@ begin
                    Write(s1);
                    GotoXy(40,3);
                    Writeln(s2);
-                   Write('Ловец команды ',t1,' ',p1);
+                   Write(Loc('Seeker of team ','Ловець команди '),t1,' ',p1);
                    case (abs(q1-n)) of
-                   0..q div 100:Writeln(' близок к снитчу');
-                   q div 100 +1..q div 10:Writeln(' похоже заметил снитч')
-                   else Writeln(' ищет снитч');
+                   0..q div 100:Writeln(Loc(' is close to the snitch',' близький до снитча'));
+                   q div 100 +1..q div 10:Writeln(Loc(' seems to have spotted the snitch',' схоже, помітив снитч'))
+                   else Writeln(Loc(' is looking for the snitch',' шукає снитч'));
                    end;
-                   Write('Ловец команды ',t2,' ',p2);
+                   Write(Loc('Seeker of team ','Ловець команди '),t2,' ',p2);
                    case (abs(q2-n)) of
-                   0..1000:Writeln(' близок к снитчу');
-                   1001..10000:Writeln(' похоже заметил снитч')
-                   else Writeln(' ищет снитч');
+                   0..1000:Writeln(Loc(' is close to the snitch',' близький до снитча'));
+                   1001..10000:Writeln(Loc(' seems to have spotted the snitch',' схоже, помітив снитч'))
+                   else Writeln(Loc(' is looking for the snitch',' шукає снитч'));
                    end;
               end;
            await(delay(random(6)*q));
@@ -81,7 +81,7 @@ begin
                    Write(s1);
                    GotoXy(40,3);
                    Writeln(s2);
-                   Writeln('Команда ',t1,' забивает гол');
+                   Writeln(Loc('Team ','Команда '),t1,Loc(' scores a goal',' забиває гол'));
               end;
            if (abs(n-g2)<=h2) then
               begin
@@ -95,7 +95,7 @@ begin
                    Write(s1);
                    GotoXy(40,3);
                    Writeln(s2);
-                   Writeln('Команда ',t2,' забивает гол');
+                   Writeln(Loc('Team ','Команда '),t2,Loc(' scores a goal',' забиває гол'));
               end;
            await(delay(60000));
            if ((t-t0) div 60>=2) then
@@ -124,8 +124,8 @@ begin
                    Write(s1);
                    GotoXy(40,3);
                    Writeln(s2);
-                   Writeln('Ловец команды ',t1,' ',p1,' словил снитч!');
-                   Write('Ловец команды ',t2,' ',p2,' выглядет разочарованым');
+                   Writeln(Loc('Seeker of team ','Ловець команди '),t1,' ',p1,Loc(' caught the snitch!',' спіймав снитч!'));
+                   Write(Loc('Seeker of team ','Ловець команди '),t2,' ',p2,Loc(' looks disappointed',' виглядає розчарованим'));
         end;
      if (q2=n) then
         begin
@@ -138,8 +138,8 @@ begin
                    Write(s1);
                    GotoXy(40,3);
                    Writeln(s2);
-                   Writeln('Ловец команды ',t2,' ',p2,' словил снитч!');
-                   Write('Ловец команды ',t1,' ',p1,' выглядет разочарованым');
+                   Writeln(Loc('Seeker of team ','Ловець команди '),t2,' ',p2,Loc(' caught the snitch!',' спіймав снитч!'));
+                   Write(Loc('Seeker of team ','Ловець команди '),t1,' ',p1,Loc(' looks disappointed',' виглядає розчарованим'));
         end;
      Sound(5000);
      await(WaitKey);
