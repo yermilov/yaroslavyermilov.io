@@ -50,6 +50,14 @@ inlined into bundles by build.ts). A mismatched rtl.js compiles clean and dies
 at runtime (null `$impl` / null 'DoClassRef') — verify by RUNNING, compilation
 proves nothing.
 
+⚠️ pas2js dead-code elimination is PER-PROGRAM and cannot see `asm` blocks: a
+shim function referenced only from asm (e.g. `pas.crt.KeyPressed` in a drain
+loop) is silently stripped from any game that never calls it from Pascal, and
+that bundle crashes at runtime while every other game works. Pin such symbols
+with a real Pascal reference in the unit's `initialization` (see crt.pas), and
+test EVERY port's bundle, not just the one you were working on — QUIDDITC's
+RANDOM crashed at its first prompt while SNITCH ran fine, same crt unit.
+
 ## Porting order (simplest → hardest)
 
 PINGPONG ✓ → PUSHKA ✓ → ANIMGAME/CARS ✓ → SUPER ✓ → QUIDDITC ✓ → BAKKARA → FOOTBALL →
