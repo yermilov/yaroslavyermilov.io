@@ -2861,6 +2861,23 @@ rtl.module("crt",["System","JS"],function () {
     window.requestAnimationFrame($impl.TextPaint);
   };
 });
+rtl.module("nls",["System"],function () {
+  "use strict";
+  var $mod = this;
+  this.GameLang = function () {
+    var Result = "";
+    Result = "ua";
+    Result = (typeof window !== 'undefined' && window.__retroLang === 'en') ? 'en' : 'ua';
+    return Result;
+  };
+  this.Loc = function (en, ua) {
+    var Result = "";
+    if ($mod.GameLang() === "en") {
+      Result = en}
+     else Result = ua;
+    return Result;
+  };
+});
 rtl.module("EMatch",["System","JS"],function () {
   "use strict";
   var $mod = this;
@@ -3048,7 +3065,7 @@ rtl.module("EMatch",["System","JS"],function () {
       };
       N = 1;
       ChAt();
-      St = "Мы приветствуем вас на стадионе " + Match.Stadium.name;
+      St = pas.nls.Loc("Welcome to the stadium ","Вітаємо вас на стадіоні ") + Match.Stadium.name;
       pas.System.Writeln(St);
       await pas.crt.Delay(1000);
       do {
@@ -3057,10 +3074,10 @@ rtl.module("EMatch",["System","JS"],function () {
       } while (!(MinEnd === MinNow));
     } while (!((MinNow === MinEnd) && (Half === Match.HalfEnd)));
     pas.System.Writeln();
-    pas.System.Writeln("Финальный свисток! ",Match.Ft[0].name," - ",Match.Ft[1].name,"  ",Match.Score[0],":",Match.Score[1]);
+    pas.System.Writeln(pas.nls.Loc("Final whistle! ","Фінальний свисток! "),Match.Ft[0].name," - ",Match.Ft[1].name,"  ",Match.Score[0],":",Match.Score[1]);
     return Result;
   };
-},["crt"]);
+},["crt","nls"]);
 rtl.module("dos",["System"],function () {
   "use strict";
   var $mod = this;
@@ -3202,7 +3219,7 @@ rtl.module("tpfiles",["System"],function () {
     return Result;
   };
 });
-rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles"],function () {
+rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],function () {
   "use strict";
   var $mod = this;
   this.t = 8;
@@ -3232,7 +3249,7 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles"],function () 
   this.dw = 0;
   this.Main = async function () {
     pas.crt.Randomize();
-    pas.System.Writeln("Идёт загрузка стран");
+    pas.System.Writeln(pas.nls.Loc("Loading countries","Завантаження країн"));
     for ($mod.i = 1; $mod.i <= 4; $mod.i++) {
       $mod.st = "" + $mod.i;
       pas.tpfiles.Assign($mod.f,"STT\\" + $mod.st + ".stt");
@@ -3243,9 +3260,9 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles"],function () 
           this.p.name = v;
         }});
       pas.tpfiles.Close($mod.f);
-      pas.System.Writeln($mod.i," загружено");
+      pas.System.Writeln($mod.i,pas.nls.Loc(" loaded"," завантажено"));
     };
-    pas.System.Writeln("Идёт загрузка стадионов");
+    pas.System.Writeln(pas.nls.Loc("Loading stadiums","Завантаження стадіонів"));
     for ($mod.i = 1; $mod.i <= 8; $mod.i++) {
       $mod.st = "" + $mod.i;
       pas.tpfiles.Assign($mod.f,"STD\\" + $mod.st + ".std");
@@ -3259,9 +3276,9 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles"],function () 
       $mod.m = pas.tpfiles.ReadLnNum($mod.f);
       $mod.Stadiums[$mod.i - 1].state.$assign($mod.Countries[$mod.m - 1]);
       pas.tpfiles.Close($mod.f);
-      pas.System.Writeln($mod.i," загружено");
+      pas.System.Writeln($mod.i,pas.nls.Loc(" loaded"," завантажено"));
     };
-    pas.System.Writeln("Идёт загрузка игроков");
+    pas.System.Writeln(pas.nls.Loc("Loading players","Завантаження гравців"));
     for ($mod.i = 0; $mod.i <= 120; $mod.i++) {
       $mod.st = "" + $mod.i;
       pas.tpfiles.Assign($mod.f,"FBP\\" + $mod.st + ".fbp");
@@ -3304,9 +3321,9 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles"],function () 
         $mod.Players[$mod.i].fall = pas.EMatch.FallType.RedCard;
       };
       pas.tpfiles.Close($mod.f);
-      pas.System.Writeln($mod.i," загружено");
+      pas.System.Writeln($mod.i,pas.nls.Loc(" loaded"," завантажено"));
     };
-    pas.System.Writeln("Идёт загрузка команд");
+    pas.System.Writeln(pas.nls.Loc("Loading teams","Завантаження команд"));
     for ($mod.i = 1; $mod.i <= 8; $mod.i++) {
       $mod.st = "" + $mod.i;
       pas.tpfiles.Assign($mod.f,"FBT\\" + $mod.st + ".fbt");
@@ -3336,13 +3353,13 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles"],function () 
       $mod.Teams[$mod.i - 1].Mark = Math.floor($mod.Teams[$mod.i - 1].Mark / 11);
       $mod.Teams[$mod.i - 1].tiredness = Math.floor($mod.Teams[$mod.i - 1].tiredness / 11);
       $mod.Teams[$mod.i - 1].mood = Math.floor($mod.Teams[$mod.i - 1].mood / 11);
-      pas.System.Writeln($mod.i," загружено");
+      pas.System.Writeln($mod.i,pas.nls.Loc(" loaded"," завантажено"));
     };
-    pas.System.Writeln("Подготовка к началу матча");
+    pas.System.Writeln(pas.nls.Loc("Preparing for kickoff","Підготовка до початку матчу"));
     $mod.t1 = false;
     $mod.t2 = false;
-    $mod.p1 = await pas.crt.AskString("Команда 1 (напр. Dynamo)");
-    $mod.p2 = await pas.crt.AskString("Команда 2 (напр. Milan)");
+    $mod.p1 = await pas.crt.AskString(pas.nls.Loc("Team 1 (e.g. Dynamo)","Команда 1 (напр. Dynamo)"));
+    $mod.p2 = await pas.crt.AskString(pas.nls.Loc("Team 2 (e.g. Milan)","Команда 2 (напр. Milan)"));
     for ($mod.i = 1; $mod.i <= 8; $mod.i++) {
       if ($mod.p1 === $mod.TeamsName[$mod.i - 1]) {
         $mod.Team1.$assign($mod.Teams[$mod.i - 1]);
@@ -3354,10 +3371,10 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles"],function () 
       };
     };
     if (($mod.t1 === false) || ($mod.t2 === false)) {
-      pas.System.Writeln("Неправильные команды");
-      pas.System.Writeln("Формат вызова:");
+      pas.System.Writeln(pas.nls.Loc("Wrong teams","Неправильні команди"));
+      pas.System.Writeln(pas.nls.Loc("Call format:","Формат виклику:"));
       pas.System.Writeln("match {team1} {team2}");
-      pas.System.Writeln("Возможные команды:");
+      pas.System.Writeln(pas.nls.Loc("Available teams:","Доступні команди:"));
       for ($mod.j = 1; $mod.j <= 8; $mod.j++) pas.System.Writeln($mod.TeamsName[$mod.j - 1]," - ",$mod.Teams[$mod.j - 1].name);
       do {
       } while (!(pas.System.Trunc(await pas.crt.ReadKeyA()) === 13));
@@ -3392,7 +3409,7 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles"],function () 
     $with.Date.month = $mod.dm;
     $with.Date.date = $mod.dd;
     $with.FileCom = "Match.txt";
-    pas.System.Writeln("Начало матча");
+    pas.System.Writeln(pas.nls.Loc("Match start","Початок матчу"));
     await pas.EMatch.EmulMatch($mod.NowMatch);
   };
   $mod.$main = function () {

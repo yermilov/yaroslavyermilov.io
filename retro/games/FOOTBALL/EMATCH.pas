@@ -25,10 +25,6 @@ interface
 
 uses JS;
 
-const Monthes : array [1..12] of string =
-              ('Январь','Февраль','Март','Апрель','Май','Июнь','Июль',
-               'Август','Сентябрь','Октябрь','Ноябрь','Декабрь');
-
 type
     FallType = (NoFall,YellowCard,RedCard);
 
@@ -91,7 +87,7 @@ function EmulMatch (var Match:MatchType): TJSPromise; async;
 
 implementation
 
-uses crt;
+uses crt, nls;
 
 function EmulMatch (var Match:MatchType): TJSPromise; async;
 var
@@ -141,7 +137,7 @@ begin
            end;
            N:=1;
            ChAt;
-           St:='Мы приветствуем вас на стадионе ' + Match.Stadium.Name;
+           St:=Loc('Welcome to the stadium ','Вітаємо вас на стадіоні ') + Match.Stadium.Name;
            Writeln(St);
            await(Delay(1000)); { HelpUnit.Duration(1) — тут awaitable }
            repeat
@@ -154,7 +150,7 @@ begin
      until (MinNow=MinEnd) and (Half=Match.HalfEnd);
      { РЕМОНТ: фінальний рахунок — інакше матч закінчувався без сліду }
      Writeln;
-     Writeln('Финальный свисток! ', Match.Ft[1].Name, ' - ', Match.Ft[2].Name,
+     Writeln(Loc('Final whistle! ','Фінальний свисток! '), Match.Ft[1].Name, ' - ', Match.Ft[2].Name,
              '  ', Match.Score[1], ':', Match.Score[2]);
 end;
 

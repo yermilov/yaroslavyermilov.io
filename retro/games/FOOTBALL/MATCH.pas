@@ -20,7 +20,7 @@
     (pas2js суворіший за TP щодо var-параметрів);
   - все інше — 1:1, включно з форматом виклику і текстами завантаження. }
 program Match;
-uses JS, EMatch, Dos, Crt, tpfiles;
+uses JS, EMatch, Dos, Crt, tpfiles, nls;
 
 const t=8;
       p=120;
@@ -43,7 +43,7 @@ var Teams : array [1..t] of footballteam;
 procedure Main; async;
 begin
      randomize;
-     Writeln('Идёт загрузка стран');
+     Writeln(Loc('Loading countries','Завантаження країн'));
      for i:=1 to c do
          begin
               str(i,st);
@@ -51,9 +51,9 @@ begin
               Reset(f);
               ReadlnT(f,Countries[i].Name);
               Close(f);
-              writeln(i,' загружено');
+              writeln(i,Loc(' loaded',' завантажено'));
          end;
-     Writeln('Идёт загрузка стадионов');
+     Writeln(Loc('Loading stadiums','Завантаження стадіонів'));
      for i:=1 to s do
          begin
               str(i,st);
@@ -64,9 +64,9 @@ begin
               m:=ReadLnNum(f);
               Stadiums[i].State:=Countries[m];
               Close(f);
-              writeln(i,' загружено');
+              writeln(i,Loc(' loaded',' завантажено'));
          end;
-     Writeln('Идёт загрузка игроков');
+     Writeln(Loc('Loading players','Завантаження гравців'));
      for i:=0 to p do
          begin
               str(i,st);
@@ -95,9 +95,9 @@ begin
               else Players[i].Fall:=RedCard;
               end;
               Close(f);
-              writeln(i,' загружено');
+              writeln(i,Loc(' loaded',' завантажено'));
          end;
-     Writeln('Идёт загрузка команд');
+     Writeln(Loc('Loading teams','Завантаження команд'));
      for i:=1 to t do
          begin
               str(i,st);
@@ -126,13 +126,13 @@ begin
               Teams[i].Mark:=Teams[i].Mark div 11;
               Teams[i].Tiredness:=Teams[i].Tiredness div 11;
               Teams[i].mood:=Teams[i].Mood div 11;
-              writeln(i,' загружено');
+              writeln(i,Loc(' loaded',' завантажено'));
          end;
-     Writeln('Подготовка к началу матча');
+     Writeln(Loc('Preparing for kickoff','Підготовка до початку матчу'));
      t1:=false;
      t2:=false;
-     p1:=await(string, AskString('Команда 1 (напр. Dynamo)'));
-     p2:=await(string, AskString('Команда 2 (напр. Milan)'));
+     p1:=await(string, AskString(Loc('Team 1 (e.g. Dynamo)','Команда 1 (напр. Dynamo)')));
+     p2:=await(string, AskString(Loc('Team 2 (e.g. Milan)','Команда 2 (напр. Milan)')));
      for i:=1 to t do
          begin
               if p1=teamsname[i] then
@@ -148,10 +148,10 @@ begin
          end;
      if (t1=false) or (t2=false) then
         begin
-             Writeln('Неправильные команды');
-             Writeln('Формат вызова:');
+             Writeln(Loc('Wrong teams','Неправильні команди'));
+             Writeln(Loc('Call format:','Формат виклику:'));
              Writeln('match {team1} {team2}');
-             Writeln('Возможные команды:');
+             Writeln(Loc('Available teams:','Доступні команди:'));
              for j:=1 to t do
                  writeln(TeamsName[j],' - ',Teams[j].Name);
              repeat until trunc(await(double, ReadKeyA))=13; { readln; }
@@ -172,7 +172,7 @@ begin
                Date.Date:=dd;
                FileCom:='Match.txt';
           end;
-     Writeln('Начало матча');
+     Writeln(Loc('Match start','Початок матчу'));
      await(EmulMatch(NowMatch));
 end;
 
