@@ -24,6 +24,11 @@ const
 
   SolidFill = 1;
 
+  { BGI text direction + a handful of font ids — WW3 selects stroked fonts by
+    number; the shim renders them all with the one embedded VGA face. }
+  HorizDir = 0;
+  VertDir = 1;
+
   ScreenW = 640;
   ScreenH = 480;
 
@@ -45,8 +50,18 @@ procedure Line(x1, y1, x2, y2: integer);
 procedure Rectangle(x1, y1, x2, y2: integer);
 procedure Bar(x1, y1, x2, y2: integer);
 procedure Circle(x, y: integer; r: word);
+procedure Arc(x, y: integer; stAngle, endAngle, r: word);
 procedure FloodFill(x, y: integer; border: word);
 procedure ClearDevice;
+{ BGI text in graph mode. The framebuffer is palette-indexed and FloodFill/
+  GetPixel READ it, so text cannot go through fillText on the visible canvas —
+  OutTextXY rasterises glyphs on a scratch canvas and stamps opaque pixels into
+  the framebuffer with the current colour. SetTextStyle keeps only the SIZE
+  (approx. BGI charsize → pixel height); font id and direction are accepted and
+  ignored (all text renders horizontally with the embedded VGA face — the
+  games' four stroked fonts are beyond a faithful 16-colour raster shim). }
+procedure SetTextStyle(font, direction, charsize: word);
+procedure OutTextXY(x, y: integer; const s: string);
 
 implementation
 
@@ -264,6 +279,62 @@ end;
   already the border colour, nothing happens — which is load-bearing: PINGPONG
   erases the ball with MakeBall(x, y, r, 0), i.e. a black circle plus
   FloodFill(x, y, 0), and that must be a no-op once the area is already black. }
+
+procedure Arc(x, y: integer; stAngle, endAngle, r: word);
+var
+  a, endA: integer;
+  rad: double;
+begin
+  { BGI angles: degrees, counter-clockwise, 0 = east; y grows downward.
+    A wrapped arc (start > end, e.g. 270→90) passes through 0° — WarWork's
+    tank halves are exactly that; skipping them leaves the outline open and
+    the tank's FloodFill spills across the screen. }
+  endA := endAngle;
+  if endA < stAngle then endA := endA + 360;
+  a := stAngle;
+  while a <= endA do
+  begin
+    rad := a * 3.14159265358979 / 180.0;
+    PutPixel(x + Round(r * cos(rad)), y - Round(r * sin(rad)), CurColor);
+    a := a + 1;
+  end;
+end;
+
+var
+  TextPxH: integer = 16;
+
+procedure SetTextStyle(font, direction, charsize: word);
+begin
+  { charsize 1..10+ → approx pixel height; BGI default (4) ≈ regular text. }
+  if charsize < 1 then charsize := 1;
+  TextPxH := 6 * charsize + 8;
+end;
+
+procedure OutTextXY(x, y: integer; const s: string);
+var
+  px: integer;
+begin
+  px := TextPxH;
+  asm
+    var scr = document.createElement('canvas');
+    var w = Math.min(1024, Math.max(8, Math.ceil(s.length * px)));
+    scr.width = w; scr.height = px + 8;
+    var c2 = scr.getContext('2d', { willReadFrequently: true });
+    c2.font = px + "px 'IBM VGA', monospace";
+    c2.textBaseline = 'top';
+    c2.fillStyle = '#fff';
+    c2.fillText(s, 0, 0);
+    var d = c2.getImageData(0, 0, scr.width, scr.height).data;
+    for (var j = 0; j < scr.height; j++) {
+      for (var i = 0; i < scr.width; i++) {
+        if (d[(j * scr.width + i) * 4 + 3] > 128) {
+          pas.graph.PutPixel(x + i, y + j, $impl.CurColor);
+        }
+      }
+    }
+  end;
+end;
+
 procedure FloodFill(x, y: integer; border: word);
 var
   stack: array of integer;

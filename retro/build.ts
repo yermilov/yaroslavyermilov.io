@@ -106,7 +106,14 @@ const GAMES: GameDef[] = [
     controls: 'введи дві команди (напр. Dynamo і Milan) + Enter · Esc — вийти',
     ports: [{ slug: 'match', main: 'MATCH.pas', file: 'MATCH.EXE' }],
   },
-  { dir: 'WARWORK', title: 'WarWork', year: '2005', note: 'Воєнна гра: літаки, прапори, WW2/WW3.' },
+  {
+    dir: 'WARWORK',
+    title: 'WarWork',
+    year: '2005',
+    note: 'Екшн: літак проти зеніток і танків. Меню — мишею.',
+    controls: 'меню — миша · стрілки — рух · b бомба, r ракета · Esc — вийти',
+    ports: [{ slug: 'warwork', main: 'WW3.pas', file: 'WW3.EXE' }],
+  },
   { dir: 'STARWARS', title: 'Star Wars', year: '2005', note: 'За мотивами «Зоряних воєн».' },
   { dir: 'SAPER', title: 'Сапер', year: '2006', note: 'Мінер. Сорс лише C++ (SAPER.CPP) — pas2js не застосовний.' },
   { dir: 'game', title: 'game', year: '2005–2009', note: 'Олімпіадна задачка (теорія ігор, file I/O) — не гра.' },
@@ -257,7 +264,12 @@ function writeGameIndexHtml(def: GameDef, port: { slug: string; main: string }):
   <canvas id="screen" width="640" height="480"></canvas>
 ${dataScript}  <script src="${port.slug}.js"></script>
   <script>
-    addEventListener('load', function () { rtl.run(); });
+    // Wait for the embedded VGA face before the program draws: graph-mode text
+    // rasterises through canvas fillText, and a first draw against the fallback
+    // font leaves differently-shaped "ghost" pixels the game never overdraws.
+    addEventListener('load', function () {
+      document.fonts.load("16px 'IBM VGA'").then(function () { rtl.run(); }, function () { rtl.run(); });
+    });
     // tpfiles' halt/RTE end the program by throwing through the async chain —
     // an INTENDED exit, not a bug; keep it out of the console.
     addEventListener('unhandledrejection', function (e) {

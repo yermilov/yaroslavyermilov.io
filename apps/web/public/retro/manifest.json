@@ -2663,7 +2663,12 @@
    "dir": "WARWORK",
    "title": "WarWork",
    "year": "2005",
-   "note": "Воєнна гра: літаки, прапори, WW2/WW3.",
+   "note": "Екшн: літак проти зеніток і танків. Меню — мишею.",
+   "controls": "меню — миша · стрілки — рух · b бомба, r ракета · Esc — вийти",
+   "run": "warwork",
+   "runs": {
+    "WW3.EXE": "warwork"
+   },
    "files": [
     {
      "name": "BOLD.CHR",

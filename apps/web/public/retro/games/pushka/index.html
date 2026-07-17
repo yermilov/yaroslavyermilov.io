@@ -17,7 +17,12 @@
   <canvas id="screen" width="640" height="480"></canvas>
   <script src="pushka.js"></script>
   <script>
-    addEventListener('load', function () { rtl.run(); });
+    // Wait for the embedded VGA face before the program draws: graph-mode text
+    // rasterises through canvas fillText, and a first draw against the fallback
+    // font leaves differently-shaped "ghost" pixels the game never overdraws.
+    addEventListener('load', function () {
+      document.fonts.load("16px 'IBM VGA'").then(function () { rtl.run(); }, function () { rtl.run(); });
+    });
     // tpfiles' halt/RTE end the program by throwing through the async chain —
     // an INTENDED exit, not a bug; keep it out of the console.
     addEventListener('unhandledrejection', function (e) {
