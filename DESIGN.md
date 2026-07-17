@@ -67,7 +67,7 @@ design *is* the argument that the maker sweats details, so restraint and
 craft outrank spectacle. Sustained reading is the primary act; interactivity earns
 its place rather than crowding the page.
 
-One identity spans every surface (blog, labs, games) via a single shared token set
+One identity spans every surface (blog, labs) via a single shared token set
 (`@yermilov/shared-tokens`), so the site reads as one volume even where the lab
 surface turns louder. Both light and dark are hand-tuned and driven by
 `prefers-color-scheme` — light by day, a deeper palette by night; the `.theme-lab`
@@ -135,8 +135,8 @@ otherwise favors crisp edges and rules over rounded cards.
   the structural brand voice.
 - **Do** honor `prefers-color-scheme` and `prefers-reduced-motion`; both light and
   dark are first-class, and motion is never load-bearing.
-- **Do** keep one shared identity across blog, labs, and games — reach for the
-  `.theme-lab` louder variant only on lab/game surfaces.
+- **Do** keep one shared identity across blog and labs — reach for the
+  `.theme-lab` louder variant only on lab surfaces.
 - **Don't** introduce drop shadows, rounded "card" chrome, or a third brand hue;
   depth is tonal + hairline rules.
 - **Don't** add all-caps tracked eyebrow kickers above every section, feature grids,

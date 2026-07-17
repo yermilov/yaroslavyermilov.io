@@ -51,7 +51,6 @@ export interface Strings {
     personal: string;
     workshop: string;
     lab: string;
-    games: string;
     about: string;
   };
   subnav: { all: string; writing: string; talking: string; kit: string };
@@ -63,7 +62,6 @@ export interface Strings {
     inspiration: string;
     personal: string;
     lab: string;
-    games: string;
   };
   sections: {
     writingTalking: { title: string; lede: string };
@@ -182,7 +180,6 @@ const STRINGS: Record<Locale, Strings> = {
       personal: 'personal',
       workshop: 'workshop',
       lab: 'labs',
-      games: 'Games',
       about: 'About',
     },
     subnav: { all: 'all', writing: 'writing', talking: 'talking', kit: 'about me kit' },
@@ -199,7 +196,6 @@ const STRINGS: Record<Locale, Strings> = {
       inspiration: 'Nothing on the shelf yet.',
       personal: 'No photos yet.',
       lab: 'No lab entries yet.',
-      games: 'No games yet.',
     },
     sections: {
       writingTalking: {
@@ -328,7 +324,6 @@ const STRINGS: Record<Locale, Strings> = {
       personal: 'особисте',
       workshop: 'воркшоп',
       lab: 'лаба',
-      games: 'Ігри',
       about: 'Про',
     },
     subnav: { all: 'усе', writing: 'тексти', talking: 'виступи', kit: 'про мене · kit' },
@@ -345,7 +340,6 @@ const STRINGS: Record<Locale, Strings> = {
       inspiration: 'На полиці поки порожньо.',
       personal: 'Поки нема фото.',
       lab: 'Поки нема записів у лабі.',
-      games: 'Поки нема ігор.',
     },
     sections: {
       writingTalking: {

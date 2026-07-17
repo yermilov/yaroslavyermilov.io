@@ -5,8 +5,6 @@ dist
 .astro
 .cache
 
-apps/site/public/games
-apps/site/public/pagefind
 
 .env
 .env.*

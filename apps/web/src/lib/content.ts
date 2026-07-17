@@ -4,7 +4,6 @@ import type { Locale } from '@lib/i18n';
 type PostEntry = CollectionEntry<'posts'>;
 type TalkEntry = CollectionEntry<'talks'>;
 type LabEntry = CollectionEntry<'labs'>;
-type GameEntry = CollectionEntry<'games'>;
 type BookEntry = CollectionEntry<'books'>;
 type LinkEntry = CollectionEntry<'links'>;
 
@@ -101,13 +100,6 @@ export async function getLabsByLocale(locale: Locale): Promise<LabEntry[]> {
   );
 }
 
-export async function getGamesByLocale(locale: Locale): Promise<GameEntry[]> {
-  const all = await getCollection('games');
-  return all
-    .filter((g) => g.data.language === locale)
-    .sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime());
-}
-
 export async function getLabByCanonicalSlug(
   canonicalSlug: string,
   locale: Locale,
@@ -117,11 +109,6 @@ export async function getLabByCanonicalSlug(
     all.find((l) => l.data.canonicalSlug === canonicalSlug && l.data.language === locale) ??
     all.find((l) => l.data.canonicalSlug === canonicalSlug)
   );
-}
-
-export async function getGameBySlug(slug: string, locale: Locale): Promise<GameEntry | undefined> {
-  const all = await getCollection('games');
-  return all.find((g) => g.data.slug === slug && g.data.language === locale);
 }
 
 /** readAt / addedAt are optional; treat missing as epoch for ordering. */

@@ -9,7 +9,7 @@ brand
 The personal site of Yaroslav Yermilov, written for four overlapping readers:
 
 - **Tech peers & community** — fellow engineers and speakers who arrive for the
-  writing (EN + UA), the interactive labs, and the games, and stay for the craft.
+  writing (EN + UA) and the interactive labs, and stay for the craft.
 - **Clients & employers** — people evaluating Yaroslav's work; the site is the
   credibility layer behind hiring, consulting, and collaboration.
 - **Workshop & talk leads** — conference organizers and workshop buyers who find
@@ -23,7 +23,7 @@ poking at a lab, or browsing the timeline of talks — not skimming a funnel.
 
 ## Product Purpose
 
-A long-lived personal home on the web — blog, lab, games, talks, books, photos,
+A long-lived personal home on the web — blog, lab, talks, books, photos,
 and a workshop prospectus — organized as a **Field Journal** of shared-timeline
 "volumes" (writing-talking, inspiration, personal, workshop). It exists so
 Yaroslav's thinking and making have a permanent, self-owned address that reads as
@@ -60,7 +60,7 @@ Restraint over spectacle: when in doubt, quieter and more editorial.
    sloppiness anywhere undercuts the whole argument.
 2. **Reading is the primary act.** Type, measure, and rhythm serve sustained
    reading first; interactivity earns its place, it doesn't crowd the page.
-3. **One coherent identity across surfaces.** Blog, labs, and games share the same
+3. **One coherent identity across surfaces.** Blog and labs share the same
    tokens ("Tactile Workbench") so the site reads as one bound volume, even where
    labs turn louder.
 4. **Built to outlast trends.** Choices favor a 5-year horizon and the

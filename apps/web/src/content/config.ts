@@ -132,21 +132,6 @@ const labs = defineCollection({
   }),
 });
 
-const games = defineCollection({
-  type: 'content',
-  schema: z.object({
-    title: z.string(),
-    /** must match apps/game-<slug> and public/games/<slug>/ */
-    slug: z.string(),
-    publishedAt: z.coerce.date(),
-    language: localeEnum,
-    summary: z.string(),
-    controls: z.string(),
-    width: z.number().default(960),
-    height: z.number().default(640),
-  }),
-});
-
 const gallery = defineCollection({
   type: 'data',
   schema: z.object({
@@ -245,4 +230,4 @@ const links = defineCollection({
   }),
 });
 
-export const collections = { posts, talks, labs, games, gallery, books, links };
+export const collections = { posts, talks, labs, gallery, books, links };

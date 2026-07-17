@@ -7,8 +7,8 @@ costs more than following them.
 ## What this repo is
 
 A long-lived personal site (5+ year horizon) for Yaroslav Yermilov. Hosts
-blog posts in EN + UA, embedded interactive demos, occasional canvas/WebGL
-games, and a list of conference talks. Co-developed with Claude Code, so the
+blog posts in EN + UA, embedded interactive demos, and a list of conference
+talks. Co-developed with Claude Code, so the
 architecture intentionally favors the lowest-magic path.
 
 ## Stack
@@ -20,7 +20,7 @@ architecture intentionally favors the lowest-magic path.
 - **Hono on Bun** API at `apps/api/` — a ready-to-grow backend skeleton (pino
   logging, zod env, `/api/healthz`); Drizzle + Postgres wired, no feature endpoints yet.
 - **Tailwind CSS v4** via `@tailwindcss/vite`; tokens live in CSS, not in a config file.
-- **pnpm workspaces** — `apps/web`, `apps/api`, `apps/game-*`, `packages/shared-*`,
+- **pnpm workspaces** — `apps/web`, `apps/api`, `packages/shared-*`,
   `packages/db-schema`, `packages/api-types`.
 - **Pagefind** static search built post-build (indexes `dist/client`).
 - **Railway** deploy — `nixpacks.toml` + `railway.json` per service (web + api +
@@ -59,12 +59,17 @@ Tier 2 — Astro lab page
   Lives at /{locale}/lab/<slug>, lazy-loaded React island, no iframe.
   Inherits theme-lab class so it can be louder than the reading surface.
 
-Tier 3 — Iframe + separate Vite app
+Tier 3 — Sandboxed iframe
   Anything with a render loop, audio, input capture, fullscreen, or
   pointer lock — even if "tiny".
-  Built as apps/game-<slug>/ with its own package.json and Vite build.
-  Output served from /games/<slug>/index.html (sandboxed iframe).
-  Astro wrapper at /{locale}/games/<slug> hosts an <iframe sandbox=…>.
+  The interactive app is a self-contained static bundle (its own
+  index.html + assets) served from apps/web/public/, hosted inside an
+  <iframe sandbox=…> by whatever page embeds it. The iframe boundary is
+  the point: input capture and global state stay isolated from the
+  site, and tearing down the iframe fully resets the app.
+  (The former apps/game-* + /games/ route machinery was removed
+  2026-07 without ever shipping a game; the retro-games lab embeds its
+  per-game bundles this way instead.)
 
 Decision rule:
   has frame loop OR audio OR input handlers OR fullscreen OR pointer lock?
@@ -187,34 +192,19 @@ Frontmatter must include `islandComponent` pointing to a path under
 `apps/web/src/components/lab/`. The body MDX renders inside the
 inverted-theme `LabLayout`.
 
-## How to add a new game (Tier 3)
-
-1. `mkdir apps/game-<slug>` and scaffold a Vite TS app there.
-2. Game's `vite.config.ts` must set `base: '/games/<slug>/'` so its
-   bundled asset URLs work when iframed under that path.
-3. Game's `pnpm build` writes `apps/game-<slug>/dist/`.
-4. Add a content entry at `apps/web/src/content/games/<slug>.mdx`
-   with a frontmatter `slug` matching the directory name.
-5. Push. The Railway build runs `scripts/build-games.ts` which copies each game's
-   `dist/` into `apps/web/public/games/<slug>/`.
-
 ## Files NEVER edit by hand
 
-- `apps/web/public/games/` — build artifact (from `apps/game-*`)
-- `apps/web/public/pagefind/` — Pagefind index
-
-Both are gitignored and rebuilt every build.
+- `apps/web/public/pagefind/` — Pagefind index (rebuilt every build).
 
 ## Common commands
 
 ```
 pnpm install                        # install all workspaces
 pnpm dev                            # Astro dev server (apps/web)
-pnpm build                          # full web build (games + Astro SSR + pagefind)
+pnpm build                          # full web build (Astro SSR + pagefind)
 pnpm --filter web typecheck         # astro check
 pnpm --filter @yermilov/api dev     # API dev (Bun --watch) on :3001
 pnpm --filter @yermilov/api typecheck
-pnpm tsx scripts/build-games.ts     # build apps/game-* into public/games/
 ```
 
 Serve the built site locally the way Railway does:

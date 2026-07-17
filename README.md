@@ -1,6 +1,6 @@
 # yaroslavyermilov.io
 
-Personal site of Yaroslav Yermilov — blog (EN + UA), lab, games, talks.
+Personal site of Yaroslav Yermilov — blog (EN + UA), lab, talks.
 
 Stack: Astro 5 (SSR, Node adapter) · Hono on Bun API · TypeScript strict · MDX ·
 React 19 islands · Tailwind v4 · Pagefind · Drizzle/Postgres · pnpm workspaces ·
@@ -20,10 +20,9 @@ pnpm --filter @yermilov/api dev        # API  → http://localhost:3001
 ```
 apps/web/          Astro site (SSR, Node adapter) + presentation-redirect middleware
 apps/api/          Hono on Bun API skeleton (pino, /api/healthz, Drizzle/Postgres)
-apps/game-*/       Tier-3 games, each with its own Vite build
 packages/shared-*/ design tokens, eslint/tsconfig/prettier base
 packages/db-schema, packages/api-types   shared backend schema + contracts
-scripts/           build-games.ts
+scripts/           repo-level utility scripts
 ```
 
 See `CLAUDE.md` for the full developer guide, the 3-tier interactivity rule, and
@@ -34,7 +33,7 @@ the repo-split / SSR-redirect architecture.
 Hosted on **Railway** (auto-deploys on push to `main`), one service per app —
 each configured by its `apps/<app>/railway.json` + `nixpacks.toml`:
 
-- **web** — `pnpm build` (games → Astro SSR → Pagefind), served by the Astro Node
+- **web** — `pnpm build` (Astro SSR → Pagefind), served by the Astro Node
   standalone server (`node ./dist/server/entry.mjs`).
 - **api** — `bun run src/index.ts`, healthcheck `/api/healthz`.
 - **Postgres** — Railway add-on (wired when the first backend feature needs it).
