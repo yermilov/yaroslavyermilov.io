@@ -8,16 +8,16 @@
 │        │ │        │ │        │ │        │ │        │ │          │         │
 └────────┴─┘        └─┘        └─┘        └─┘        └─┘         ─┘         └─
 
-                                  ВЕРСІЯ 1.1
+                                 VERSION 1.1
 
-        ГРА ЗА МОТИВАМИ ОДНОЙМЕННОЇ ГРИ З ТЕЛЕФОНА MOTOROLA TALK ABOUT
-                          НА ПРОХАННЯ ЄРМІЛОВА САШКА
+       A GAME AFTER THE MOTOROLA TALK ABOUT PHONE GAME OF THE SAME NAME
+                       AT THE REQUEST OF SASHA YERMILOV
 
-                              1 січня 2005 року
+                                1 January 2005
 
-            Створено в текстовому редакторі MIM
-            і мовою PASCAL (TURBO PASCAL 7.0)
+            Built in the MIM text editor
+            and the PASCAL language (TURBO PASCAL 7.0)
 
-         Файл textbak.txt зберігає текст, а виконуваний — bakkara.exe
-                                                         Зробив Єрмілов Ярослав
+         textbak.txt holds the text; the executable is bakkara.exe
+                                                     Made by Yaroslav Yermilov
 

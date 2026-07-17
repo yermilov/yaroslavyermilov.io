@@ -93,6 +93,12 @@ begin
     var ls = null;
     try { ls = localStorage.getItem('retro:' + (window.__retroSlug || 'game') + ':' + name); } catch (e) {}
     if (ls != null) { Result = JSON.parse(ls); return Result; }
+    // English build: prefer a data.en/ override for this file; fall back to the
+    // base (Ukrainian) map. Language-neutral files (card art) have no override.
+    if (window.__retroLang === 'en' && window.__retroFilesEn &&
+        Object.prototype.hasOwnProperty.call(window.__retroFilesEn, name)) {
+      Result = window.__retroFilesEn[name]; return Result;
+    }
     var m = window.__retroFiles || {};
     Result = Object.prototype.hasOwnProperty.call(m, name) ? m[name] : null;
   end;

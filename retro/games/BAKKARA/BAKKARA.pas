@@ -37,7 +37,7 @@
   перед a:=1); сейв пише ГЛОБАЛЬНИЙ balans=500, а не виграний локальний
   (start затіняє глобальну змінну). Esc завжди повертає в NC. }
 program bakkara;
-uses JS, crt, tpfiles;
+uses JS, crt, tpfiles, nls;
 var sel:char;
     balans:longint;
     a:byte;
@@ -98,7 +98,7 @@ begin
                     ReadlnT(fi,str);
                     writeln(str);
                end;
-     writeln ('Для выхода из меню информации нажмите Esc');
+     writeln (Loc('Press Esc to leave the info screen','Натисніть Esc, щоб вийти з інформації'));
      repeat
            ch:=trunc(await(double, ReadKeyA));
            if ch=27 then flag:=true;
@@ -182,7 +182,7 @@ begin
               ReadlnT(fsm,str);
               writeln(str);
          end;
-     s:=trunc(await(double, AskReal('Ставка (гривен)')));
+     s:=trunc(await(double, AskReal(Loc('Bet (hryvnias)','Ставка (гривень)'))));
      stavka:=s;
 end;
 
@@ -262,25 +262,25 @@ begin
      for n:=4 to 6 do
               sum2:=sum2+b[n];
      gotoxy (35,12);
-     writeln ('1 игрок заработал ',sum1,' балов');
+     writeln (Loc('Player 1 scored ','Гравець 1 набрав '),sum1,Loc(' points',' балів'));
      writeln;
-     writeln ('2 игрок заработал ',sum2,' балов');
+     writeln (Loc('Player 2 scored ','Гравець 2 набрав '),sum2,Loc(' points',' балів'));
      writeln;
      if sum1>sum2 then
                       begin
                            sel:=1;
-                           writeln('1 игрок победил');
+                           writeln(Loc('Player 1 wins','Гравець 1 переміг'));
                       end
                   else
                       if sum1<sum2 then
                                        begin
                                             sel:=2;
-                                            writeln('2 игрок победил');
+                                            writeln(Loc('Player 2 wins','Гравець 2 переміг'));
                                        end
                                    else
                                        begin
                                             sel:=0;
-                                            writeln('Ничья');
+                                            writeln(Loc('Draw','Нічия'));
                                        end;
      if sel=pl then win:=true
                else win:=false;
@@ -295,14 +295,14 @@ begin
     gotoxy (35,3);
     Assign(fs,'c:\cash\bakkara\saves.txt');
     Append(fs);
-                 writeln('Введите имя вашего сохранения');
-                 name_save:=await(string, AskString('Имя сохранения'));
+                 writeln(Loc('Enter your save name','Введіть імʼя збереження'));
+                 name_save:=await(string, AskString(Loc('Save name','Імʼя збереження')));
                  WritelnT(fs,name_save);
                  WritelnLong(fs,balans);
-                 writeln('Ваше сохранение успешко создано и сохранено');
+                 writeln(Loc('Your game has been saved','Гру збережено'));
     ClrScr;
     gotoxy(35,10);
-    writeln('Хотите вернутся в игру (g), или же в главное меню (m)?');
+    writeln(Loc('Back to game (g) or main menu (m)?','Повернутись у гру (g) чи в головне меню (m)?'));
     repeat
           ch:=chr(trunc(await(double, ReadKeyA)));
           case ch of
@@ -331,9 +331,9 @@ begin
            for n:=1 to 6 do
                     number_of_karts[n]:=trunc(await(double, num_kart(n)));
            gotoxy(12,24);
-           writeln('Игрок 1');
+           writeln(Loc('Player 1','Гравець 1'));
            gotoxy(52,24);
-           writeln('Игрок 2');
+           writeln(Loc('Player 2','Гравець 2'));
            palka;
            flag:=false;
            repeat
@@ -344,19 +344,19 @@ begin
            flag:=win(pl,number_of_karts);
            if flag then
                        begin
-                            writeln ('Вы победили');
-                            writeln ('Вы заработали ',post, ' гривен');
+                            writeln (Loc('You won','Ви виграли'));
+                            writeln (Loc('You won ','Ви виграли '),post,Loc(' hryvnias',' гривень'));
                             balans:=balans+post;
                        end
                    else
                        begin
-                            writeln ('Вы проиграли');
-                            writeln ('Вы проиграли ',post, ' гривен');
+                            writeln (Loc('You lost','Ви програли'));
+                            writeln (Loc('You lost ','Ви програли '),post,Loc(' hryvnias',' гривень'));
                             balans:=balans-post;
                        end;
            writeln;
-           writeln('Хотите сохранить игру?');
-           writeln('y-да             n-нет');
+           writeln(Loc('Save the game?','Зберегти гру?'));
+           writeln(Loc('y-yes            n-no','y-так            n-ні'));
            repeat
                  ch:=chr(trunc(await(double, ReadKeyA)));
                  case ch of
@@ -377,7 +377,7 @@ begin
      ClrScr;
      Assign(fs,'c:\cash\bakkara\saves.txt');
      Reset(fs);
-     writeln('Сейчас появится список сохранений. Первый рядок - это название, а второй - баланс');
+     writeln(Loc('The save list follows: line 1 is the name, line 2 the balance','Зараз зʼявиться список збережень: рядок 1 — назва, рядок 2 — баланс'));
      while (not Eof) do
            begin
                 for n:=1 to 23 do
@@ -387,17 +387,17 @@ begin
                     end;
                 repeat until trunc(await(double, ReadKeyA))=13; { readln; — чекання Enter }
            end;
-     writeln('Введите имя вашего сохранения, или "Выход" чтобы выйти');
-     str:=await(string, AskString('Имя сохранения'));
-     if (str='Выход') or (str='"Выход"') then await(choice());
+     writeln(Loc('Enter your save name, or "Exit" to quit','Введіть імʼя збереження, або «Вихід» щоб вийти'));
+     str:=await(string, AskString(Loc('Save name','Імʼя збереження')));
+     if (str=Loc('Exit','Вихід')) then await(choice());
      while (not Eof) do
            begin
                 st:=await(string, AskString(''));
                 if st=str then
                               begin
-                                   writeln('Ваше сохранение найдено');
+                                   writeln(Loc('Save found','Збереження знайдено'));
                                    ReadlnLong(fs,balans);
-                                   writeln('Для начала игры нажмите Esc, а для повторного поиска сохранения n');
+                                   writeln(Loc('Press Esc to start, or n to search again','Натисніть Esc, щоб почати, або n для повторного пошуку'));
                                    repeat
                                          ch:=chr(trunc(await(double, ReadKeyA)));
                                          case ch of
@@ -423,7 +423,7 @@ begin
               ReadlnT(fo,str);
               writeln(str);
          end;
-     writeln('Нажмите нужную букву подменю, которое вас интересует и Esc чтобы выйти');
+     writeln(Loc('Press the submenu letter you want, or Esc to exit','Натисніть потрібну літеру підменю, або Esc щоб вийти'));
      repeat
            ch:=chr(trunc(await(double, ReadKeyA)));
            case ch of

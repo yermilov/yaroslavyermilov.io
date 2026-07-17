@@ -240,16 +240,29 @@ function writeGameIndexHtml(def: GameDef, port: { slug: string; main: string }):
   // inlined: retro/games/<DIR>/data/* becomes window.__retroFiles, a
   // {basename: [lines]} map the tpfiles shim resolves paths against (the
   // sandboxed iframe is opaque-origin — it cannot fetch, same as the font).
-  const dataDir = path.join(REPO_ROOT, 'retro/games', def.dir, 'data');
-  let dataScript = '';
-  if (fs.existsSync(dataDir)) {
+  // A game's DOS data files are inlined as window.__retroFiles (basename→lines).
+  // Localised games add a sibling `data.en/` dir holding the English versions of
+  // the text screens; those go into window.__retroFilesEn, and the tpfiles shim
+  // returns the EN copy when window.__retroLang==='en'. `data/` stays the base
+  // (Ukrainian) set, so language-neutral files (card art) need no EN override.
+  const readDataDir = (dir: string): Record<string, string[]> => {
     const files: Record<string, string[]> = {};
-    for (const name of fs.readdirSync(dataDir).sort()) {
-      const body = fs.readFileSync(path.join(dataDir, name), 'utf8');
+    for (const name of fs.readdirSync(dir).sort()) {
+      const body = fs.readFileSync(path.join(dir, name), 'utf8');
       // An empty file has ZERO lines (Eof at once), not one empty line.
       files[name.toLowerCase()] = body === '' ? [] : body.replace(/\n$/, '').split('\n');
     }
-    dataScript = `  <script>window.__retroSlug = ${JSON.stringify(port.slug)}; window.__retroFiles = ${JSON.stringify(files)};</script>\n`;
+    return files;
+  };
+  const dataDir = path.join(REPO_ROOT, 'retro/games', def.dir, 'data');
+  let dataScript = '';
+  if (fs.existsSync(dataDir)) {
+    const files = readDataDir(dataDir);
+    const enDir = path.join(REPO_ROOT, 'retro/games', def.dir, 'data.en');
+    const enScript = fs.existsSync(enDir)
+      ? ` window.__retroFilesEn = ${JSON.stringify(readDataDir(enDir))};`
+      : '';
+    dataScript = `  <script>window.__retroSlug = ${JSON.stringify(port.slug)}; window.__retroFiles = ${JSON.stringify(files)};${enScript}</script>\n`;
   }
   // Self-contained bundle page. Esc inside the game posts `retro:quit` to the
   // parent so the NC can close the window; the game itself also reacts to Esc.

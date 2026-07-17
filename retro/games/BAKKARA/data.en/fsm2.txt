@@ -1,0 +1,5 @@
+  Who do you bet on?
+
+  f — player 1        s — player 2        n — draw
+
+

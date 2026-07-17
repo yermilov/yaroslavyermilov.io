@@ -2012,6 +2012,12 @@ rtl.module("tpfiles",["System"],function () {
     var ls = null;
     try { ls = localStorage.getItem('retro:' + (window.__retroSlug || 'game') + ':' + name); } catch (e) {}
     if (ls != null) { Result = JSON.parse(ls); return Result; }
+    // English build: prefer a data.en/ override for this file; fall back to the
+    // base (Ukrainian) map. Language-neutral files (card art) have no override.
+    if (window.__retroLang === 'en' && window.__retroFilesEn &&
+        Object.prototype.hasOwnProperty.call(window.__retroFilesEn, name)) {
+      Result = window.__retroFilesEn[name]; return Result;
+    }
     var m = window.__retroFiles || {};
     Result = Object.prototype.hasOwnProperty.call(m, name) ? m[name] : null;
     return Result;
@@ -2020,7 +2026,24 @@ rtl.module("tpfiles",["System"],function () {
     try { localStorage.setItem('retro:' + (window.__retroSlug || 'game') + ':' + name, JSON.stringify(lines)); } catch (e) {};
   };
 });
-rtl.module("program",["System","JS","crt","tpfiles"],function () {
+rtl.module("nls",["System"],function () {
+  "use strict";
+  var $mod = this;
+  this.GameLang = function () {
+    var Result = "";
+    Result = "ua";
+    Result = (typeof window !== 'undefined' && window.__retroLang === 'en') ? 'en' : 'ua';
+    return Result;
+  };
+  this.Loc = function (en, ua) {
+    var Result = "";
+    if ($mod.GameLang() === "en") {
+      Result = en}
+     else Result = ua;
+    return Result;
+  };
+});
+rtl.module("program",["System","JS","crt","tpfiles","nls"],function () {
   "use strict";
   var $mod = this;
   this.sel = "";
@@ -2093,7 +2116,7 @@ rtl.module("program",["System","JS","crt","tpfiles"],function () {
         }});
       pas.System.Writeln(str);
     };
-    pas.System.Writeln("Для выхода из меню информации нажмите Esc");
+    pas.System.Writeln(pas.nls.Loc("Press Esc to leave the info screen","Натисніть Esc, щоб вийти з інформації"));
     do {
       ch = pas.System.Trunc(await pas.crt.ReadKeyA());
       if (ch === 27) flag = true;
@@ -2190,7 +2213,7 @@ rtl.module("program",["System","JS","crt","tpfiles"],function () {
         }});
       pas.System.Writeln(str);
     };
-    s = pas.System.Trunc(await pas.crt.AskReal("Ставка (гривен)"));
+    s = pas.System.Trunc(await pas.crt.AskReal(pas.nls.Loc("Bet (hryvnias)","Ставка (гривень)")));
     Result = s;
     return Result;
   };
@@ -2282,19 +2305,19 @@ rtl.module("program",["System","JS","crt","tpfiles"],function () {
     for (n = 1; n <= 3; n++) sum1 = sum1 + b[n - 1];
     for (n = 4; n <= 6; n++) sum2 = sum2 + b[n - 1];
     pas.crt.GotoXY(35,12);
-    pas.System.Writeln("1 игрок заработал ",sum1," балов");
+    pas.System.Writeln(pas.nls.Loc("Player 1 scored ","Гравець 1 набрав "),sum1,pas.nls.Loc(" points"," балів"));
     pas.System.Writeln();
-    pas.System.Writeln("2 игрок заработал ",sum2," балов");
+    pas.System.Writeln(pas.nls.Loc("Player 2 scored ","Гравець 2 набрав "),sum2,pas.nls.Loc(" points"," балів"));
     pas.System.Writeln();
     if (sum1 > sum2) {
       sel = 1;
-      pas.System.Writeln("1 игрок победил");
+      pas.System.Writeln(pas.nls.Loc("Player 1 wins","Гравець 1 переміг"));
     } else if (sum1 < sum2) {
       sel = 2;
-      pas.System.Writeln("2 игрок победил");
+      pas.System.Writeln(pas.nls.Loc("Player 2 wins","Гравець 2 переміг"));
     } else {
       sel = 0;
-      pas.System.Writeln("Ничья");
+      pas.System.Writeln(pas.nls.Loc("Draw","Нічия"));
     };
     if (sel === pl) {
       Result = true}
@@ -2309,14 +2332,14 @@ rtl.module("program",["System","JS","crt","tpfiles"],function () {
     pas.crt.GotoXY(35,3);
     pas.tpfiles.Assign(fs,"c:\\cash\\bakkara\\saves.txt");
     pas.tpfiles.Append(fs);
-    pas.System.Writeln("Введите имя вашего сохранения");
-    name_save = await pas.crt.AskString("Имя сохранения");
+    pas.System.Writeln(pas.nls.Loc("Enter your save name","Введіть імʼя збереження"));
+    name_save = await pas.crt.AskString(pas.nls.Loc("Save name","Імʼя збереження"));
     pas.tpfiles.WritelnT(fs,name_save);
     pas.tpfiles.WritelnLong(fs,$mod.balans);
-    pas.System.Writeln("Ваше сохранение успешко создано и сохранено");
+    pas.System.Writeln(pas.nls.Loc("Your game has been saved","Гру збережено"));
     pas.crt.ClrScr();
     pas.crt.GotoXY(35,10);
-    pas.System.Writeln("Хотите вернутся в игру (g), или же в главное меню (m)?");
+    pas.System.Writeln(pas.nls.Loc("Back to game (g) or main menu (m)?","Повернутись у гру (g) чи в головне меню (m)?"));
     do {
       ch = String.fromCharCode(pas.System.Trunc(await pas.crt.ReadKeyA()));
       var $tmp = ch;
@@ -2345,9 +2368,9 @@ rtl.module("program",["System","JS","crt","tpfiles"],function () {
       pas.crt.ClrScr();
       for (n = 1; n <= 6; n++) number_of_karts[n - 1] = pas.System.Trunc(await $mod.num_kart(n));
       pas.crt.GotoXY(12,24);
-      pas.System.Writeln("Игрок 1");
+      pas.System.Writeln(pas.nls.Loc("Player 1","Гравець 1"));
       pas.crt.GotoXY(52,24);
-      pas.System.Writeln("Игрок 2");
+      pas.System.Writeln(pas.nls.Loc("Player 2","Гравець 2"));
       $mod.palka();
       flag = false;
       do {
@@ -2356,17 +2379,17 @@ rtl.module("program",["System","JS","crt","tpfiles"],function () {
       } while (!flag);
       flag = $mod.win(pl,number_of_karts.slice(0));
       if (flag) {
-        pas.System.Writeln("Вы победили");
-        pas.System.Writeln("Вы заработали ",post," гривен");
+        pas.System.Writeln(pas.nls.Loc("You won","Ви виграли"));
+        pas.System.Writeln(pas.nls.Loc("You won ","Ви виграли "),post,pas.nls.Loc(" hryvnias"," гривень"));
         balans = balans + post;
       } else {
-        pas.System.Writeln("Вы проиграли");
-        pas.System.Writeln("Вы проиграли ",post," гривен");
+        pas.System.Writeln(pas.nls.Loc("You lost","Ви програли"));
+        pas.System.Writeln(pas.nls.Loc("You lost ","Ви програли "),post,pas.nls.Loc(" hryvnias"," гривень"));
         balans = balans - post;
       };
       pas.System.Writeln();
-      pas.System.Writeln("Хотите сохранить игру?");
-      pas.System.Writeln("y-да             n-нет");
+      pas.System.Writeln(pas.nls.Loc("Save the game?","Зберегти гру?"));
+      pas.System.Writeln(pas.nls.Loc("y-yes            n-no","y-так            n-ні"));
       do {
         ch = String.fromCharCode(pas.System.Trunc(await pas.crt.ReadKeyA()));
         var $tmp = ch;
@@ -2384,7 +2407,7 @@ rtl.module("program",["System","JS","crt","tpfiles"],function () {
     pas.crt.ClrScr();
     pas.tpfiles.Assign(fs,"c:\\cash\\bakkara\\saves.txt");
     pas.tpfiles.Reset(fs);
-    pas.System.Writeln("Сейчас появится список сохранений. Первый рядок - это название, а второй - баланс");
+    pas.System.Writeln(pas.nls.Loc("The save list follows: line 1 is the name, line 2 the balance","Зараз зʼявиться список збережень: рядок 1 — назва, рядок 2 — баланс"));
     while (!pas.tpfiles.Eof()) {
       for (n = 1; n <= 23; n++) {
         pas.tpfiles.ReadlnT(fs,{get: function () {
@@ -2397,19 +2420,19 @@ rtl.module("program",["System","JS","crt","tpfiles"],function () {
       do {
       } while (!(pas.System.Trunc(await pas.crt.ReadKeyA()) === 13));
     };
-    pas.System.Writeln('Введите имя вашего сохранения, или "Выход" чтобы выйти');
-    str = await pas.crt.AskString("Имя сохранения");
-    if ((str === "Выход") || (str === '"Выход"')) await $mod.choice();
+    pas.System.Writeln(pas.nls.Loc('Enter your save name, or "Exit" to quit',"Введіть імʼя збереження, або «Вихід» щоб вийти"));
+    str = await pas.crt.AskString(pas.nls.Loc("Save name","Імʼя збереження"));
+    if (str === pas.nls.Loc("Exit","Вихід")) await $mod.choice();
     while (!pas.tpfiles.Eof()) {
       st = await pas.crt.AskString("");
       if (st === str) {
-        pas.System.Writeln("Ваше сохранение найдено");
+        pas.System.Writeln(pas.nls.Loc("Save found","Збереження знайдено"));
         pas.tpfiles.ReadlnLong(fs,{p: $mod, get: function () {
             return this.p.balans;
           }, set: function (v) {
             this.p.balans = v;
           }});
-        pas.System.Writeln("Для начала игры нажмите Esc, а для повторного поиска сохранения n");
+        pas.System.Writeln(pas.nls.Loc("Press Esc to start, or n to search again","Натисніть Esc, щоб почати, або n для повторного пошуку"));
         do {
           ch = String.fromCharCode(pas.System.Trunc(await pas.crt.ReadKeyA()));
           var $tmp = ch;
@@ -2436,7 +2459,7 @@ rtl.module("program",["System","JS","crt","tpfiles"],function () {
         }});
       pas.System.Writeln(str);
     };
-    pas.System.Writeln("Нажмите нужную букву подменю, которое вас интересует и Esc чтобы выйти");
+    pas.System.Writeln(pas.nls.Loc("Press the submenu letter you want, or Esc to exit","Натисніть потрібну літеру підменю, або Esc щоб вийти"));
     do {
       ch = String.fromCharCode(pas.System.Trunc(await pas.crt.ReadKeyA()));
       var $tmp = ch;
