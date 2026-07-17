@@ -36,8 +36,11 @@ interface GameDef {
   year: string;
   note: string; // one-liner for F1 help (what the program is)
   controls?: string; // shown before launch / in F1
-  /** set when the game is ported: slug under public/retro/games/ + main .pas in retro/games/<dir>/ */
-  port?: { slug: string; main: string };
+  /** Ported programs of this folder: slug under public/retro/games/ + main .pas
+   *  in retro/games/<dir>/ + the manifest file whose Enter launches it (for
+   *  folders without .EXEs, e.g. the CARS sources). Any .EXE still launches
+   *  the FIRST port (the folder default). */
+  ports?: Array<{ slug: string; main: string; file?: string }>;
 }
 
 const GAMES: GameDef[] = [
@@ -47,7 +50,7 @@ const GAMES: GameDef[] = [
     year: '2005',
     note: 'Арканоїд: платформа, мʼяч і стіна блоків.',
     controls: '← → — рухати платформу · Esc — вийти',
-    port: { slug: 'pingpong', main: 'PINGPONG.pas' },
+    ports: [{ slug: 'pingpong', main: 'PINGPONG.pas' }],
   },
   {
     dir: 'PUSHKA',
@@ -55,9 +58,19 @@ const GAMES: GameDef[] = [
     year: '2008',
     note: 'Балістика: політ снаряда під кутом.',
     controls: 'введи кут/швидкість/координати + Enter · будь-яка клавіша — стоп · Esc — вийти',
-    port: { slug: 'pushka', main: 'PUSHKA.pas' },
+    ports: [{ slug: 'pushka', main: 'PUSHKA.pas' }],
   },
-  { dir: 'ANIMGAME', title: 'Cars', year: '2005', note: 'Анімації машинок (CARS1/CARS2).' },
+  {
+    dir: 'ANIMGAME',
+    title: 'Cars',
+    year: '2005',
+    note: 'Текстові анімації: машинка ▲ і зорепад (CARS1/CARS2).',
+    controls: '← → — рухати машинку · Esc — вийти',
+    ports: [
+      { slug: 'cars2', main: 'CARS2.pas', file: 'CARS/CARS2.PAS' },
+      { slug: 'cars1', main: 'CARS1.pas', file: 'CARS/CARS1.PAS' },
+    ],
+  },
   { dir: 'SUPER', title: 'Super', year: '2008', note: 'Текстова програма з TEXT.TXT.' },
   { dir: 'QUIDDITC', title: 'Quidditch', year: '2008', note: 'Квідич: RANDOM і SNITCH.' },
   { dir: 'BAKKARA', title: 'Бакара', year: '2005', note: 'Карткова гра проти компʼютера.' },
@@ -143,8 +156,7 @@ function scanFolder(def: GameDef): { files: ManifestFile[] } {
   return { files };
 }
 
-function compilePort(def: GameDef): void {
-  const port = def.port!;
+function compilePort(def: GameDef, port: { slug: string; main: string }): void {
   const srcDir = path.join(REPO_ROOT, 'retro/games', def.dir);
   const shims = path.join(REPO_ROOT, 'retro/shims');
   const outGame = path.join(OUT_DIR, 'games', port.slug);
@@ -171,10 +183,13 @@ function compilePort(def: GameDef): void {
   console.log(`✓ ${port.slug}: compiled`);
 }
 
-function writeGameIndexHtml(def: GameDef): void {
-  const port = def.port!;
+function writeGameIndexHtml(def: GameDef, port: { slug: string; main: string }): void {
   const outGame = path.join(OUT_DIR, 'games', port.slug);
   fs.mkdirSync(outGame, { recursive: true });
+  // The text-mode renderer draws glyphs with fillText — embed the IBM VGA face
+  // as a data: URI (a sandboxed iframe has an opaque origin, so a cross-origin
+  // font URL would need CORS headers the static host doesn't send).
+  const woff = fs.readFileSync(path.join(OUT_DIR, 'fonts/WebPlus_IBM_VGA_8x16.woff')).toString('base64');
   // Self-contained bundle page. Esc inside the game posts `retro:quit` to the
   // parent so the NC can close the window; the game itself also reacts to Esc.
   const html = `<!doctype html>
@@ -183,9 +198,13 @@ function writeGameIndexHtml(def: GameDef): void {
   <meta charset="utf-8">
   <title>${def.dir} — pas2js</title>
   <style>
+    @font-face { font-family: 'IBM VGA'; src: url(data:font/woff;base64,${woff}) format('woff'); }
     html, body { margin:0; height:100%; background:#000; overflow:hidden; }
     body { display:flex; align-items:center; justify-content:center; }
-    canvas { image-rendering:pixelated; width:min(100vw, calc(100vh * 4 / 3)); height:auto; aspect-ratio:4/3; }
+    /* object-fit honours the canvas's INTRINSIC ratio — 640×480 for graphics
+       mode, 640×400 once crt's text renderer resizes the backing store — so
+       text cells are never stretched into 4:3. */
+    canvas { image-rendering:pixelated; width:100vw; height:100vh; object-fit:contain; }
   </style>
 </head>
 <body>
@@ -228,15 +247,22 @@ const manifest = {
       year: def.year,
       note: def.note,
       ...(def.controls ? { controls: def.controls } : {}),
-      ...(def.port ? { run: def.port.slug } : {}),
+      // `run` = the folder default (F6 / any .EXE); `runs` maps specific files
+      // to their own port (folders whose programs never got compiled to .EXE).
+      ...(def.ports?.length ? { run: def.ports[0]!.slug } : {}),
+      ...(def.ports?.some((p) => p.file)
+        ? { runs: Object.fromEntries(def.ports.filter((p) => p.file).map((p) => [p.file!, p.slug])) }
+        : {}),
       files,
     };
   }),
 };
 
-for (const def of GAMES.filter((d) => d.port)) {
-  compilePort(def);
-  writeGameIndexHtml(def);
+for (const def of GAMES) {
+  for (const port of def.ports ?? []) {
+    compilePort(def, port);
+    writeGameIndexHtml(def, port);
+  }
 }
 
 fs.writeFileSync(path.join(OUT_DIR, 'manifest.json'), JSON.stringify(manifest, null, 1));

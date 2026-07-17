@@ -25,7 +25,8 @@ interface ManifestFolder {
   year: string;
   note: string;
   controls?: string;
-  run?: string;
+  run?: string; // folder default (F6 / any .EXE)
+  runs?: Record<string, string>; // specific file → its own port slug
   files: ManifestFile[];
 }
 interface Manifest {
@@ -105,8 +106,9 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
 
   const tryRun = useCallback(
     (f: ManifestFolder, file?: ManifestFile) => {
-      if (f.run) {
-        setOverlay({ kind: 'run', slug: f.run, title: f.title, controls: f.controls });
+      const slug = (file && f.runs?.[file.name]) || f.run;
+      if (slug) {
+        setOverlay({ kind: 'run', slug, title: f.title, controls: f.controls });
         return;
       }
       setOverlay({
@@ -183,7 +185,7 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
           }
           const file = files[fileIdx];
           if (!file) break;
-          if (/\.exe$/i.test(file.name)) tryRun(folder, file);
+          if (/\.exe$/i.test(file.name) || folder.runs?.[file.name]) tryRun(folder, file);
           else openView(folder.dir, file);
           break;
         }
@@ -377,7 +379,10 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
                   setPanel(1);
                   setFileIdx(i);
                 },
-                onOpen: () => (/\.exe$/i.test(f.name) ? folder && tryRun(folder, f) : folder && openView(folder.dir, f)),
+                onOpen: () =>
+                  /\.exe$/i.test(f.name) || folder?.runs?.[f.name]
+                    ? folder && tryRun(folder, f)
+                    : folder && openView(folder.dir, f),
               }),
             ),
             folder?.run

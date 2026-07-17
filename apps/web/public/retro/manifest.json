@@ -703,7 +703,13 @@
    "dir": "ANIMGAME",
    "title": "Cars",
    "year": "2005",
-   "note": "Анімації машинок (CARS1/CARS2).",
+   "note": "Текстові анімації: машинка ▲ і зорепад (CARS1/CARS2).",
+   "controls": "← → — рухати машинку · Esc — вийти",
+   "run": "cars2",
+   "runs": {
+    "CARS/CARS2.PAS": "cars2",
+    "CARS/CARS1.PAS": "cars1"
+   },
    "files": [
     {
      "name": "CARS/CARS1.BAK",

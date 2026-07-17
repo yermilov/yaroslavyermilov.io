@@ -1474,6 +1474,7 @@ var rtl = {
 rtl.module("System",[],function () {
   "use strict";
   var $mod = this;
+  var $impl = $mod.$impl;
   this.Trunc = function (A) {
     if (!Math.trunc) {
       Math.trunc = function(v) {
@@ -1489,9 +1490,20 @@ rtl.module("System",[],function () {
     if (Index<1) Index = 1;
     return (Size>0) ? S.substring(Index-1,Index+Size-1) : "";
   };
+  this.SetWriteCallBack = function (H) {
+    var Result = null;
+    Result = $impl.WriteCallBack;
+    $impl.WriteCallBack = H;
+    return Result;
+  };
   $mod.$init = function () {
     rtl.exitcode = 0;
   };
+},null,function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  $impl.WriteCallBack = null;
 });
 rtl.module("JS",["System"],function () {
   "use strict";
@@ -1515,6 +1527,7 @@ rtl.module("graph",["System"],function () {
   this.ScreenW = 640;
   this.ScreenH = 480;
   this.InitGraph = function (gd, gm, path) {
+    pas.crt.TextShutdown();
     $impl.Canvas = document.getElementById("screen");
     if ($impl.Canvas === null) {
       $impl.LastResult = -2;
@@ -1529,6 +1542,11 @@ rtl.module("graph",["System"],function () {
     $impl.LastResult = 0;
     gm.set(0);
     window.requestAnimationFrame($impl.Frame);
+  };
+  this.GraphActive = function () {
+    var Result = false;
+    Result = $impl.Ctx !== null;
+    return Result;
   };
   this.SetColor = function (c) {
     $impl.CurColor = c & 15;
@@ -1567,7 +1585,7 @@ rtl.module("graph",["System"],function () {
     if (rtl.length($impl.FB) === 0) return;
     for (i = 0; i <= 307199; i++) $impl.FB[i] = 0;
   };
-},["JS","Web","weborworker"],function () {
+},["JS","Web","weborworker","crt"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
@@ -1676,8 +1694,25 @@ rtl.module("crt",["System","JS"],function () {
     });
     return Result;
   };
+  this.TextShutdown = function () {
+    if (!$impl.TextActive) return;
+    $impl.TextActive = false;
+    pas.System.SetWriteCallBack($impl.SavedWriteCb);
+  };
   this.ClrScr = function () {
-    pas.graph.ClearDevice();
+    var i = 0;
+    if (pas.graph.GraphActive()) {
+      pas.graph.ClearDevice();
+      return;
+    };
+    $impl.TextEnsure();
+    for (i = 0; i <= 1999; i++) {
+      $impl.CellCh[i] = " ";
+      $impl.CellFg[i] = $impl.CurFg;
+      $impl.CellBg[i] = $impl.CurBg;
+    };
+    $impl.CurX = 1;
+    $impl.CurY = 1;
   };
 },["Web","graph"],function () {
   "use strict";
@@ -1721,6 +1756,154 @@ rtl.module("crt",["System","JS"],function () {
     if ($impl.Installed) return;
     $impl.Installed = true;
     document.addEventListener("keydown",$impl.OnKeyDown);
+  };
+  $impl.Cols = 80;
+  $impl.Rows = 25;
+  $impl.CellW = 8;
+  $impl.CellH = 16;
+  $impl.Css = ["#000000","#0000a8","#00a800","#00a8a8","#a80000","#a800a8","#a85400","#a8a8a8","#545454","#5454ff","#54ff54","#54ffff","#ff5454","#ff54ff","#ffff54","#ffffff"];
+  $impl.TextActive = false;
+  $impl.TextCanvas = null;
+  $impl.TextCtx = null;
+  $impl.CellCh = [];
+  $impl.CellFg = [];
+  $impl.CellBg = [];
+  $impl.CurX = 1;
+  $impl.CurY = 1;
+  $impl.CurFg = 7;
+  $impl.CurBg = 0;
+  $impl.SavedWriteCb = null;
+  $impl.CtrlGlyph = function (code) {
+    var Result = "";
+    var $tmp = code;
+    if ($tmp === 16) {
+      Result = "►"}
+     else if ($tmp === 17) {
+      Result = "◄"}
+     else if ($tmp === 24) {
+      Result = "↑"}
+     else if ($tmp === 25) {
+      Result = "↓"}
+     else if ($tmp === 30) {
+      Result = "▲"}
+     else if ($tmp === 31) {
+      Result = "▼"}
+     else {
+      Result = " ";
+    };
+    return Result;
+  };
+  $impl.HighGlyph = function (code) {
+    var Result = "";
+    var $tmp = code;
+    if ($tmp === 179) {
+      Result = "│"}
+     else if ($tmp === 191) {
+      Result = "┐"}
+     else if ($tmp === 192) {
+      Result = "└"}
+     else if ($tmp === 196) {
+      Result = "─"}
+     else if ($tmp === 217) {
+      Result = "┘"}
+     else if ($tmp === 218) {
+      Result = "┌"}
+     else {
+      Result = String.fromCharCode(code);
+    };
+    return Result;
+  };
+  $impl.TextEnsure = function () {
+    var i = 0;
+    if ($impl.TextActive) return;
+    $impl.TextActive = true;
+    $impl.TextCanvas = document.getElementById("screen");
+    if ($impl.TextCanvas === null) return;
+    $impl.TextCanvas.width = 80 * 8;
+    $impl.TextCanvas.height = 25 * 16;
+    $impl.TextCtx = $impl.TextCanvas.getContext("2d");
+    $impl.CellCh = rtl.arraySetLength($impl.CellCh,"",80 * 25);
+    $impl.CellFg = rtl.arraySetLength($impl.CellFg,0,80 * 25);
+    $impl.CellBg = rtl.arraySetLength($impl.CellBg,0,80 * 25);
+    for (i = 0; i <= 1999; i++) {
+      $impl.CellCh[i] = " ";
+      $impl.CellFg[i] = 7;
+      $impl.CellBg[i] = 0;
+    };
+    $impl.SavedWriteCb = pas.System.SetWriteCallBack(function (S, NewLine) {
+      var txt = "";
+      var k = 0;
+      var code = 0;
+      var g = "";
+      if (!$impl.TextActive) return;
+      txt = "" + S;
+      for (var $l = 1, $end = txt.length; $l <= $end; $l++) {
+        k = $l;
+        code = txt.charCodeAt(k - 1);
+        if (code === 13) {
+          $impl.CurX = 1;
+          continue;
+        };
+        if (code === 10) {
+          $impl.CurX = 1;
+          $impl.CurY += 1;
+          continue;
+        };
+        if (code < 32) {
+          g = $impl.CtrlGlyph(code)}
+         else if (code > 126) {
+          g = $impl.HighGlyph(code)}
+         else g = txt.charAt(k - 1);
+        if (($impl.CurX >= 1) && ($impl.CurX <= 80) && ($impl.CurY >= 1) && ($impl.CurY <= 25)) {
+          $impl.CellCh[(($impl.CurY - 1) * 80) + ($impl.CurX - 1)] = g;
+          $impl.CellFg[(($impl.CurY - 1) * 80) + ($impl.CurX - 1)] = $impl.CurFg;
+          $impl.CellBg[(($impl.CurY - 1) * 80) + ($impl.CurX - 1)] = $impl.CurBg;
+        };
+        $impl.CurX += 1;
+        if ($impl.CurX > 80) {
+          $impl.CurX = 1;
+          $impl.CurY += 1;
+        };
+      };
+      if (NewLine) {
+        $impl.CurX = 1;
+        $impl.CurY += 1;
+      };
+      while ($impl.CurY > 25) {
+        for (k = 0; k <= 1919; k++) {
+          $impl.CellCh[k] = $impl.CellCh[k + 80];
+          $impl.CellFg[k] = $impl.CellFg[k + 80];
+          $impl.CellBg[k] = $impl.CellBg[k + 80];
+        };
+        for (k = 1920; k <= 1999; k++) {
+          $impl.CellCh[k] = " ";
+          $impl.CellFg[k] = 7;
+          $impl.CellBg[k] = $impl.CurBg;
+        };
+        $impl.CurY -= 1;
+      };
+    });
+    window.requestAnimationFrame($impl.TextPaint);
+  };
+  $impl.TextPaint = function (aTime) {
+    var x = 0;
+    var y = 0;
+    var i = 0;
+    if (!$impl.TextActive) return;
+    if ($impl.TextCtx !== null) {
+      $impl.TextCtx.font = '16px "IBM VGA", ui-monospace, Menlo, monospace';
+      $impl.TextCtx.textBaseline = "top";
+      for (y = 0; y <= 24; y++) for (x = 0; x <= 79; x++) {
+        i = (y * 80) + x;
+        $impl.TextCtx["fillStyle"] = $impl.Css[$impl.CellBg[i] & 15];
+        $impl.TextCtx.fillRect(x * 8,y * 16,8,16);
+        if ($impl.CellCh[i] !== " ") {
+          $impl.TextCtx["fillStyle"] = $impl.Css[$impl.CellFg[i] & 15];
+          $impl.TextCtx.fillText($impl.CellCh[i],x * 8,y * 16);
+        };
+      };
+    };
+    window.requestAnimationFrame($impl.TextPaint);
   };
 });
 rtl.module("program",["System","crt","graph"],function () {

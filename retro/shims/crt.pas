@@ -21,6 +21,12 @@ interface
 
 uses JS;
 
+const
+  { Turbo Pascal's crt colour constants — the games use them by name. }
+  Black = 0; Blue = 1; Green = 2; Cyan = 3; Red = 4; Magenta = 5;
+  Brown = 6; LightGray = 7; DarkGray = 8; LightBlue = 9; LightGreen = 10;
+  LightCyan = 11; LightRed = 12; LightMagenta = 13; Yellow = 14; White = 15;
+
 function KeyPressed: boolean;
 function ReadKey: char;
 function Delay(ms: integer): TJSPromise;
@@ -32,6 +38,19 @@ function Delay(ms: integer): TJSPromise;
 function AskReal(const prompt: string): TJSPromise;
 { Fast macrotask yield for busy compute loops — see the implementation note. }
 function Yield: TJSPromise;
+{ ---- DOS text mode (80×25) ----------------------------------------------
+  The text-mode games (CARS, and later SUPER/QUIDDITC/BAKKARA/FOOTBALL) never
+  call InitGraph: they paint with GotoXY/TextColor/TextBackground and plain
+  Write. The shim keeps a real 80×25 cell buffer (char + fg + bg per cell,
+  CP437-style glyphs) rendered to the same #screen canvas at 8×16 per cell
+  (640×400 — authentic VGA text). System Write/Writeln is routed here through
+  pas2js's SetWriteCallBack once any text op runs; graph.InitGraph hands the
+  canvas back to graphics mode (see TextShutdown). }
+procedure TextBackground(c: byte);
+procedure TextColor(c: byte);
+procedure GotoXY(x, y: byte);
+{ Called by graph.InitGraph: stop the text renderer and release Write. }
+procedure TextShutdown;
 procedure ClrScr;
 { Not a crt routine on DOS — it lived in System, which pas2js does not provide.
   Absorbed here so the game's own source needs no further edits. JS's Math.random
@@ -191,9 +210,210 @@ begin
     end);
 end;
 
-procedure ClrScr;
+{ ---- text mode ---------------------------------------------------------- }
+
+const
+  Cols = 80;
+  Rows = 25;
+  CellW = 8;
+  CellH = 16;
+  // The 16 DOS colours as CSS — same values as graph.pas's palette.
+  Css: array[0..15] of string = (
+    '#000000', '#0000a8', '#00a800', '#00a8a8', '#a80000', '#a800a8', '#a85400', '#a8a8a8',
+    '#545454', '#5454ff', '#54ff54', '#54ffff', '#ff5454', '#ff54ff', '#ffff54', '#ffffff');
+
+var
+  TextActive: boolean = false;
+  TextCanvas: TJSHTMLCanvasElement;
+  TextCtx: TJSCanvasRenderingContext2D;
+  CellCh: array of string; // Rows*Cols glyphs
+  CellFg: array of byte;
+  CellBg: array of byte;
+  CurX: integer = 1; // 1-based, like Turbo Pascal
+  CurY: integer = 1;
+  CurFg: byte = 7;
+  CurBg: byte = 0;
+  SavedWriteCb: TConsoleHandler;
+
+{ CP437's visible control glyphs (the games draw with them: #30 is the car). }
+function CtrlGlyph(code: integer): string;
 begin
-  ClearDevice;
+  case code of
+    16: Result := '►';
+    17: Result := '◄';
+    24: Result := '↑';
+    25: Result := '↓';
+    30: Result := '▲';
+    31: Result := '▼';
+  else
+    Result := ' ';
+  end;
+end;
+
+{ High-half CP437/CP866 shared box-drawing range used by t_graph's Box. }
+function HighGlyph(code: integer): string;
+begin
+  case code of
+    179: Result := '│';
+    191: Result := '┐';
+    192: Result := '└';
+    196: Result := '─';
+    217: Result := '┘';
+    218: Result := '┌';
+  else
+    Result := chr(code);
+  end;
+end;
+
+procedure TextPaint(aTime: TJSDOMHighResTimeStamp); forward;
+
+procedure TextEnsure;
+var
+  i: integer;
+begin
+  if TextActive then exit;
+  TextActive := true;
+  TextCanvas := TJSHTMLCanvasElement(document.getElementById('screen'));
+  if TextCanvas = nil then exit;
+  TextCanvas.width := Cols * CellW;   // 640
+  TextCanvas.height := Rows * CellH;  // 400 — real VGA text mode
+  TextCtx := TJSCanvasRenderingContext2D(TextCanvas.getContext('2d'));
+  SetLength(CellCh, Cols * Rows);
+  SetLength(CellFg, Cols * Rows);
+  SetLength(CellBg, Cols * Rows);
+  for i := 0 to Cols * Rows - 1 do
+  begin
+    CellCh[i] := ' ';
+    CellFg[i] := 7;
+    CellBg[i] := 0;
+  end;
+  // Route System Write/Writeln into the cell grid.
+  SavedWriteCb := SetWriteCallBack(
+    procedure(S: JSValue; NewLine: boolean)
+    var
+      txt: string;
+      k, code: integer;
+      g: string;
+    begin
+      if not TextActive then exit;
+      txt := String(S);
+      for k := 1 to Length(txt) do
+      begin
+        code := ord(txt[k]);
+        if code = 13 then begin CurX := 1; continue; end;
+        if code = 10 then begin CurX := 1; Inc(CurY); continue; end;
+        if code < 32 then g := CtrlGlyph(code)
+        else if code > 126 then g := HighGlyph(code)
+        else g := txt[k];
+        if (CurX >= 1) and (CurX <= Cols) and (CurY >= 1) and (CurY <= Rows) then
+        begin
+          CellCh[(CurY - 1) * Cols + (CurX - 1)] := g;
+          CellFg[(CurY - 1) * Cols + (CurX - 1)] := CurFg;
+          CellBg[(CurY - 1) * Cols + (CurX - 1)] := CurBg;
+        end;
+        Inc(CurX);
+        if CurX > Cols then begin CurX := 1; Inc(CurY); end;
+      end;
+      if NewLine then begin CurX := 1; Inc(CurY); end;
+      // Bottom overflow scrolls, exactly like the DOS console did.
+      while CurY > Rows do
+      begin
+        for k := 0 to (Rows - 1) * Cols - 1 do
+        begin
+          CellCh[k] := CellCh[k + Cols];
+          CellFg[k] := CellFg[k + Cols];
+          CellBg[k] := CellBg[k + Cols];
+        end;
+        for k := (Rows - 1) * Cols to Rows * Cols - 1 do
+        begin
+          CellCh[k] := ' ';
+          CellFg[k] := 7;
+          CellBg[k] := CurBg;
+        end;
+        Dec(CurY);
+      end;
+    end);
+  window.requestAnimationFrame(@TextPaint);
+end;
+
+procedure TextPaint(aTime: TJSDOMHighResTimeStamp);
+var
+  x, y, i: integer;
+begin
+  if not TextActive then exit;
+  if TextCtx <> nil then
+  begin
+    TextCtx.font := '16px "IBM VGA", ui-monospace, Menlo, monospace';
+    TextCtx.textBaseline := 'top';
+    for y := 0 to Rows - 1 do
+      for x := 0 to Cols - 1 do
+      begin
+        i := y * Cols + x;
+        TJSObject(TextCtx)['fillStyle'] := Css[CellBg[i] and 15];
+        TextCtx.fillRect(x * CellW, y * CellH, CellW, CellH);
+        if CellCh[i] <> ' ' then
+        begin
+          TJSObject(TextCtx)['fillStyle'] := Css[CellFg[i] and 15];
+          TextCtx.fillText(CellCh[i], x * CellW, y * CellH);
+        end;
+      end;
+  end;
+  window.requestAnimationFrame(@TextPaint);
+end;
+
+procedure TextShutdown;
+begin
+  if not TextActive then exit;
+  TextActive := false; // the paint loop sees this and stops re-queueing
+  SetWriteCallBack(SavedWriteCb);
+end;
+
+procedure TextBackground(c: byte);
+begin
+  TextEnsure;
+  CurBg := c and 15;
+end;
+
+procedure TextColor(c: byte);
+begin
+  TextEnsure;
+  CurFg := c and 15;
+end;
+
+procedure GotoXY(x, y: byte);
+begin
+  TextEnsure;
+  // Turbo Pascal IGNORED out-of-range coordinates (the cursor stayed put) —
+  // and that semantics is load-bearing: CARS2 has a latent bug where a star's
+  // row counter grows past 25 forever (inc lands on 25, the =24 reset never
+  // fires). On DOS the bad GotoXY was a no-op and the stray writes hit the
+  // stale cursor — accepting the row instead made every frame SCROLL, flooding
+  // the screen green. Bug-for-bug fidelity requires the ignore.
+  if (x < 1) or (x > Cols) or (y < 1) or (y > Rows) then exit;
+  CurX := x;
+  CurY := y;
+end;
+
+procedure ClrScr;
+var
+  i: integer;
+begin
+  if GraphActive then
+  begin
+    ClearDevice;
+    exit;
+  end;
+  // Text-mode clear: fill with the current background and home the cursor,
+  // exactly what Turbo Pascal's ClrScr did.
+  TextEnsure;
+  for i := 0 to Cols * Rows - 1 do
+  begin
+    CellCh[i] := ' ';
+    CellFg[i] := CurFg;
+    CellBg[i] := CurBg;
+  end;
+  CurX := 1;
+  CurY := 1;
 end;
 
 procedure Randomize;

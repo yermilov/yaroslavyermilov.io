@@ -29,6 +29,8 @@ const
 
 procedure InitGraph(var gd, gm: integer; const path: string);
 procedure CloseGraph;
+{ True once InitGraph has taken the canvas — crt.ClrScr dispatches on this. }
+function GraphActive: boolean;
 function GraphResult: integer;
 function GraphErrorMsg(code: integer): string;
 
@@ -48,7 +50,9 @@ procedure ClearDevice;
 
 implementation
 
-uses JS, Web, WebOrWorker, SysUtils;   // TJSImageData / the 2D context live in WebOrWorker
+// crt is used at IMPLEMENTATION level only (crt's impl uses graph the same
+// way) — InitGraph must shut the text renderer down when it takes the canvas.
+uses JS, Web, WebOrWorker, SysUtils, crt;   // TJSImageData / the 2D context live in WebOrWorker
 
 var
   FB: array of byte;          // colour index per pixel — the BGI surface
@@ -101,8 +105,14 @@ begin
   window.requestAnimationFrame(@Frame);
 end;
 
+function GraphActive: boolean;
+begin
+  Result := Ctx <> nil;
+end;
+
 procedure InitGraph(var gd, gm: integer; const path: string);
 begin
+  TextShutdown; // a ClrScr before InitGraph may have booted the text renderer
   Canvas := TJSHTMLCanvasElement(document.getElementById('screen'));
   if Canvas = nil then
   begin
