@@ -114,7 +114,15 @@ const GAMES: GameDef[] = [
     controls: 'меню — миша · стрілки — рух · b бомба, r ракета · Esc — вийти',
     ports: [{ slug: 'warwork', main: 'WW3.pas', file: 'WW3.EXE' }],
   },
-  { dir: 'STARWARS', title: 'Star Wars', year: '2005', note: 'За мотивами «Зоряних воєн».' },
+  {
+    dir: 'STARWARS',
+    title: 'Star Wars',
+    year: '2005',
+    // Not portable: not Yarik's game (K. Balitsky + A. Yakovenko), the MENU_KB/
+    // ZASTAVA unit sources are lost (TPU-only in every backup), and it targets
+    // 800×600 SVGA-256 — see retro/README.md. Browsable only.
+    note: 'Шутер K.Balitsky+A.Yakovenko (не Ярикова гра); юніти меню втрачено — лише перегляд.',
+  },
   { dir: 'SAPER', title: 'Сапер', year: '2006', note: 'Мінер. Сорс лише C++ (SAPER.CPP) — pas2js не застосовний.' },
   { dir: 'game', title: 'game', year: '2005–2009', note: 'Олімпіадна задачка (теорія ігор, file I/O) — не гра.' },
 ];

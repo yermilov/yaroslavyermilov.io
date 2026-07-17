@@ -61,8 +61,16 @@ RANDOM crashed at its first prompt while SNITCH ran fine, same crt unit.
 ## Porting order (simplest → hardest)
 
 PINGPONG ✓ → PUSHKA ✓ → ANIMGAME/CARS ✓ → SUPER ✓ → QUIDDITC ✓ → BAKKARA ✓ → FOOTBALL ✓ →
-WARWORK ✓ → STARWARS. Not portable: SAPER (source is C++), game/GAME.PAS (an
-olympiad exercise, not a game) — both still browsable in the NC.
+WARWORK ✓ — the plan's port list is COMPLETE (8 runnable ports). Not portable,
+documented and still browsable in the NC:
+- SAPER — the exe is Win32, the source is C++ (not a TP game at all);
+- game/GAME.PAS — an olympiad exercise, not a game;
+- STARWARS — not Yarik's game (its header credits Kostia Balitsky and Anton
+  Yakovenko), and two of its units (MENU_KB — an OO menu framework the whole
+  UI builds on — and ZASTAVA) survive only as compiled .TPUs in every copy
+  incl. the Noah's Ark backup; it also targets 800×600 SVGA-256 via
+  svga256m.bgi, beyond this shim's faithful 640×480×16 framebuffer.
+  Reconstructing lost units of someone else's game is invention, not porting.
 
 The IBM VGA web font under `apps/web/public/retro/fonts/` is from The Ultimate
 Oldschool PC Font Pack v2.2 by VileR (int10h.org), CC BY-SA 4.0.
