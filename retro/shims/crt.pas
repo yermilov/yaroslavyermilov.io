@@ -41,6 +41,11 @@ function AskString(const prompt: string): TJSPromise;
 { Resolves when the NEXT key arrives (the key is consumed) — the blocking
   `ReadKey;` of DOS, awaitable. }
 function WaitKey: TJSPromise;
+{ Same, but resolves with the key's CHAR CODE (ord(ReadKey) of DOS) — for
+  ports whose whole flow blocks on ReadKey (menus, y/n prompts). Extended
+  keys deliver their #0 prefix and scan code as two resolutions, exactly
+  like the two-call DOS protocol. }
+function ReadKeyA: TJSPromise;
 { PC-speaker: a square-wave beep at hz until NoSound. Best-effort — browser
   autoplay policy may keep it silent until a real user gesture. }
 procedure Sound(hz: word);
@@ -278,6 +283,22 @@ begin
       asm
         const poll = () => {
           if (pas.crt.KeyPressed()) { pas.crt.ReadKey(); resolve(0); }
+          else setTimeout(poll, 50);
+        };
+        poll();
+      end;
+    end);
+end;
+
+function ReadKeyA: TJSPromise;
+begin
+  Install;
+  Result := TJSPromise.New(
+    procedure(resolve, reject: TJSPromiseResolver)
+    begin
+      asm
+        const poll = () => {
+          if (pas.crt.KeyPressed()) { resolve(pas.crt.ReadKey().charCodeAt(0)); }
           else setTimeout(poll, 50);
         };
         poll();

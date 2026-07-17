@@ -90,7 +90,14 @@ const GAMES: GameDef[] = [
       { slug: 'randommatch', main: 'RANDOM.pas', file: 'RANDOM.EXE' },
     ],
   },
-  { dir: 'BAKKARA', title: 'Бакара', year: '2005', note: 'Карткова гра проти компʼютера.' },
+  {
+    dir: 'BAKKARA',
+    title: 'Бакара',
+    year: '2005',
+    note: 'Карткова гра: ставка на гравця 1/2/нічию. Арт карт — реконструкція.',
+    controls: 'Enter · s/i/o/q у меню · f/s/n — ставка · Esc — вийти',
+    ports: [{ slug: 'bakkara', main: 'BAKKARA.pas', file: 'BAKKARA.EXE' }],
+  },
   { dir: 'FOOTBALL', title: 'Football', year: '2005–2009', note: 'Футбольний менеджер: NEWTEAM, MATCH, EMATCH.' },
   { dir: 'WARWORK', title: 'WarWork', year: '2005', note: 'Воєнна гра: літаки, прапори, WW2/WW3.' },
   { dir: 'STARWARS', title: 'Star Wars', year: '2005', note: 'За мотивами «Зоряних воєн».' },
@@ -207,6 +214,21 @@ function writeGameIndexHtml(def: GameDef, port: { slug: string; main: string }):
   // as a data: URI (a sandboxed iframe has an opaque origin, so a cross-origin
   // font URL would need CORS headers the static host doesn't send).
   const woff = fs.readFileSync(path.join(OUT_DIR, 'fonts/WebPlus_IBM_VGA_8x16.woff')).toString('base64');
+  // Games that read their screens/art from DOS data files (BAKKARA) ship them
+  // inlined: retro/games/<DIR>/data/* becomes window.__retroFiles, a
+  // {basename: [lines]} map the tpfiles shim resolves paths against (the
+  // sandboxed iframe is opaque-origin — it cannot fetch, same as the font).
+  const dataDir = path.join(REPO_ROOT, 'retro/games', def.dir, 'data');
+  let dataScript = '';
+  if (fs.existsSync(dataDir)) {
+    const files: Record<string, string[]> = {};
+    for (const name of fs.readdirSync(dataDir).sort()) {
+      const body = fs.readFileSync(path.join(dataDir, name), 'utf8');
+      // An empty file has ZERO lines (Eof at once), not one empty line.
+      files[name.toLowerCase()] = body === '' ? [] : body.replace(/\n$/, '').split('\n');
+    }
+    dataScript = `  <script>window.__retroSlug = ${JSON.stringify(port.slug)}; window.__retroFiles = ${JSON.stringify(files)};</script>\n`;
+  }
   // Self-contained bundle page. Esc inside the game posts `retro:quit` to the
   // parent so the NC can close the window; the game itself also reacts to Esc.
   const html = `<!doctype html>
@@ -226,9 +248,15 @@ function writeGameIndexHtml(def: GameDef, port: { slug: string; main: string }):
 </head>
 <body>
   <canvas id="screen" width="640" height="480"></canvas>
-  <script src="${port.slug}.js"></script>
+${dataScript}  <script src="${port.slug}.js"></script>
   <script>
     addEventListener('load', function () { rtl.run(); });
+    // tpfiles' halt/RTE end the program by throwing through the async chain —
+    // an INTENDED exit, not a bug; keep it out of the console.
+    addEventListener('unhandledrejection', function (e) {
+      var m = e.reason && e.reason.message || '';
+      if (m === 'halt' || m.indexOf('TP runtime error') === 0) e.preventDefault();
+    });
     addEventListener('keydown', function (e) {
       if (e.key === 'Escape') parent.postMessage({ type: 'retro:quit' }, '*');
     });

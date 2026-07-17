@@ -843,7 +843,12 @@
    "dir": "BAKKARA",
    "title": "Бакара",
    "year": "2005",
-   "note": "Карткова гра проти компʼютера.",
+   "note": "Карткова гра: ставка на гравця 1/2/нічию. Арт карт — реконструкція.",
+   "controls": "Enter · s/i/o/q у меню · f/s/n — ставка · Esc — вийти",
+   "run": "bakkara",
+   "runs": {
+    "BAKKARA.EXE": "bakkara"
+   },
    "files": [
     {
      "name": "BAKKARA.BAK",

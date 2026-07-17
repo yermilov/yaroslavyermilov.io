@@ -18,6 +18,12 @@
   <script src="pushka.js"></script>
   <script>
     addEventListener('load', function () { rtl.run(); });
+    // tpfiles' halt/RTE end the program by throwing through the async chain —
+    // an INTENDED exit, not a bug; keep it out of the console.
+    addEventListener('unhandledrejection', function (e) {
+      var m = e.reason && e.reason.message || '';
+      if (m === 'halt' || m.indexOf('TP runtime error') === 0) e.preventDefault();
+    });
     addEventListener('keydown', function (e) {
       if (e.key === 'Escape') parent.postMessage({ type: 'retro:quit' }, '*');
     });
