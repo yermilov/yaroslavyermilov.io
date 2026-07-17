@@ -1948,7 +1948,24 @@ rtl.module("crt",["System","JS"],function () {
     window.requestAnimationFrame($impl.TextPaint);
   };
 });
-rtl.module("program",["System","crt","graph"],function () {
+rtl.module("nls",["System"],function () {
+  "use strict";
+  var $mod = this;
+  this.GameLang = function () {
+    var Result = "";
+    Result = "ua";
+    Result = (typeof window !== 'undefined' && window.__retroLang === 'en') ? 'en' : 'ua';
+    return Result;
+  };
+  this.Loc = function (en, ua) {
+    var Result = "";
+    if ($mod.GameLang() === "en") {
+      Result = en}
+     else Result = ua;
+    return Result;
+  };
+});
+rtl.module("program",["System","crt","graph","nls"],function () {
   "use strict";
   var $mod = this;
   this.y = 0;
@@ -1962,11 +1979,11 @@ rtl.module("program",["System","crt","graph"],function () {
   this.Gm = 0;
   this.Main = async function () {
     pas.crt.ClrScr();
-    $mod.alfa = await pas.crt.AskReal("Print alfa");
+    $mod.alfa = await pas.crt.AskReal(pas.nls.Loc("Angle (deg)","Кут (градуси)"));
     $mod.alfa = ($mod.alfa * Math.PI) / 180;
-    $mod.v = pas.System.Trunc(await pas.crt.AskReal("Print speed"));
-    $mod.x0 = pas.System.Trunc(await pas.crt.AskReal("Print coordinates (x)"));
-    $mod.y0 = pas.System.Trunc(await pas.crt.AskReal("Print coordinates (y)"));
+    $mod.v = pas.System.Trunc(await pas.crt.AskReal(pas.nls.Loc("Speed","Швидкість")));
+    $mod.x0 = pas.System.Trunc(await pas.crt.AskReal(pas.nls.Loc("Start X","Координата X")));
+    $mod.y0 = pas.System.Trunc(await pas.crt.AskReal(pas.nls.Loc("Start Y","Координата Y")));
     $mod.t = 0;
     $mod.Gd = 0;
     pas.graph.InitGraph({p: $mod, get: function () {

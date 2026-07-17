@@ -1870,7 +1870,24 @@ rtl.module("crt",["System","JS"],function () {
     window.requestAnimationFrame($impl.TextPaint);
   };
 });
-rtl.module("program",["System","crt"],function () {
+rtl.module("nls",["System"],function () {
+  "use strict";
+  var $mod = this;
+  this.GameLang = function () {
+    var Result = "";
+    Result = "ua";
+    Result = (typeof window !== 'undefined' && window.__retroLang === 'en') ? 'en' : 'ua';
+    return Result;
+  };
+  this.Loc = function (en, ua) {
+    var Result = "";
+    if ($mod.GameLang() === "en") {
+      Result = en}
+     else Result = ua;
+    return Result;
+  };
+});
+rtl.module("program",["System","crt","nls"],function () {
   "use strict";
   var $mod = this;
   this.c = 47;
@@ -1881,7 +1898,7 @@ rtl.module("program",["System","crt"],function () {
   this.n = 0;
   this.s = 0.0;
   this.Main = async function () {
-    $mod.n = pas.System.Trunc(await pas.crt.AskReal("n (довжина рядка; 1-3 розумно)"));
+    $mod.n = pas.System.Trunc(await pas.crt.AskReal(pas.nls.Loc("n (string length; 1-3 is sane)","n (довжина рядка; 1-3 розумно)")));
     for (var $l = 1, $end = $mod.n; $l <= $end; $l++) {
       $mod.i = $l;
       $mod.t[$mod.i - 1] = 1;

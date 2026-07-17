@@ -16,7 +16,7 @@
     values and behavior are identical — TP didn't range-check either).
   The enumeration logic is untouched, including its own 2008 quirks. }
 program super;
-uses crt; { PORT: the original had no uses clause — needed for AskReal/Yield }
+uses crt,nls; { PORT: the original had no uses clause — needed for AskReal/Yield; nls for the bilingual prompt }
 const c = 47;
       symbol : array [1..c] of char =
                              ('а','б','в','г','д','е','ё','ж','з','и','й','к',
@@ -29,7 +29,7 @@ var t : array [1..10000] of word; { PORT: was `of 1..c+1` — pas2js rejects a n
 
 procedure Main; async;
 begin
-     n:=trunc(await(double, AskReal('n (довжина рядка; 1-3 розумно)')));
+     n:=trunc(await(double, AskReal(Loc('n (string length; 1-3 is sane)','n (довжина рядка; 1-3 розумно)'))));
      for i:=1 to n do
          t[i]:=1;
     repeat

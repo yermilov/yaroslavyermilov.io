@@ -15,7 +15,7 @@
     never arrive; Yield is a fast MessageChannel yield (paint + input).
   Everything else — the physics, the flow, Duration (declared, never called,
   kept verbatim) — compiles as written in 2008. }
-uses crt,graph,dos;
+uses crt,graph,dos,nls;
 var y,x,v,x0,y0:word;
     alfa,t:real;
     Gd,Gm:integer;
@@ -36,11 +36,11 @@ end;
 procedure Main; async;
 begin
      clrscr;
-     alfa:=await(double, AskReal('Print alfa'));
+     alfa:=await(double, AskReal(Loc('Angle (deg)','Кут (градуси)')));
      alfa:=alfa*pi/180;
-     v:=trunc(await(double, AskReal('Print speed')));
-     x0:=trunc(await(double, AskReal('Print coordinates (x)')));
-     y0:=trunc(await(double, AskReal('Print coordinates (y)')));
+     v:=trunc(await(double, AskReal(Loc('Speed','Швидкість'))));
+     x0:=trunc(await(double, AskReal(Loc('Start X','Координата X'))));
+     y0:=trunc(await(double, AskReal(Loc('Start Y','Координата Y'))));
      t:=0;
      Gd:=Detect;
      InitGraph(Gd,Gm,'');

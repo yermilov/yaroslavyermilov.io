@@ -270,6 +270,12 @@ function writeGameIndexHtml(def: GameDef, port: { slug: string; main: string }):
 </head>
 <body>
   <canvas id="screen" width="640" height="480"></canvas>
+  <script>
+    // The NC lab launches this frame as index.html?lang=en|ua; the nls shim
+    // reads window.__retroLang to pick each game's language. Default 'ua' (the
+    // site's default locale) when the param is absent.
+    window.__retroLang = new URLSearchParams(location.search).get('lang') === 'en' ? 'en' : 'ua';
+  </script>
 ${dataScript}  <script src="${port.slug}.js"></script>
   <script>
     // Wait for the embedded VGA face before the program draws: graph-mode text

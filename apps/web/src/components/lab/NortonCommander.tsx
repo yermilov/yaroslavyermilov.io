@@ -505,7 +505,7 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
               the overlay destroys the iframe and with it every rtl.js global. */}
           <iframe
             ref={frameRef}
-            src={`/retro/games/${overlay.slug}/index.html`}
+            src={`/retro/games/${overlay.slug}/index.html?lang=${locale}`}
             sandbox="allow-scripts"
             title={overlay.title}
             style={{ flex: 1, border: 0, width: '100%' }}
