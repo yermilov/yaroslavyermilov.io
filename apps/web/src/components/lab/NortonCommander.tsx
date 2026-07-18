@@ -82,6 +82,10 @@ function runSlugFor(folder: ManifestFolder, file: ManifestFile): string | undefi
 // binary assets (.CHR/.BGI, exes in un-ported folders) do neither — the panel
 // dims them and the cursor skips over them.
 function isOpenable(folder: ManifestFolder, file: ManifestFile): boolean {
+  // .bak (editor backups) and .bat (DOS batch) are build noise, not artefacts
+  // worth reading — keep them inert (dimmed + cursor-skipped, no F3) even though
+  // the build decoded them to text (Yarik: "don't make bak and bat readable").
+  if (/\.(bak|bat)$/i.test(file.name)) return false;
   return Boolean(runSlugFor(folder, file)) || file.view;
 }
 

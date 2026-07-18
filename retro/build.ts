@@ -56,14 +56,6 @@ const GAMES: GameDef[] = [
     ports: [{ slug: 'pingpong', main: 'PINGPONG.pas' }],
   },
   {
-    dir: 'PUSHKA',
-    title: 'Пушка',
-    year: '2008',
-    note: { ua: 'Балістика: політ снаряда під кутом.', en: "Ballistics: a projectile's flight at an angle." },
-    controls: { ua: 'введи кут/швидкість/координати + Enter · будь-яка клавіша — стоп · Esc — вийти', en: 'enter angle/speed/coords + Enter · any key stops · Esc to exit' },
-    ports: [{ slug: 'pushka', main: 'PUSHKA.pas' }],
-  },
-  {
     dir: 'ANIMGAME',
     title: 'Cars',
     year: '2005',
