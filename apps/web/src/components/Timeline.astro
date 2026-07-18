@@ -315,7 +315,7 @@ function kindLabel(kind: KindLabelKey): string {
                     {link.data.title}<span class="ext" aria-hidden="true">↗</span>
                   </a>
                 </h3>
-                {!compact && link.data.summary && <p class="summary">{link.data.summary}</p>}
+                {!compact && link.data.summary && <p class="summary">{localized(locale, link.data.summary, link.data.summaryUk)}</p>}
                 {!compact && link.data.thumbnail && (
                   <a
                     class="link-media"
@@ -330,7 +330,7 @@ function kindLabel(kind: KindLabelKey): string {
                 )}
               </>
             )}
-            {!compact && link.data.verdict && <p class="verdict">{link.data.verdict}</p>}
+            {!compact && link.data.verdict && <p class="verdict">{localized(locale, link.data.verdict, link.data.verdictUk)}</p>}
           </article>
         </li>
       );

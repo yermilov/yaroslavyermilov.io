@@ -71,7 +71,9 @@ const shelfPool: ShelfItem[] = [
     byline: link.data.source,
     cover: link.data.thumbnail ?? null,
     rating: link.data.rating ?? null,
-    summary: link.data.summary ?? '',
+    // Same as books above: localize the shelf blurb so /ua/ doesn't print the
+    // English summary of a promoted link next to an otherwise Ukrainian page.
+    summary: localized(locale, link.data.summary, link.data.summaryUk) ?? '',
     href: link.data.url,
     external: true,
     date: link.data.readAt?.getTime() ?? 0,

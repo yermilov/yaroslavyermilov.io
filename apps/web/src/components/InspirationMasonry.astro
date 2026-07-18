@@ -48,7 +48,8 @@ const stars = (r: number) => '★'.repeat(r) + '☆'.repeat(5 - r);
       }
       if (entry.kind === 'link') {
         const l = entry.link;
-        const summary = l.data.summary ?? null;
+        const summary = localized(locale, l.data.summary, l.data.summaryUk) ?? null;
+        const verdict = localized(locale, l.data.verdict, l.data.verdictUk) ?? null;
         // A tweet renders as a pseudo-screenshot (the native TweetCard: avatar,
         // @handle, verbatim body, "View on X"), with Yarik's rating + verdict kept
         // below it as his take.
@@ -87,7 +88,7 @@ const stars = (r: number) => '★'.repeat(r) + '☆'.repeat(5 - r);
                       {stars(l.data.rating)}
                     </span>
                   ) : null}
-                  {l.data.verdict ? <span class="verdict">{l.data.verdict}</span> : null}
+                  {l.data.verdict ? <span class="verdict">{verdict}</span> : null}
                 </p>
               ) : null}
             </li>
@@ -109,7 +110,7 @@ const stars = (r: number) => '★'.repeat(r) + '☆'.repeat(5 - r);
                     {stars(l.data.rating)}
                   </span>
                 ) : null}
-                {l.data.verdict ? <span class="verdict">{l.data.verdict}</span> : null}
+                {l.data.verdict ? <span class="verdict">{verdict}</span> : null}
                 {summary ? <span class="summary">{summary}</span> : null}
               </span>
             </a>
