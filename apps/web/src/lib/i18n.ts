@@ -89,6 +89,7 @@ export interface Strings {
     article: string;
     video: string;
     podcast: string;
+    show: string;
     link: string;
   };
   books: {
@@ -233,6 +234,7 @@ const STRINGS: Record<Locale, Strings> = {
       article: 'article',
       video: 'video',
       podcast: 'podcast',
+      show: 'show',
       link: 'link',
     },
     books: {
@@ -375,6 +377,7 @@ const STRINGS: Record<Locale, Strings> = {
       article: 'стаття',
       video: 'відео',
       podcast: 'подкаст',
+      show: 'серіал',
       link: 'посилання',
     },
     books: {

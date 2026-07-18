@@ -200,7 +200,7 @@ const links = defineCollection({
     url: z.string().url(),
     /** attribution shown in the kindline, e.g. "Thariq · X". */
     source: z.string(),
-    kind: z.enum(['tweet', 'article', 'video', 'podcast', 'link']).default('link'),
+    kind: z.enum(['tweet', 'article', 'video', 'podcast', 'show', 'link']).default('link'),
     /** 0–5 stars; omit when unrated. Gates promotion to the home shelf. */
     rating: z.number().min(0).max(5).optional(),
     status: z.enum(['stamped', 'backlog']).default('stamped'),
