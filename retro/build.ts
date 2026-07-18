@@ -40,9 +40,11 @@ interface GameDef {
   note: LocStr; // one-liner for F1 help (what the program is)
   controls?: LocStr; // shown before launch / in F1
   /** Ported programs of this folder: slug under public/retro/games/ + main .pas
-   *  in retro/games/<dir>/ + the manifest file whose Enter launches it (for
-   *  folders without .EXEs, e.g. the CARS sources). Any .EXE still launches
-   *  the FIRST port (the folder default). */
+   *  in retro/games/<dir>/ + the manifest file whose Enter launches it. A `file`
+   *  that isn't on disk is SYNTHESIZED as a cosmetic binary row (e.g. the CARS
+   *  animations only ever existed as .PAS — the green CARS1.EXE/CARS2.EXE are
+   *  minted so ANIMGAME reads like the truly-compiled folders; see scanFolder).
+   *  Any .EXE still launches the FIRST port (the folder default). */
   ports?: Array<{ slug: string; main: string; file?: string }>;
 }
 
@@ -62,8 +64,12 @@ const GAMES: GameDef[] = [
     note: { ua: 'Текстові анімації: машинка ▲ і зорепад (CARS1/CARS2).', en: 'Text animations: a car ▲ and a starfall (CARS1/CARS2).' },
     controls: { ua: '← → — рухати машинку · Esc — вийти', en: '← → move the car · Esc to exit' },
     ports: [
-      { slug: 'cars2', main: 'CARS2.pas', file: 'CARS/CARS2.PAS' },
-      { slug: 'cars1', main: 'CARS1.pas', file: 'CARS/CARS1.PAS' },
+      // The CARS animations were never compiled to an .EXE (sources only). Yarik
+      // asked for a green CARS1.EXE/CARS2.EXE for visual consistency with the
+      // other folders, so these `file`s are synthesized as cosmetic binary rows
+      // (see scanFolder); the .PAS then stay as F3-viewable source.
+      { slug: 'cars2', main: 'CARS2.pas', file: 'CARS/CARS2.EXE' },
+      { slug: 'cars1', main: 'CARS1.pas', file: 'CARS/CARS1.EXE' },
     ],
   },
   {
@@ -194,6 +200,25 @@ function scanFolder(def: GameDef): { files: ManifestFile[] } {
     }
   };
   walk('');
+  // Synthetic .EXE rows for ports that were never compiled to a real executable.
+  // The CARS text-animations only ever existed as .PAS sources; Yarik asked for a
+  // green CARS1.EXE/CARS2.EXE in the panel so ANIMGAME reads like the other
+  // (truly-compiled) folders. We mint a cosmetic binary entry — view:false, sized
+  // and dated to sit believably next to its .PAS — that the manifest's `runs` map
+  // launches; the .PAS stays viewable source (cyan), exactly like SNITCH.PAS next
+  // to a real SNITCH.EXE. Only fires for a port `file` that is NOT on disk (real
+  // .EXE folders skip this and use their genuine sizes/dates).
+  for (const port of def.ports ?? []) {
+    if (!port.file || files.some((f) => f.name === port.file)) continue;
+    const src = files.find((f) => f.name === port.file!.replace(/\.exe$/i, '.PAS'));
+    files.push({
+      name: port.file,
+      size: (src?.size ?? 0) + 3200, // synthetic — a small TP7 CRT .EXE's ballpark
+      mtime: src?.mtime ?? new Date().toISOString().slice(0, 10),
+      view: false, // binary: F3 shows "preview unavailable", same as real .EXEs
+    });
+  }
+  files.sort((a, b) => a.name.localeCompare(b.name));
   return { files };
 }
 
@@ -334,7 +359,7 @@ const manifest = {
       note: def.note,
       ...(def.controls ? { controls: def.controls } : {}),
       // `run` = the folder default (F6 / any .EXE); `runs` maps specific files
-      // to their own port (folders whose programs never got compiled to .EXE).
+      // to their own port (incl. the synthesized CARS .EXEs, see scanFolder).
       ...(def.ports?.length ? { run: def.ports[0]!.slug } : {}),
       ...(def.ports?.some((p) => p.file)
         ? { runs: Object.fromEntries(def.ports.filter((p) => p.file).map((p) => [p.file!, p.slug])) }

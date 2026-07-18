@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-07-17",
+ "generatedAt": "2026-07-18",
  "folders": [
   {
    "dir": "PINGPONG",
@@ -511,8 +511,8 @@
    },
    "run": "cars2",
    "runs": {
-    "CARS/CARS2.PAS": "cars2",
-    "CARS/CARS1.PAS": "cars1"
+    "CARS/CARS2.EXE": "cars2",
+    "CARS/CARS1.EXE": "cars1"
    },
    "files": [
     {
@@ -520,6 +520,12 @@
      "size": 653,
      "mtime": "2026-04-26",
      "view": true
+    },
+    {
+     "name": "CARS/CARS1.EXE",
+     "size": 3853,
+     "mtime": "2026-04-26",
+     "view": false
     },
     {
      "name": "CARS/CARS1.PAS",
@@ -532,6 +538,12 @@
      "size": 1557,
      "mtime": "2026-04-26",
      "view": true
+    },
+    {
+     "name": "CARS/CARS2.EXE",
+     "size": 4757,
+     "mtime": "2026-04-26",
+     "view": false
     },
     {
      "name": "CARS/CARS2.PAS",

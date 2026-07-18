@@ -79,6 +79,12 @@ and launches each game as `index.html?lang=en|ua`; build.ts sets
 - **NC chrome** (`NortonCommander.tsx`) uses a `t(ua, en)` helper; the F1
   `note`/`controls` are `{en, ua}` in build.ts's `GameDef` and flow through the
   manifest. Game **titles** stay as their proper names (WarWork, BAKKARA, Пушка).
+- **Synthetic CARS .EXEs** — the CARS animations only ever existed as `.PAS`
+  sources (never compiled), so ANIMGAME used to show a green `.PAS`. For visual
+  consistency with the other folders (green `.EXE` runs, cyan `.PAS` views),
+  build.ts's `scanFolder` mints cosmetic `CARS1.EXE`/`CARS2.EXE` rows for any
+  port `file` absent from disk (`view:false`, size/date mirrored off the sibling
+  `.PAS`); the `runs` map then launches those. Cosmetic-only — no real binary.
 - **Russian removed** from all playable text (QUIDDITC commentary, BAKKARA,
   FOOTBALL were Russian; the rest were Ukrainian/English). The **original
   F3-viewable sources are left byte-for-byte** as the historical exhibit — only
