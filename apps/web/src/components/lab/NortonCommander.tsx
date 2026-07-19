@@ -73,6 +73,21 @@ function fmtSize(f: ManifestFile): string {
   return String(f.size);
 }
 
+// Folders render oldest→newest by year (Yarik). `year` is either a single "2005"
+// or a range "2005–2009" written with a Unicode EN DASH (U+2013), so the start
+// year is just the first 4-digit run; ties fall back to folder name. Sorting the
+// manifest once (here, not at render) keeps folderIdx indexing consistent.
+function folderStartYear(year: string): number {
+  const match = year.match(/\d{4}/);
+  return match ? Number(match[0]) : Number.POSITIVE_INFINITY;
+}
+function sortFoldersByYear(manifest: Manifest): Manifest {
+  const folders = [...manifest.folders].sort(
+    (a, b) => folderStartYear(a.year) - folderStartYear(b.year) || a.dir.localeCompare(b.dir),
+  );
+  return { ...manifest, folders };
+}
+
 // The run slug this specific file would launch (mirrors tryRun's resolution):
 // a `runs` mapping wins, else a folder default applies only to .EXE files.
 function runSlugFor(folder: ManifestFolder, file: ManifestFile): string | undefined {
@@ -109,7 +124,7 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
   useEffect(() => {
     fetch('/retro/manifest.json')
       .then((r) => (r.ok ? (r.json() as Promise<Manifest>) : Promise.reject(new Error(String(r.status)))))
-      .then(setManifest)
+      .then((m) => setManifest(sortFoldersByYear(m)))
       .catch(() => setError(true));
   }, []);
 
@@ -339,7 +354,7 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
         color: opts.cursor ? C.cursorFg : opts.dim ? C.dim : opts.run ? C.run : opts.dir ? C.dir : C.open,
       }}
     >
-      <span style={{ overflow: 'hidden', textOverflow: 'clip' }}>{cols[0]}</span>
+      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{cols[0]}</span>
       <span style={{ textAlign: 'right' }}>{cols[1]}</span>
       <span style={{ textAlign: 'right' }}>{cols[2]}</span>
     </div>
@@ -351,6 +366,12 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
         display: 'flex',
         flexDirection: 'column',
         minHeight: 0,
+        // min-width:0 is load-bearing: as a `1fr 1fr` grid item the section's
+        // default min-width is min-content, and the long nowrap FOOTER (game
+        // blurb) then forces this panel wider than its half — squeezing the
+        // other panel until its file names truncate to 4 chars. Pinning it to 0
+        // keeps both panels a true 50/50 and lets the footer's overflow:hidden clip.
+        minWidth: 0,
         border: `2px double ${C.frame}`,
         background: C.panelBg,
         margin: '2px',
