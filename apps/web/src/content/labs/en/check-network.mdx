@@ -12,7 +12,7 @@ hideCardSummary: true
 
 import TweetCard from '@components/TweetCard.astro';
 
-I saw this in May:
+zoom dropping? internet not working? call in codex. in May I saw this:
 
 <TweetCard
   url="https://x.com/cjzafir/status/2056404142848135409"
@@ -32,9 +32,9 @@ I saw this in May:
   &gt; Ran before/after speed tests and latency checks.
 </TweetCard>
 
-So I dropped the link into my Codex and asked it to do the same for me.
+so I dropped the link into my Codex: can you do that for me?
 
-My work Zoom calls kept dropping. I decided to find out whether an agent could fix it. I pay for a gigabit, and I had no idea what actually reached my desk. I didn't know how to measure it either. Those nine days turned into the `check-network` skill.
+my work Zoom calls kept dropping. I pay for a gigabit and honestly had no idea how much of it reached my desk, or how to even measure it. nine days later, out came the `check-network` skill.
 
 ## Try it yourself
 
@@ -57,13 +57,13 @@ Then just say "use check-network to make my home network faster".
 
 ## What it found
 
-75 Mbps. The next run gave 190. Then eighty-something again. At my desk the speed just jumped from run to run.
+75 Mbps. next run, 190. then eighty-something again. at my desk the speed just jumped from run to run.
 
 <figure>
   <img src="/lab/check-network/1-wifi-far-from-router.jpg" alt="Desk, Wi-Fi straight to the router but far from it: 75–190 Mbps, 5% packet loss, −68 dBm, link 234 Mbps" width="1360" height="765" loading="lazy" decoding="async" />
 </figure>
 
-The agent ruled out the usual causes one by one. The plan is already the top tier. DNS answers in 10 ms. MTU is fine, zero interface errors. But the ping to my own router was losing 5% of packets, and that ended the hunt. If packets die inside the apartment, the ISP has nothing to do with it.
+the full checklist: speedtest, DNS, MTU, packet loss, Wi-Fi signal, background processes. half these words I don't know, but vibe it! the agent ruled out the usual suspects one by one. plan's already top tier. DNS answers in 10 ms. MTU fine, zero interface errors. but the ping to my own router was dropping 5% of packets — and that ended the hunt. if packets die inside the apartment, the ISP has nothing to do with it.
 
 <figure>
   <video src="/lab/check-network/1-hunt.mp4" poster="/lab/check-network/1-hunt-poster.jpg" controls muted playsinline preload="none" width="1600" height="900" style={{ width: '100%', height: 'auto', borderRadius: '6px' }}>
@@ -71,15 +71,15 @@ The agent ruled out the usual causes one by one. The plan is already the top tie
   </video>
 </figure>
 
-The cause was distance. Nothing exotic: the laptop was talking straight to the router, just across the whole apartment. −68 dBm, and the connection speed topped out at 234 Mbps. That is the ceiling, four times below my plan. The gigabit never reached my desk at all.
+the cause was distance. nothing exotic: the laptop was talking straight to the router, just across the whole apartment. −68 dBm, link topped out at 234 Mbps — four times below my plan. the gigabit never reached my desk at all.
 
-The cheapest diagnostic in the world: pick up the laptop and walk five meters to the router. −20 dBm instead of −68, an 866 Mbps link, 624 Mbps, zero loss.
+cheapest test in the world: pick up the laptop and walk five meters to the router. −20 dBm instead of −68, an 866 Mbps link, 624 Mbps, zero loss.
 
 <figure>
   <img src="/lab/check-network/2-next-to-router.jpg" alt="Next to the router: 624 Mbps, 0% packet loss, −20 dBm, link 866 Mbps" width="1360" height="765" loading="lazy" decoding="async" />
 </figure>
 
-The agent tried the two most popular fixes — neither worked. And it ran them itself, in the browser: it opened the router's admin panel (Archer C64, Wireless section) and flipped the settings right there, running networkQuality between each change. Turning off Smart Connect: 611 vs 612 Mbps. Picking "cleaner" channels by hand: 398 on channel 36, 418 on channel 44 — and a re-measurement on auto in the same session gave 382. It is all one flat band of noise: the channel decides nothing.
+the one thing the agent can't do yet is physically carry the laptop closer to the router on its own two feet. but it can open the router's admin panel in the browser and mess with the settings itself. and it did: Archer C64, Wireless section, flipping options right there and running networkQuality between each change. Smart Connect off: 611 vs 612 Mbps. "cleaner" channels by hand: 398 on channel 36, 418 on channel 44 — and a re-run on auto in the same session gave 382. one flat band of noise: the channel decides nothing.
 
 <figure>
   <video src="/lab/check-network/2-experiments.mp4" poster="/lab/check-network/2-experiments-poster.jpg" controls muted playsinline preload="none" width="1600" height="900" style={{ width: '100%', height: 'auto', borderRadius: '6px' }}>
@@ -87,7 +87,7 @@ The agent tried the two most popular fixes — neither worked. And it ran them i
   </video>
 </figure>
 
-I asked an LLM council (ChatGPT + Gemini) whether to buy a second extender for the desk. Both ranked that option last: an extender that is itself sitting on Wi-Fi halves the bandwidth — one hand holding the link to the router, the other to the laptop. The right fix is a cable from the router to the desk with the extender in access-point mode.
+I asked an LLM council (ChatGPT + Gemini) whether to buy a second extender for the desk. both ranked it last: an extender that's itself on Wi-Fi halves the bandwidth — one hand holding the link to the router, the other to the laptop. the right fix is a cable from the router to the desk with the extender in access-point mode.
 
 <figure>
   <video src="/lab/check-network/3-council.mp4" poster="/lab/check-network/3-council-poster.jpg" controls muted playsinline preload="none" width="1600" height="900" style={{ width: '100%', height: 'auto', borderRadius: '6px' }}>
@@ -95,7 +95,7 @@ I asked an LLM council (ChatGPT + Gemini) whether to buy a second extender for t
   </video>
 </figure>
 
-I never ran that cable. I plugged the Mac into the extender's gigabit port — the same extender still hanging off a wireless backhaul — so roughly 80% of the fix. 492 Mbps, zero loss.
+I never ran that cable. plugged the Mac into the extender's gigabit port — the same extender still hanging off a wireless backhaul — so about 80% of the fix. 492 Mbps, zero loss. but it was beautiful!
 
 <figure>
   <img src="/lab/check-network/3-cable-into-extender.jpg" alt="Desk, cable into the extender, but the backhaul is still wireless: 492 Mbps, 0% packet loss" width="1360" height="765" loading="lazy" decoding="async" />
