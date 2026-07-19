@@ -24,6 +24,35 @@ const talkTitle = localized(locale, talk.data.title, talk.data.titleUk);
 const talkEvent = localized(locale, talk.data.event, talk.data.eventUk);
 const talkAbstract = localized(locale, talk.data.abstract, talk.data.abstractUk);
 
+const talkDate = talk.data.date.toISOString().slice(0, 10);
+const talkUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const eventLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: talkTitle,
+  startDate: talkDate,
+  ...(talkAbstract ? { description: talkAbstract } : {}),
+  ...(talkEvent ? { superEvent: { '@type': 'Event', name: talkEvent } } : {}),
+  performer: {
+    '@type': 'Person',
+    name: 'Yaroslav Yermilov',
+    url: new URL('/en/', Astro.site).toString(),
+  },
+  url: talkUrl,
+  ...(talk.data.videoUrl
+    ? {
+        workFeatured: {
+          '@type': 'VideoObject',
+          name: talkTitle,
+          description: talkAbstract ?? talkTitle,
+          uploadDate: talkDate,
+          url: talk.data.videoUrl,
+          thumbnailUrl: new URL(`/og/talk-${talk.slug}.png`, Astro.site).toString(),
+        },
+      }
+    : {}),
+};
+
 const dateFmt = new Intl.DateTimeFormat(bcp47, {
   year: 'numeric',
   month: 'long',
@@ -139,6 +168,7 @@ const artifactLabel: Record<Artifact, string> = {
   description={paragraphs[0]}
   alternatePath={`talks/${talk.slug}`}
   ogImage={`/og/talk-${talk.slug}.png`}
+  jsonLd={eventLd}
 >
   <article class="page-frame talk-detail">
     <p class="workbench breadcrumb">

@@ -1,0 +1,4 @@
+Contact: mailto:yermilov17@gmail.com
+Expires: 2027-06-30T23:59:59.000Z
+Preferred-Languages: en, uk
+Canonical: https://yaroslavyermilov.io/.well-known/security.txt

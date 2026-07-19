@@ -22,6 +22,8 @@ interface Props {
   /** Unlisted: this page is reachable by direct link only, so keep it out of site search and tell
    * crawlers not to index it. (The lab index card and the sitemap are dropped upstream.) */
   draft?: boolean;
+  /** page-specific JSON-LD (BlogPosting), forwarded to BaseLayout */
+  jsonLd?: object | undefined;
 }
 
 const {
@@ -35,6 +37,7 @@ const {
   hideTitle = false,
   hideLede = false,
   draft = false,
+  jsonLd,
 } = Astro.props;
 const full = layout === 'full';
 
@@ -48,6 +51,7 @@ const fmt = new Intl.DateTimeFormat(bcp47Locale(locale), { dateStyle: 'long' });
   alternatePath={alternatePath}
   alternateMissing={alternateMissing}
   noindex={draft}
+  jsonLd={jsonLd}
   themeLab
 >
   <article

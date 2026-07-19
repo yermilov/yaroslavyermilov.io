@@ -54,7 +54,13 @@ export interface Strings {
     about: string;
   };
   subnav: { all: string; writing: string; talking: string; kit: string };
-  site: { title: string; tagline: string; languageName: string; otherLanguageName: string };
+  site: {
+    title: string;
+    tagline: string;
+    metaDescription: string;
+    languageName: string;
+    otherLanguageName: string;
+  };
   empty: {
     timeline: string;
     writing: string;
@@ -187,6 +193,8 @@ const STRINGS: Record<Locale, Strings> = {
     site: {
       title: 'Yaroslav Yermilov',
       tagline: 'Notes, experiments, talks.',
+      metaDescription:
+        'Yaroslav Yermilov — Principal Software Engineer at Superhuman, based in Kyiv. A field journal on AI-first software engineering, developer productivity, and building with LLM agents: posts, conference talks, and interactive experiments, in English and Ukrainian.',
       languageName: 'English',
       otherLanguageName: 'Ukrainian',
     },
@@ -332,6 +340,8 @@ const STRINGS: Record<Locale, Strings> = {
     site: {
       title: 'Ярослав Єрмілов',
       tagline: 'Нотатки, експерименти, доповіді.',
+      metaDescription:
+        'Ярослав Єрмілов — Principal Software Engineer у Superhuman, Київ. Польовий журнал про AI-first інженерію, продуктивність розробника і роботу з LLM-агентами: пости, доповіді та інтерактивні експерименти, англійською й українською.',
       languageName: 'Українська',
       otherLanguageName: 'Англійська',
     },

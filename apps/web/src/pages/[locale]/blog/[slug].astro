@@ -56,6 +56,27 @@ export async function getStaticPaths() {
 const { post, sourceLocale, translationPending, alternatePath, alternateMissing } = Astro.props;
 const locale = Astro.params.locale as Locale;
 const { Content } = await post.render();
+
+const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const articleLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: post.data.title,
+  description: post.data.summary,
+  datePublished: post.data.publishedAt.toISOString().slice(0, 10),
+  ...(post.data.updatedAt ? { dateModified: post.data.updatedAt.toISOString().slice(0, 10) } : {}),
+  inLanguage: post.data.language === 'ua' ? 'uk' : 'en',
+  author: {
+    '@type': 'Person',
+    name: 'Yaroslav Yermilov',
+    url: new URL('/en/', Astro.site).toString(),
+  },
+  url: pageUrl,
+  mainEntityOfPage: pageUrl,
+  ...(post.data.coverImage
+    ? { image: new URL(post.data.coverImage, Astro.site).toString() }
+    : {}),
+};
 ---
 
 <PostLayout
@@ -70,6 +91,7 @@ const { Content } = await post.render();
   translationPending={translationPending}
   sourceLocale={sourceLocale}
   ogImage={`/og/post-${postSlug(post)}.png`}
+  jsonLd={articleLd}
 >
   <Content />
 </PostLayout>

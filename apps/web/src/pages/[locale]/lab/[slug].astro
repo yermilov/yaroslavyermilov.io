@@ -49,6 +49,26 @@ export async function getStaticPaths() {
 const { entry, alternatePath, alternateMissing } = Astro.props;
 const locale = Astro.params.locale as Locale;
 const { Content } = await entry.render();
+
+const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const articleLd = entry.data.draft
+  ? undefined
+  : {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: entry.data.title,
+      description: entry.data.summary,
+      datePublished: entry.data.publishedAt.toISOString().slice(0, 10),
+      inLanguage: entry.data.language === 'ua' ? 'uk' : 'en',
+      author: {
+        '@type': 'Person',
+        name: 'Yaroslav Yermilov',
+        url: new URL('/en/', Astro.site).toString(),
+      },
+      url: pageUrl,
+      mainEntityOfPage: pageUrl,
+      ...(entry.data.cover ? { image: new URL(entry.data.cover, Astro.site).toString() } : {}),
+    };
 ---
 
 <LabLayout
@@ -62,6 +82,7 @@ const { Content } = await entry.render();
   hideTitle={entry.data.hideTitle ?? false}
   hideLede={entry.data.hideLede ?? false}
   draft={entry.data.draft ?? false}
+  jsonLd={articleLd}
 >
   <Content />
 </LabLayout>

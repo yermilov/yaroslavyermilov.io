@@ -1,6 +1,6 @@
 ---
 import type { Locale } from '@lib/i18n';
-import { t, htmlLang, ogLocale, otherLocale } from '@lib/i18n';
+import { t, htmlLang, ogLocale, otherLocale, localePath } from '@lib/i18n';
 import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
 import PhotoLightbox from '@components/PhotoLightbox.astro';
@@ -24,6 +24,8 @@ interface Props {
   noindex?: boolean;
   /** path to the page's social card under /og/, defaults to the home card */
   ogImage?: string | undefined;
+  /** page-specific JSON-LD (BlogPosting / Event …), emitted alongside the site-wide Person */
+  jsonLd?: object | undefined;
 }
 
 const {
@@ -37,6 +39,7 @@ const {
   hideFooter = false,
   noindex = false,
   ogImage,
+  jsonLd,
 } = Astro.props;
 
 const strings = t(locale);
@@ -44,6 +47,43 @@ const fullTitle = title ? `${title} — ${strings.site.title}` : strings.site.ti
 const meta = description ?? strings.site.tagline;
 const canonical = new URL(Astro.url.pathname, Astro.site).toString();
 const ogImageUrl = new URL(ogImage ?? `/og/home-${locale}.png`, Astro.site).toString();
+
+// Complete hreflang set (self + other + x-default), only when a translated counterpart
+// exists. x-default points at the EN version (the canonical entry point for non-JS agents).
+const otherHref =
+  alternatePath !== undefined && !alternateMissing
+    ? new URL(localePath(otherLocale(locale), alternatePath), Astro.site).toString()
+    : undefined;
+const xDefaultHref = locale === 'en' ? canonical : otherHref;
+
+// Serialize JSON-LD safely: escape `<` so a content-derived string (a post title with
+// "</script>") can never break out of the inline <script>.
+const ldJson = (data: unknown) => JSON.stringify(data).replace(/</g, '\\u003c');
+
+// Site-wide Person structured data — lets an agent read "who / what / where" without
+// parsing prose. Emitted on every page; per-page BlogPosting/Event arrives via `jsonLd`.
+const personLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Yaroslav Yermilov',
+  alternateName: 'Yarik Yermilov',
+  jobTitle: 'Principal Software Engineer',
+  worksFor: { '@type': 'Organization', name: 'Superhuman' },
+  url: new URL('/en/', Astro.site).toString(),
+  image: new URL('/home/avatar.jpg', Astro.site).toString(),
+  address: { '@type': 'PostalAddress', addressLocality: 'Kyiv', addressCountry: 'UA' },
+  knowsAbout: [
+    'AI-first software engineering',
+    'LLM agents',
+    'Software engineering',
+    'Developer productivity',
+  ],
+  sameAs: [
+    'https://www.linkedin.com/in/yarik-yermilov/',
+    'https://github.com/yermilov',
+    'https://twitter.com/yermilov17',
+  ],
+};
 ---
 
 <!doctype html>
@@ -71,8 +111,16 @@ const ogImageUrl = new URL(ogImage ?? `/og/home-${locale}.png`, Astro.site).toSt
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content={ogImageUrl} />
     <link rel="alternate" type="application/rss+xml" title={`${strings.site.title} (${locale.toUpperCase()})`} href={`/${locale}/rss.xml`} />
-    {alternatePath !== undefined && !alternateMissing && (
-      <link rel="alternate" hreflang={htmlLang(otherLocale(locale))} href={`/${otherLocale(locale)}/${alternatePath.replace(/^\/+/, '')}/`} />
+    {otherHref !== undefined && (
+      <Fragment>
+        <link rel="alternate" hreflang={htmlLang(locale)} href={canonical} />
+        <link rel="alternate" hreflang={htmlLang(otherLocale(locale))} href={otherHref} />
+        <link rel="alternate" hreflang="x-default" href={xDefaultHref} />
+      </Fragment>
+    )}
+    <script type="application/ld+json" is:inline set:html={ldJson(personLd)} />
+    {jsonLd !== undefined && (
+      <script type="application/ld+json" is:inline set:html={ldJson(jsonLd)} />
     )}
     {import.meta.env.PROD && (
       <Fragment>

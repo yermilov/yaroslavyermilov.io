@@ -19,6 +19,8 @@ interface Props {
   sourceLocale: Locale;
   /** path to the post's social card under /og/ */
   ogImage?: string | undefined;
+  /** page-specific JSON-LD (BlogPosting), forwarded to BaseLayout */
+  jsonLd?: object | undefined;
 }
 
 const {
@@ -33,6 +35,7 @@ const {
   translationPending = false,
   sourceLocale,
   ogImage,
+  jsonLd,
 } = Astro.props;
 
 const strings = t(locale);
@@ -46,6 +49,7 @@ const fmt = new Intl.DateTimeFormat(bcp47Locale(locale), { dateStyle: 'long' });
   alternatePath={alternatePath}
   alternateMissing={alternateMissing}
   ogImage={ogImage}
+  jsonLd={jsonLd}
 >
   <article class="page-frame post" data-pagefind-body>
     <header class="post-header prose-column">
