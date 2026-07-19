@@ -2919,53 +2919,6 @@
      "view": false
     }
    ]
-  },
-  {
-   "dir": "game",
-   "title": "game",
-   "year": "2005–2009",
-   "note": {
-    "ua": "Олімпіадна задачка (теорія ігор, file I/O) — не гра.",
-    "en": "An olympiad exercise (game theory, file I/O) — not a game."
-   },
-   "files": [
-    {
-     "name": "GAME.BAK",
-     "size": 1491,
-     "mtime": "2026-04-26",
-     "view": true
-    },
-    {
-     "name": "GAME.PAS",
-     "size": 1491,
-     "mtime": "2026-04-26",
-     "view": true
-    },
-    {
-     "name": "INPUT.BAK",
-     "size": 4,
-     "mtime": "2026-04-26",
-     "view": true
-    },
-    {
-     "name": "INPUT.TXT",
-     "size": 7,
-     "mtime": "2026-04-26",
-     "view": true
-    },
-    {
-     "name": "OUTPUT.TXT",
-     "size": 3,
-     "mtime": "2026-04-26",
-     "view": true
-    },
-    {
-     "name": "TP.BAT",
-     "size": 32,
-     "mtime": "2026-04-26",
-     "view": true
-    }
-   ]
   }
  ]
 }

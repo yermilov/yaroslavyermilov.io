@@ -117,7 +117,7 @@ const GAMES: GameDef[] = [
     note: { ua: 'Шутер K.Balitsky+A.Yakovenko (не Ярикова гра); юніти меню втрачено — лише перегляд.', en: "Shooter by K.Balitsky+A.Yakovenko (not Yarik's game); menu units lost — view only." },
   },
   { dir: 'SAPER', title: 'Сапер', year: '2006', note: { ua: 'Мінер. Сорс лише C++ (SAPER.CPP) — pas2js не застосовний.', en: 'Minesweeper. Source is C++ only (SAPER.CPP) — pas2js N/A.' } },
-  { dir: 'game', title: 'game', year: '2005–2009', note: { ua: 'Олімпіадна задачка (теорія ігор, file I/O) — не гра.', en: 'An olympiad exercise (game theory, file I/O) — not a game.' } },
+  // «game» (олімпіадна задачка зі спортивного програмування, не гра) прибрано на прохання Yarik.
 ];
 
 /** Extensions treated as viewable text (decoded CP866 → UTF-8, served for F3). */
