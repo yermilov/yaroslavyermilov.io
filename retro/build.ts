@@ -165,6 +165,18 @@ interface ManifestFile {
   view: boolean; // has a decoded copy under src/<dir>/ for F3
 }
 
+// The original folders' mtimes are only partly trustworthy: git checkout / a re-copy
+// reset a chunk of them to 2026-04-26 (PINGPONG, ANIMGAME, FOOTBALL, STARWARS are wholly
+// reset), and some bundled DOS library files carry the TP compiler's own 1991–1998 date.
+// Keep a file's real mtime only when its year sits in the games' plausible era; otherwise
+// fall back to the folder's curated `year` so the panel never shows a copy/library date
+// (Yarik: "why all dates switched to 2026?"). Real 2005–2008 dates (QUIDDITC/BAKKARA/WARWORK)
+// are preserved.
+function fileEra(mtime: Date, folderYear: string): string {
+  const year = mtime.getFullYear();
+  return year >= 2000 && year <= 2019 ? mtime.toISOString().slice(0, 10) : folderYear;
+}
+
 function scanFolder(def: GameDef): { files: ManifestFile[] } {
   const abs = path.join(GAMES_DIR, def.dir);
   const files: ManifestFile[] = [];
@@ -186,7 +198,7 @@ function scanFolder(def: GameDef): { files: ManifestFile[] } {
       files.push({
         name: relPath,
         size: st.size,
-        mtime: st.mtime.toISOString().slice(0, 10),
+        mtime: fileEra(st.mtime, def.year),
         view,
       });
     }
@@ -206,7 +218,7 @@ function scanFolder(def: GameDef): { files: ManifestFile[] } {
     files.push({
       name: port.file,
       size: (src?.size ?? 0) + 3200, // synthetic — a small TP7 CRT .EXE's ballpark
-      mtime: src?.mtime ?? new Date().toISOString().slice(0, 10),
+      mtime: src?.mtime ?? def.year,
       view: false, // binary: F3 shows "preview unavailable", same as real .EXEs
     });
   }
