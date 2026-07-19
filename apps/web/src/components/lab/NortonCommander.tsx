@@ -74,16 +74,19 @@ function fmtSize(f: ManifestFile): string {
 }
 
 // Folders render oldest→newest by year (Yarik). `year` is either a single "2005"
-// or a range "2005–2009" written with a Unicode EN DASH (U+2013), so the start
-// year is just the first 4-digit run; ties fall back to folder name. Sorting the
-// manifest once (here, not at render) keeps folderIdx indexing consistent.
-function folderStartYear(year: string): number {
-  const match = year.match(/\d{4}/);
-  return match ? Number(match[0]) : Number.POSITIVE_INFINITY;
+// or a range "2005–2009" written with a Unicode EN DASH (U+2013). Sort by the
+// range's END year — Yarik: «бери другий 4-значний рядок» — so a folder worked
+// through 2009 lands after the 2005–2008 ones; a single year uses its only value.
+// Ties fall back to folder name. Sorting the manifest once (here, not at render)
+// keeps folderIdx indexing consistent.
+function folderSortYear(year: string): number {
+  const matches = year.match(/\d{4}/g);
+  if (!matches || matches.length === 0) return Number.POSITIVE_INFINITY;
+  return Number(matches[1] ?? matches[0]);
 }
 function sortFoldersByYear(manifest: Manifest): Manifest {
   const folders = [...manifest.folders].sort(
-    (a, b) => folderStartYear(a.year) - folderStartYear(b.year) || a.dir.localeCompare(b.dir),
+    (a, b) => folderSortYear(a.year) - folderSortYear(b.year) || a.dir.localeCompare(b.dir),
   );
   return { ...manifest, folders };
 }
