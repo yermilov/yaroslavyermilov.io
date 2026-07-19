@@ -73,14 +73,6 @@ const GAMES: GameDef[] = [
     ],
   },
   {
-    dir: 'SUPER',
-    title: 'Super',
-    year: '2008',
-    note: { ua: 'Вавилонська бібліотека: перебір УСІХ рядків довжини n (47 символів).', en: 'Library of Babel: enumerate ALL strings of length n (47 chars).' },
-    controls: { ua: 'введи n + Enter (1–3 розумно, далі — вічність) · Esc — вийти', en: 'enter n + Enter (1–3 is sane, more is eternity) · Esc to exit' },
-    ports: [{ slug: 'super', main: 'SUPER.pas' }],
-  },
-  {
     dir: 'QUIDDITC',
     title: 'Quidditch',
     year: '2008',
