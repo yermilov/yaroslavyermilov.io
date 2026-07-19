@@ -38,6 +38,8 @@ const sectionRedirects = Object.fromEntries(
     [`/${l}/books`, `/${l}/inspiration/`],
     [`/${l}/gallery`, `/${l}/personal/`],
     [`/${l}/conference-kit`, `/${l}/writing-talking/kit/`],
+    // check-network moved from the lab to the blog (2026-07-19) — keep the old lab URL alive.
+    [`/${l}/lab/check-network`, `/${l}/blog/check-network/`],
   ]),
 );
 
