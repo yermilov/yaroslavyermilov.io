@@ -1,0 +1,34 @@
+# yaroslavyermilov.io — open to crawlers and AI agents.
+# Yaroslav wants to be discoverable, cited, AND learned: all bots allowed.
+
+User-agent: *
+Allow: /
+
+# AI answer-engine / search crawlers (explicit allow)
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# AI training crawlers — allowed on purpose: for a personal brand, being in the
+# training data means the models later "know" Yaroslav without a prompt.
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+Sitemap: https://yaroslavyermilov.io/sitemap-index.xml
