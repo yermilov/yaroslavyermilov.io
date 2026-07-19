@@ -2896,29 +2896,6 @@
      "view": false
     }
    ]
-  },
-  {
-   "dir": "SAPER",
-   "title": "Сапер",
-   "year": "2006",
-   "note": {
-    "ua": "Мінер. Сорс лише C++ (SAPER.CPP) — pas2js не застосовний.",
-    "en": "Minesweeper. Source is C++ only (SAPER.CPP) — pas2js N/A."
-   },
-   "files": [
-    {
-     "name": "SAPER.CPP",
-     "size": 2914,
-     "mtime": "2006-11-12",
-     "view": true
-    },
-    {
-     "name": "SAPER.EXE",
-     "size": 561216,
-     "mtime": "2006-11-12",
-     "view": false
-    }
-   ]
   }
  ]
 }

@@ -116,8 +116,8 @@ const GAMES: GameDef[] = [
     // 800×600 SVGA-256 — see retro/README.md. Browsable only.
     note: { ua: 'Шутер K.Balitsky+A.Yakovenko (не Ярикова гра); юніти меню втрачено — лише перегляд.', en: "Shooter by K.Balitsky+A.Yakovenko (not Yarik's game); menu units lost — view only." },
   },
-  { dir: 'SAPER', title: 'Сапер', year: '2006', note: { ua: 'Мінер. Сорс лише C++ (SAPER.CPP) — pas2js не застосовний.', en: 'Minesweeper. Source is C++ only (SAPER.CPP) — pas2js N/A.' } },
-  // «game» (олімпіадна задачка зі спортивного програмування, не гра) прибрано на прохання Yarik.
+  // «SAPER» (сапер/мінер, але C++/Win32 — не Pascal і неграбельна) та «game» (олімпіадна
+  // задачка зі спортивного програмування, не гра) прибрано на прохання Yarik.
 ];
 
 /** Extensions treated as viewable text (decoded CP866 → UTF-8, served for F3). */
