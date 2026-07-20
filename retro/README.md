@@ -94,8 +94,9 @@ and launches each game as `index.html?lang=en|ua`; build.ts sets
 ## Porting order (simplest → hardest)
 
 PINGPONG ✓ → PUSHKA ✓ → ANIMGAME/CARS ✓ → SUPER ✓ → QUIDDITC ✓ → BAKKARA ✓ → FOOTBALL ✓ →
-WARWORK ✓ — the plan's port list is COMPLETE (8 runnable ports). Not portable,
-documented and still browsable in the NC:
+WARWORK ✓ — the plan's port list is COMPLETE (8 runnable ports). Three source
+folders were REMOVED from the lab at Yarik's request — none is his Pascal game /
+none is portable — so they no longer appear in the NC (their rationale kept here):
 - SAPER — the exe is Win32, the source is C++ (not a TP game at all);
 - game/GAME.PAS — an olympiad exercise, not a game;
 - STARWARS — not Yarik's game (its header credits Kostia Balitsky and Anton
@@ -104,6 +105,7 @@ documented and still browsable in the NC:
   incl. the Noah's Ark backup; it also targets 800×600 SVGA-256 via
   svga256m.bgi, beyond this shim's faithful 640×480×16 framebuffer.
   Reconstructing lost units of someone else's game is invention, not porting.
+  (Removed 2026-07-20 at Yarik's request — "not mine".)
 
 The IBM VGA web font under `apps/web/public/retro/fonts/` is from The Ultimate
 Oldschool PC Font Pack v2.2 by VileR (int10h.org), CC BY-SA 4.0.

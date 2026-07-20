@@ -107,17 +107,10 @@ const GAMES: GameDef[] = [
     controls: { ua: 'меню — миша · стрілки — рух · b бомба, r ракета · Esc — вийти', en: 'menu by mouse · arrows move · b bomb, r rocket · Esc to exit' },
     ports: [{ slug: 'warwork', main: 'WW3.pas', file: 'WW3.EXE' }],
   },
-  {
-    dir: 'STARWARS',
-    title: 'Star Wars',
-    year: '2005',
-    // Not portable: not Yarik's game (K. Balitsky + A. Yakovenko), the MENU_KB/
-    // ZASTAVA unit sources are lost (TPU-only in every backup), and it targets
-    // 800×600 SVGA-256 — see retro/README.md. Browsable only.
-    note: { ua: 'Шутер K.Balitsky+A.Yakovenko (не Ярикова гра); юніти меню втрачено — лише перегляд.', en: "Shooter by K.Balitsky+A.Yakovenko (not Yarik's game); menu units lost — view only." },
-  },
-  // «SAPER» (сапер/мінер, але C++/Win32 — не Pascal і неграбельна) та «game» (олімпіадна
-  // задачка зі спортивного програмування, не гра) прибрано на прохання Yarik.
+  // «STARWARS» (шутер K.Balitsky+A.Yakovenko — не Ярикова гра; юніти MENU_KB/ZASTAVA
+  // втрачено як TPU-only, SVGA-256), «SAPER» (сапер/мінер, але C++/Win32 — не Pascal і
+  // неграбельна) та «game» (олімпіадна задачка зі спортивного програмування, не гра)
+  // прибрано на прохання Yarik.
 ];
 
 /** Extensions treated as viewable text (decoded CP866 → UTF-8, served for F3). */
@@ -166,7 +159,7 @@ interface ManifestFile {
 }
 
 // The original folders' mtimes are only partly trustworthy: git checkout / a re-copy
-// reset a chunk of them to 2026-04-26 (PINGPONG, ANIMGAME, FOOTBALL, STARWARS are wholly
+// reset a chunk of them to 2026-04-26 (PINGPONG, ANIMGAME, FOOTBALL are wholly
 // reset), and some bundled DOS library files carry the TP compiler's own 1991–1998 date.
 // Keep a file's real mtime only when its year sits in the games' plausible era; otherwise
 // fall back to the folder's curated `year` so the panel never shows a copy/library date
