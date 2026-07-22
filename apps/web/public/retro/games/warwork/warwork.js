@@ -2233,14 +2233,40 @@ rtl.module("mouse",["System"],function () {
       $impl.MX = Math.max(0, Math.min(639, x));
       $impl.MY = Math.max(0, Math.min(479, y));
     };
-    var buttons = function (e) {
-      $impl.BL = (e.buttons & 1) !== 0;
-      $impl.BR = (e.buttons & 2) !== 0;
-      $impl.BC = (e.buttons & 4) !== 0;
+    // The DOS games sample LeftButton at discrete poll points in their menu
+    // loops (await(Yield) between checks). Two failure modes had to be closed:
+    //   (1) many synthetic click injectors leave e.buttons === 0 on mousedown,
+    //       so the old bitmask-only read NEVER saw the press — the WARWORK menu
+    //       could not be left with a programmatic click;
+    //   (2) a fast/synthetic click's pressed window can fall entirely BETWEEN
+    //       two polls and be missed.
+    // Fix: latch by button INDEX on down/up (the index is set even when the
+    // bitmask is not), and hold the button "down" for a short grace after
+    // release so at least one poll observes every click.
+    var GRACE = 140;
+    var relTimer = { 0: 0, 1: 0, 2: 0 };
+    var slot = { 0: 'BL', 1: 'BC', 2: 'BR' }; // DOM button index → shim field
+    var press = function (b) {
+      var f = slot[b];
+      if (f === undefined) return;
+      clearTimeout(relTimer[b]);
+      $impl[f] = true;
     };
-    document.addEventListener('mousemove', function (e) { track(e); buttons(e); });
-    document.addEventListener('mousedown', function (e) { track(e); buttons(e); });
-    document.addEventListener('mouseup', function (e) { track(e); buttons(e); });
+    var release = function (b) {
+      var f = slot[b];
+      if (f === undefined) return;
+      clearTimeout(relTimer[b]);
+      relTimer[b] = setTimeout(function () { $impl[f] = false; }, GRACE);
+    };
+    document.addEventListener('mousemove', function (e) {
+      track(e);
+      // Keep a held button latched while dragging (real hardware sets the mask).
+      if (e.buttons & 1) $impl.BL = true;
+      if (e.buttons & 2) $impl.BR = true;
+      if (e.buttons & 4) $impl.BC = true;
+    });
+    document.addEventListener('mousedown', function (e) { track(e); press(e.button); });
+    document.addEventListener('mouseup', function (e) { track(e); release(e.button); });
     // The games poll LeftButton to "click" menu buttons — context menu on
     // right-click would steal the RightButton presses.
     canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });

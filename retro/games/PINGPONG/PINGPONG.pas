@@ -60,6 +60,17 @@ var ball,fly,ud:coordinates;
                  MakeBall(ball.x,ball.y,35,0);
                  ball.x:=634;
             end;
+         { РЕМОНТ: у оригіналі не було ВЕРХНЬОЇ стіни — м'яч, що йшов угору крізь
+           пробитий стовпчик у верхньому ряду, вилітав за y=0, і жодна умова Udar
+           більше не спрацьовувала: м'яч зникав назавжди, поле застигало. Додано
+           відбій від верху (як від низу, лише вниз) — інших правок логіки немає. }
+         if ball.y<=5 then
+            begin
+                 Udar:=true;
+                 vertical:=false;
+                 MakeBall(ball.x,ball.y,25,0);
+                 ball.y:=6;
+            end;
          flag:=true;
          if GetPixel(ball.x,ball.y-6)<>0 then
             begin

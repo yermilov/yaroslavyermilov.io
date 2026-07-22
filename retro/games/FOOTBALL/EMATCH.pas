@@ -125,6 +125,11 @@ begin
      Match.Score[2]:=0;
      Half:=0;
      At:=2;
+     { РЕМОНТ: вітання стадіону друкувалось ВСЕРЕДИНІ циклу таймів (HalfEnd=2),
+       тож виводилось двічі поспіль. Винесено сюди — один раз на початку матчу. }
+     St:=Loc('Welcome to the stadium ','Вітаємо вас на стадіоні ') + Match.Stadium.Name;
+     Writeln(St);
+     await(Delay(1000)); { HelpUnit.Duration(1) — тут awaitable }
      repeat
            DoTeamP;
            Inc(Half);
@@ -137,9 +142,6 @@ begin
            end;
            N:=1;
            ChAt;
-           St:=Loc('Welcome to the stadium ','Вітаємо вас на стадіоні ') + Match.Stadium.Name;
-           Writeln(St);
-           await(Delay(1000)); { HelpUnit.Duration(1) — тут awaitable }
            repeat
                  If MinNow mod 15 = 0  then DoTeamP;
                  {case n of

@@ -141,7 +141,10 @@ begin
               writeln(str);
          end;
      gotoxy (33,4);
-     writeln(bal); { авторський баг: друкує неініціалізовану bal, не bals }
+     writeln(bals); { РЕМОНТ: оригінал друкував неініціалізовану локальну bal
+       (завжди 0) замість параметра bals — очевидна авторська одрук: write_bal
+       існує саме щоб показати баланс. Виправлено на bals, щоб на старті гри
+       видно було реальні 500 грн, а не 0. }
 end;
 
 function player:byte; async;
@@ -158,7 +161,9 @@ begin
               ReadlnT(fsm,str);
               writeln(str);
          end;
-     ch:=chr(trunc(await(double, ReadKeyA)));
+     { РЕМОНТ: тут стояв зайвий `ReadKey`, який з'їдав ПЕРШЕ натискання на
+       екрані вибору ставки — гравець тиснув f/s/n, а нічого не відбувалось
+       (клавіша гинула). Прибрано, щоб перший же f/s/n працював. }
      flag:=false;
      repeat
            case chr(trunc(await(double, ReadKeyA))) of

@@ -107,5 +107,39 @@ none is portable — so they no longer appear in the NC (their rationale kept he
   Reconstructing lost units of someone else's game is invention, not porting.
   (Removed 2026-07-20 at Yarik's request — "not mine".)
 
+## QA pass (2026-07-22) — play-tested every game, fixed the bugs
+
+A play-through of all 8 ports (Codex, via the Chrome controller) surfaced six
+issues; five were real and are fixed (the per-file `РЕМОНТ` comments carry the
+detail), one did not reproduce:
+
+- **PINGPONG — top-wall deadlock (was: High).** `Udar` bounced the ball off the
+  left/right/bottom walls but had **no top edge** — once a top-row block was
+  knocked out, a ball climbing through the gap left `y<0`, no `Udar` condition
+  ever fired again, and the game froze with the ball gone. Added the missing
+  top wall (mirrors the bottom one). `PINGPONG.pas`.
+- **BAKKARA — balance 0 + first bet key eaten (was: High).** `write_bal` printed
+  an uninitialised local `bal` (always 0) instead of its `bals` param → fixed to
+  show the real 500; and a stray `ReadKey` swallowed the first f/s/n keypress →
+  removed. Now a fresh player sees 500 and can bet immediately. `BAKKARA.pas`.
+  (These were preserved as "authentic quirks" before; Yarik's plan asks for
+  *playable*, so they're now repaired — the byte-identical original stays the F3
+  exhibit.)
+- **WARWORK — mouse menu unreachable via click (was: High).** The `mouse` shim
+  read only `e.buttons`, which synthetic click injectors leave `0`, and it
+  sampled the button only at the menu loop's discrete poll points. Rewrote it to
+  latch by button **index** on down/up with a ~140 ms release grace, so real and
+  programmatic clicks are both caught. `shims/mouse.pas` (affects WARWORK only).
+- **NC "6 Run" ran the folder default, not the selection (was: Medium).** The F6
+  handler called `tryRun(folder)` with no file, so selecting RANDOM.EXE launched
+  SNITCH. Now passes `files[fileIdx]`. `NortonCommander.tsx`.
+- **FOOTBALL — duplicate stadium greeting (was: Low).** "Welcome to the stadium…"
+  sat inside the per-half loop (`HalfEnd=2`) so it printed twice; moved it before
+  the loop. The `N loaded` progress is authentic 1:1 and kept. `EMATCH.pas`.
+- **SNITCH — "Team 1 black-on-black" (Medium): did NOT reproduce.** All three
+  render paths (periodic status, goal, end-of-match) show Team 1's name + seeker
+  line in normal lightgray; the text shim uses a uniform `fg=7`. Left unchanged
+  rather than risk regressing a correct render — flagged back to Yarik.
+
 The IBM VGA web font under `apps/web/public/retro/fonts/` is from The Ultimate
 Oldschool PC Font Pack v2.2 by VileR (int10h.org), CC BY-SA 4.0.

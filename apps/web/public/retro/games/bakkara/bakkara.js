@@ -2149,7 +2149,6 @@ rtl.module("program",["System","JS","crt","tpfiles","nls"],function () {
     var fsm = pas.tpfiles.Text.$new();
     var n = 0;
     var str = "";
-    var bal = 0;
     pas.tpfiles.Assign(fsm,"c:\\cash\\bakkara\\fsm1.txt");
     pas.tpfiles.Reset(fsm);
     for (n = 1; n <= 5; n++) {
@@ -2161,12 +2160,11 @@ rtl.module("program",["System","JS","crt","tpfiles","nls"],function () {
       pas.System.Writeln(str);
     };
     pas.crt.GotoXY(33,4);
-    pas.System.Writeln(bal);
+    pas.System.Writeln(bals);
   };
   this.player = async function () {
     var Result = 0;
     var n = 0;
-    var ch = "";
     var fsm = pas.tpfiles.Text.$new();
     var str = "";
     var flag = false;
@@ -2180,7 +2178,6 @@ rtl.module("program",["System","JS","crt","tpfiles","nls"],function () {
         }});
       pas.System.Writeln(str);
     };
-    ch = String.fromCharCode(pas.System.Trunc(await pas.crt.ReadKeyA()));
     flag = false;
     do {
       var $tmp = String.fromCharCode(pas.System.Trunc(await pas.crt.ReadKeyA()));

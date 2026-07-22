@@ -3046,6 +3046,9 @@ rtl.module("EMatch",["System","JS"],function () {
     Match.Score[1] = 0;
     Half = 0;
     At = 2;
+    St = pas.nls.Loc("Welcome to the stadium ","Вітаємо вас на стадіоні ") + Match.Stadium.name;
+    pas.System.Writeln(St);
+    await pas.crt.Delay(1000);
     do {
       DoTeamP();
       Half += 1;
@@ -3065,9 +3068,6 @@ rtl.module("EMatch",["System","JS"],function () {
       };
       N = 1;
       ChAt();
-      St = pas.nls.Loc("Welcome to the stadium ","Вітаємо вас на стадіоні ") + Match.Stadium.name;
-      pas.System.Writeln(St);
-      await pas.crt.Delay(1000);
       do {
         if ((MinNow % 15) === 0) DoTeamP();
         MinNow += 1;

@@ -2171,6 +2171,12 @@ rtl.module("program",["System","crt","graph"],function () {
       $mod.MakeBall($mod.ball.x,$mod.ball.y,35,0);
       $mod.ball.x = 634;
     };
+    if ($mod.ball.y <= 5) {
+      Result = true;
+      $mod.vertical = false;
+      $mod.MakeBall($mod.ball.x,$mod.ball.y,25,0);
+      $mod.ball.y = 6;
+    };
     flag = true;
     if (pas.graph.GetPixel($mod.ball.x,$mod.ball.y - 6) !== 0) {
       Result = true;

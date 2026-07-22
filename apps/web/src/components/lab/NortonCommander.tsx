@@ -330,7 +330,11 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
   const fkeys: Array<[string, string, () => void]> = [
     ['1', 'Help', () => setOverlay({ kind: 'help' })],
     ['3', 'View', () => folder && files[fileIdx] && openView(folder.dir, files[fileIdx]!)],
-    ['6', 'Run', () => folder && tryRun(folder)],
+    // Run the CURRENTLY-HIGHLIGHTED file, not the folder default — otherwise
+    // selecting RANDOM.EXE and pressing "6 Run" launched SNITCH (the default),
+    // contradicting the highlight. tryRun resolves the file's own port via
+    // `runs`, falling back to the folder default only for a non-mapped row.
+    ['6', 'Run', () => folder && tryRun(folder, files[fileIdx])],
     ['9', 'Full', fullscreen],
     ['10', 'Quit', () => setOverlay({ kind: 'quit' })],
   ];
