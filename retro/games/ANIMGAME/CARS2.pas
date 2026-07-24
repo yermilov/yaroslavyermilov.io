@@ -8,7 +8,26 @@
     pacing, exactly as in the original polling loop (InKey is non-blocking by
     design there, so no extra yield is needed).
   Everything else — including the InKey helper and t_graph — compiles as
-  written in 2005. }
+  written in 2005, with ONE deliberate exception, reported as a bug from the
+  lab (23.07.2026) and fixed rather than preserved:
+
+  - `if y2=24` → `if y2>=24` (star 2's reset).
+
+  The 2005 logic loses the equality. When star 1 wraps, its reset block runs
+  `y2:=y1` BEFORE `y1:=1`, so y2 becomes 24. The next time `y1>3` opens the
+  star-2 block, that block draws at row 24 and then `inc(y2)` lands on 25 —
+  the `=24` test never fires again and y2 climbs forever. From then on every
+  frame calls gotoxy with a row past the screen; Turbo Pascal ignored
+  out-of-range coordinates (crt.pas reproduces that faithfully and must keep
+  doing so), so the two writes per frame land wherever the cursor happened to
+  stop — after the car, at row 24. They march across the line, wrap, and
+  scroll the frame, which is what put loose '*' below the box on black and
+  filled the field with columns of stars.
+
+  `>=` restores the intended wrap. It is a change to the original source, so
+  it is called out here rather than hidden: bug-for-bug fidelity is the rule
+  everywhere else in this folder, but a self-flooding screen is not a
+  playable exhibit. }
 program cars2;
 uses t_graph,crt;
 var x1,hy,hx,i,y1,x2,y2,cx,cy:byte;
@@ -59,7 +78,7 @@ repeat
          gotoxy(x2,y2);
          write('*');
          inc(y2);
-         if y2=24 then
+         if y2>=24 then   { was `=24` — see the 2005-bug note in the header }
          begin
          y2:=1;
          gotoxy(x2,24);

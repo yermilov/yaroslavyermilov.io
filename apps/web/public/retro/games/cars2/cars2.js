@@ -1950,7 +1950,7 @@ rtl.module("program",["System","t_graph","crt"],function () {
         pas.crt.GotoXY($mod.x2,$mod.y2);
         pas.System.Write("*");
         $mod.y2 += 1;
-        if ($mod.y2 === 24) {
+        if ($mod.y2 >= 24) {
           $mod.y2 = 1;
           pas.crt.GotoXY($mod.x2,24);
           pas.System.Write(" ");
