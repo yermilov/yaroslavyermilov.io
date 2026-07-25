@@ -194,7 +194,11 @@ end;
 function random_kart:byte;
 begin
 randomize;
-random_kart:=random(55);
+{ РЕМОНТ: було random(55) → 0..54, а name_of_files індексується 1..54, тож
+  індекс 0 не мав жодної картинки — приблизно кожна 55-та карта малювалася
+  сміттям (у win() нуль ще й тихо рахувався як 14 очок через `0 mod 13`).
+  random(54)+1 дає рівномірні 1..54 і завжди валідний файл. }
+random_kart:=random(54)+1;
 end;
 
 function num_kart(num:byte):byte; async;
@@ -213,14 +217,23 @@ begin
      x:=1 + num*12;
      kart:=random_kart;
      num_kart:=kart;
-              gotoxy(x,9);
               nf:=name_of_files[kart];
               Assign(fk,'c:\cash\bakkara\'+nf);
               Reset(fk);
+              { РЕМОНТ: оригінал робив gotoxy(x,9) ОДИН раз перед циклом і далі
+                17 разів writeln. Але writeln повертає курсор у колонку 1 (це
+                справжня семантика Turbo Pascal, і шим її відтворює — crt.pas:
+                `if NewLine then begin CurX := 1; Inc(CurY); end;`). Тому на своєму
+                x малювався лише верхній бордюр карти, а решта 16 рядків лягали
+                впритул до лівого краю; до того ж 17 рядків від 9-го впиралися в
+                25-й і скролили екран, через що кожна наступна карта з'їжджала
+                нижче. Тепер позиціонуємо КОЖЕН рядок і пишемо через write —
+                рівно так, як це вже робить сусідня `palka`. }
               for h2:=1 to 17 do
                   begin
                        ReadlnT(fk,str);
-                       writeln(str);
+                       gotoxy(x, 8+h2);
+                       write(str);
                   end;
 end;
 

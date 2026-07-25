@@ -2217,7 +2217,7 @@ rtl.module("program",["System","JS","crt","tpfiles","nls"],function () {
   this.random_kart = function () {
     var Result = 0;
     pas.crt.Randomize();
-    Result = pas.System.Random(55);
+    Result = pas.System.Random(54) + 1;
     return Result;
   };
   var name_of_files = ["k1","k2","k3","k4","k5","k6","k7","k8","k9","k10","k11","k12","k13","k14","k15","k16","k17","k18","k19","k20","k21","k22","k23","k24","k25","k26","k27","k28","k29","k30","k31","k32","k33","k34","k35","k36","k37","k38","k39","k40","k41","k42","k43","k44","k45","k46","k47","k48","k49","k50","k51","k52","k53","k54"];
@@ -2232,7 +2232,6 @@ rtl.module("program",["System","JS","crt","tpfiles","nls"],function () {
     x = 1 + (num * 12);
     kart = $mod.random_kart();
     Result = kart;
-    pas.crt.GotoXY(x,9);
     nf = name_of_files[kart - 1];
     pas.tpfiles.Assign(fk,"c:\\cash\\bakkara\\" + nf);
     pas.tpfiles.Reset(fk);
@@ -2242,7 +2241,8 @@ rtl.module("program",["System","JS","crt","tpfiles","nls"],function () {
         }, set: function (v) {
           str = v;
         }});
-      pas.System.Writeln(str);
+      pas.crt.GotoXY(x,8 + h2);
+      pas.System.Write(str);
     };
     return Result;
   };
