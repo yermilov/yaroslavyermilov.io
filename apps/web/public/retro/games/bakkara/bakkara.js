@@ -2229,7 +2229,9 @@ rtl.module("program",["System","JS","crt","tpfiles","nls"],function () {
     var kart = 0;
     var str = "";
     var nf = "";
-    x = 1 + (num * 12);
+    if (num <= 3) {
+      x = 3 + ((num - 1) * 12)}
+     else x = 43 + ((num - 4) * 12);
     kart = $mod.random_kart();
     Result = kart;
     nf = name_of_files[kart - 1];
@@ -2251,7 +2253,7 @@ rtl.module("program",["System","JS","crt","tpfiles","nls"],function () {
     var h3 = 0;
     y = 9;
     for (h3 = 1; h3 <= 16; h3++) {
-      pas.crt.GotoXY(38,y);
+      pas.crt.GotoXY(40,y);
       pas.System.Write("|");
       y += 1;
     };
@@ -2364,10 +2366,10 @@ rtl.module("program",["System","JS","crt","tpfiles","nls"],function () {
       post = pas.System.Trunc(await $mod.stavka());
       pas.crt.ClrScr();
       for (n = 1; n <= 6; n++) number_of_karts[n - 1] = pas.System.Trunc(await $mod.num_kart(n));
-      pas.crt.GotoXY(12,24);
-      pas.System.Writeln(pas.nls.Loc("Player 1","Гравець 1"));
-      pas.crt.GotoXY(52,24);
-      pas.System.Writeln(pas.nls.Loc("Player 2","Гравець 2"));
+      pas.crt.GotoXY(16,25);
+      pas.System.Write(pas.nls.Loc("Player 1","Гравець 1"));
+      pas.crt.GotoXY(56,25);
+      pas.System.Write(pas.nls.Loc("Player 2","Гравець 2"));
       $mod.palka();
       flag = false;
       do {
