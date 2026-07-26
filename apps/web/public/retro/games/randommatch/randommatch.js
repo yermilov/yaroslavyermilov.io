@@ -2679,7 +2679,9 @@ rtl.module("crt",["System","JS"],function () {
   $impl.Queue = [];
   $impl.Installed = false;
   $impl.PromptActive = false;
+  $impl.KeyBufferMax = 16;
   $impl.Push = function (c) {
+    if (rtl.length($impl.Queue) >= 16) return;
     $impl.Queue = rtl.arraySetLength($impl.Queue,"",rtl.length($impl.Queue) + 1);
     $impl.Queue[rtl.length($impl.Queue) - 1] = c;
   };

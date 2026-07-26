@@ -30,6 +30,21 @@ const
 function KeyPressed: boolean;
 function ReadKey: char;
 function Delay(ms: integer): TJSPromise;
+{ Wall-clock delay, deliberately NOT scaled by DelayScale — for the ONE Delay
+  in a game that is its frame clock rather than a pause.
+
+  DelayScale is a single linear knob, and it only works while a game's Delay
+  arguments stay within one order of magnitude of each other. WARWORK spans
+  500×: its loop paces frames with Delay(100) (=10 fps, the game's real speed)
+  but its death sequence waits Delay(50000). At the 0.004 that keeps the
+  50-second wait bearable, the frame delay rounds to 0 ms and the game runs
+  ~14× too fast — the enemy plane closes and fires before a human can react
+  (measured: 1.5 s to death, vs 21 s at the source's own pacing). Scaling up
+  for the frame instead would make Game Over take 20 s.
+
+  So: pace the frame with FrameDelay (real ms, what the source literally
+  says), and leave the long waits to Delay/DelayScale. }
+function FrameDelay(ms: integer): TJSPromise;
 { DOS-style numeric prompt for ports of programs that ReadLn from the console.
   Renders a white-on-black prompt line over the canvas and resolves with the
   typed number on Enter. Input is collected from DOCUMENT-level keydowns, so it
@@ -100,8 +115,19 @@ var
     readln, not to the type-ahead buffer.) }
   PromptActive: boolean = false;
 
+const
+  { The BIOS type-ahead buffer held 16 words and DROPPED (beeped at) anything
+    past that. Reproducing the cap is not pedantry — it is what keeps a HELD
+    key honest in a game that reads one key per frame. WARWORK runs at 10 fps
+    while the browser auto-repeats at ~30/s, i.e. 60 queued entries per second
+    against 10 consumed: an unbounded queue turns a 1-second hold into ~5
+    seconds of plane still climbing after you let go. Capped, the overhang
+    stays under a second, exactly as it did on DOS. }
+  KeyBufferMax = 16;
+
 procedure Push(c: char);
 begin
+  if Length(Queue) >= KeyBufferMax then exit;
   SetLength(Queue, Length(Queue) + 1);
   Queue[Length(Queue) - 1] := c;
 end;
@@ -159,6 +185,16 @@ begin
   for i := 0 to Length(Queue) - 2 do
     Queue[i] := Queue[i + 1];
   SetLength(Queue, Length(Queue) - 1);
+end;
+
+function FrameDelay(ms: integer): TJSPromise;
+begin
+  Install;
+  Result := TJSPromise.New(
+    procedure(resolve, reject: TJSPromiseResolver)
+    begin
+      window.setTimeout(procedure begin resolve(0); end, ms);
+    end);
 end;
 
 function Delay(ms: integer): TJSPromise;

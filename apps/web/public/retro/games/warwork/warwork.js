@@ -1628,6 +1628,16 @@ rtl.module("crt",["System","JS"],function () {
     });
     return Result;
   };
+  this.FrameDelay = function (ms) {
+    var Result = null;
+    $impl.Install();
+    Result = new Promise(function (resolve, reject) {
+      window.setTimeout(function () {
+        resolve(0);
+      },ms);
+    });
+    return Result;
+  };
   this.Sound = function (hz) {
     try {
       if (!window.__retroAudio) {
@@ -1714,7 +1724,9 @@ rtl.module("crt",["System","JS"],function () {
   $impl.Queue = [];
   $impl.Installed = false;
   $impl.PromptActive = false;
+  $impl.KeyBufferMax = 16;
   $impl.Push = function (c) {
+    if (rtl.length($impl.Queue) >= 16) return;
     $impl.Queue = rtl.arraySetLength($impl.Queue,"",rtl.length($impl.Queue) + 1);
     $impl.Queue[rtl.length($impl.Queue) - 1] = c;
   };
@@ -2899,7 +2911,7 @@ rtl.module("program",["System","JS","graph","crt","jarik","mouse","tpfiles","nls
           if ($mod.p[i - 1]) $mod.MakeHisPlane(i,4);
         };
       };
-      await pas.crt.Delay(Math.floor(1000 / 10));
+      await pas.crt.FrameDelay(Math.floor(1000 / 10));
       pas.crt.NoSound();
     } while (!(!$mod.myplane || (key === "\x1B")));
   };
