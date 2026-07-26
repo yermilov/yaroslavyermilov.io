@@ -141,5 +141,27 @@ detail), one did not reproduce:
   line in normal lightgray; the text shim uses a uniform `fg=7`. Left unchanged
   rather than risk regressing a correct render — flagged back to Yarik.
 
+## DelayScale is one linear knob — it breaks when a game's Delays span decades
+
+WARWORK (2026-07-26, "any button I click my plane immediately crashes"): the
+keypress was a red herring — the plane died ~1.5 s in with **no input at all**.
+Its loop paces frames with `Delay(duration div 10)` = 100 ms (10 fps, the game's
+real speed) while its death sequence waits `Delay(50000)`. At the DelayScale of
+0.004 that keeps the 50-second wait bearable, the frame delay rounds to **0 ms**
+and the loop free-runs at ~140 fps: the enemy plane matches your altitude and
+fires before a human can react. Scaling *up* instead would make Game Over 20 s.
+
+So one scale cannot serve a 500× spread. `crt.FrameDelay(ms)` is the way out — a
+wall-clock delay DelayScale does not touch, for the ONE Delay in a game that is
+its frame clock rather than a pause. Measured after: 9.4 fps, survives >28 s with
+no input. **Check any other port whose per-frame Delay argument is small relative
+to its longest one — the same trap is silent, it just looks like "hard game".**
+
+Slowing a loop to authentic speed exposes a second thing: the shim's key queue was
+unbounded, and the browser auto-repeats a held key at ~30/s (60 queued entries)
+against 10 consumed per second — a 1-second hold became ~5 seconds of plane still
+climbing after release. `Push` now caps the queue at 16 like the BIOS type-ahead
+buffer did; the overhang is back under half a second.
+
 The IBM VGA web font under `apps/web/public/retro/fonts/` is from The Ultimate
 Oldschool PC Font Pack v2.2 by VileR (int10h.org), CC BY-SA 4.0.
