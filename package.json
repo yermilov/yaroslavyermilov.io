@@ -14,9 +14,11 @@
     "preview": "pnpm --filter web preview",
     "start": "pnpm --filter web start",
     "lint": "pnpm --filter web lint",
+    "design:check": "impeccable detect --quiet apps/web/src",
     "typecheck": "pnpm --filter web typecheck"
   },
   "devDependencies": {
+    "impeccable": "3.3.1",
     "typescript": "^5.7.2"
   }
 }

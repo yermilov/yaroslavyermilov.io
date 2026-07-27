@@ -13,6 +13,9 @@ const strings = t(locale);
   <button class="lb-close" type="button" aria-label={strings.labels.close}>×</button>
   <button class="lb-prev" type="button" aria-label={strings.labels.previousPhoto} hidden>‹</button>
   <button class="lb-next" type="button" aria-label={strings.labels.nextPhoto} hidden>›</button>
+  <!-- src is set by the lightbox script when a photo is opened; the dialog is
+       hidden until then, so this never paints as a broken image. -->
+  <!-- impeccable-disable-next-line broken-image -- deliberate, see above -->
   <img class="lb-img" src="" alt="" />
 </dialog>
 

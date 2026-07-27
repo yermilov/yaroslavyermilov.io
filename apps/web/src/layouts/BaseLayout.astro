@@ -201,6 +201,10 @@ const personLd = {
         padding: 8px 8px 8px 16px;
         box-shadow: 4px 6px 0 0 var(--rule); /* the site's hard offset shadow (TweetCard) */
         z-index: 60;
+        /* This file declares exactly one family, for one small component; the page's
+           actual pairing (Newsreader + JetBrains Mono) lives in styles/tokens.css,
+           which this file-scoped rule cannot see. */
+        /* impeccable-disable-next-line single-font -- see above */
         font-family: var(--font-mono);
         font-size: 0.8rem;
         letter-spacing: 0.02em;

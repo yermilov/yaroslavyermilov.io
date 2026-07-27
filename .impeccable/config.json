@@ -1,0 +1,10 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [
+      "apps/web/src/components/lab/NortonCommander.tsx",
+      "retro/build.ts"
+    ],
+    "ignoreValues": []
+  }
+}

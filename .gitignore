@@ -19,4 +19,8 @@ dist
 .claude/worktrees/
 
 # Impeccable hook cache — machine-specific, may appear in any content subdir
-**/.impeccable/
+# Impeccable: the hook cache and live-mode scratch are machine-local, but the
+# detector CONFIG is a project decision — track it, or a waiver added on one
+# machine silently changes what the design gate sees everywhere else.
+**/.impeccable/*
+!**/.impeccable/config.json

@@ -203,9 +203,32 @@ pnpm install                        # install all workspaces
 pnpm dev                            # Astro dev server (apps/web)
 pnpm build                          # full web build (Astro SSR + pagefind)
 pnpm --filter web typecheck         # astro check
+pnpm design:check                   # Impeccable detector over apps/web/src (see below)
 pnpm --filter @yermilov/api dev     # API dev (Bun --watch) on :3001
 pnpm --filter @yermilov/api typecheck
 ```
+
+**`pnpm design:check` runs Impeccable's detector** with no LLM, no API key and no quota, so it costs
+nothing per run — put it next to typecheck before every commit.
+⚠️ **Scope, measured not assumed:** it catches **generic AI-UI tells**, not Tactile Workbench token
+adherence — 3.3.1 only loads a design system from YAML frontmatter in `DESIGN.md` or a
+`.impeccable/design.json`, and this repo has neither, so off-system colours/fonts/radii pass silently.
+Treat it as a slop filter; adding that metadata is what would make token rules mechanical. The baseline is **zero findings**, and the gate is proven to bite (a probe with
+`border-left: 6px solid red` and an empty `<img src>` exits 2). It is a **locked devDependency**, not
+an `npx` call, so the gate is reproducible offline — at two costs worth knowing: it pulls
+**puppeteer + a Chrome download** (its URL-scanning mode; we only scan files), and it declares
+**node >= 22.12**.
+
+Waive a finding **inline, with a reason** — the waiver then travels with the code it explains and is
+visible in review. `.impeccable/config.json` is now TRACKED (only the hook cache stays ignored) so a
+config-level waiver is reviewable too rather than silently changing what the gate sees on one
+machine; prefer inline anyway. Two gotchas that cost time when this was wired:
+the directive must be on **one line, immediately above** the offending line (inside a multi-line
+comment it lands on the wrong line and silently does nothing); and the current waivers are all
+scope/heuristic limits, not defects — `broken-image` fires on the lightbox `src=""` that JS fills,
+`single-font` judges `BaseLayout.astro` alone while the real Newsreader + JetBrains Mono pairing
+lives in `styles/tokens.css`, and `side-tab` fires on **blockquotes**, where a left rule is
+typographic convention rather than the coloured-card tell the rule targets.
 
 Serve the built site locally the way Railway does:
 `cd apps/web && node ./dist/server/entry.mjs`
