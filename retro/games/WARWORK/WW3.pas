@@ -19,6 +19,17 @@
 program GraphWarWork; {5.04.2005 19:17 - 5.04.2005 21:27 |2:10| }
 uses JS,graph,crt,jarik,mouse,tpfiles,nls;
 const duration=1000;
+      { Frame period of the main loop. The source paces at `duration div 10` =
+        100 ms (10 fps); this is 83 ms — 20% quicker, at Yarik's request after
+        playing the real-time-paced build.
+        83, not 80: the game advances a fixed amount per iteration, so "20%
+        faster" is 20% more FRAMES (10 -> 12 fps => 1000/12 = 83.3 ms), not 20%
+        off the period. Cutting the period to 80 would be 12.5 fps, i.e. 25%.
+        Deliberately a constant HERE rather than a scale factor inside
+        FrameDelay: FrameDelay's entire job is "real milliseconds, unscaled",
+        and hiding a multiplier in it would rebuild the very coupling that made
+        this game unplayable (see the comment above FrameDelay in crt.pas). }
+      frameMs=83;
       zenitka=2;
       plane=1;
       tank=3;
@@ -668,8 +679,10 @@ begin
       DelayScale=0.004 (його тримає Delay(50000) у сценах загибелі) він
       округлявся до 0 мс і гра йшла ~в 14 разів швидше: ворожий літак
       підрівнювався по висоті й збивав тебе за ~1.5 с — «літак одразу
-      падає». FrameDelay дає реальні 100 мс, як і написано в оригіналі. }
-    await(FrameDelay(Duration Div 10));
+      падає». FrameDelay дає реальні мілісекунди, як і написано в оригіналі.
+      frameMs=83 замість 100 — на прохання зробити на 20% швидше (це +20% до
+      кадрів: 10 -> 12 к/с; 80 мс було б 12.5 к/с, тобто +25%). }
+    await(FrameDelay(frameMs));
     NoSound;
     until (not (myplane)) or (key=#27);
 end;
