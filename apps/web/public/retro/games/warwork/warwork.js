@@ -1942,6 +1942,10 @@ rtl.module("graph",["System"],function () {
     window.requestAnimationFrame($impl.Frame);
   };
   this.CloseGraph = function () {
+    $impl.Ctx = null;
+    $impl.Canvas = null;
+    $impl.Img = null;
+    $impl.FB = rtl.arraySetLength($impl.FB,0,0);
   };
   this.GraphActive = function () {
     var Result = false;

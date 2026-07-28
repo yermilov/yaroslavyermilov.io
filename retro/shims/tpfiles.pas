@@ -41,6 +41,13 @@ type
 procedure Assign(var f: Text; const path: string);
 procedure Reset(var f: Text);
 procedure Append(var f: Text);
+{ Truncate to empty and open for output — Turbo Pascal's Rewrite. }
+procedure Rewrite(var f: Text);
+{ Delete the file. Only the localStorage shadow can actually be removed; a
+  build-time data/ entry is masked with an empty array instead, so a later
+  Reset sees an existing-but-empty file rather than resurrecting the shipped
+  copy (PINGPONG erases best.scr after reading it). }
+procedure Erase(var f: Text);
 procedure ReadlnT(var f: Text; var s: string);
 procedure ReadlnLong(var f: Text; var n: longint);
 { TP `read(f, n)` — skip whitespace INCLUDING line breaks, consume one integer
@@ -131,6 +138,33 @@ procedure Append(var f: Text);
 begin
   if GetLines(f.name) = nil then RTE(2);
   f.mode := 2;
+end;
+
+procedure Rewrite(var f: Text);
+var
+  empty: JSValue;
+begin
+  asm
+    empty = [];
+  end;
+  PutLines(f.name, empty);
+  f.cursor := 0;
+  f.col := 0;
+  f.mode := 2;
+end;
+
+procedure Erase(var f: Text);
+var
+  empty: JSValue;
+begin
+  { An empty shadow, not a removed key: dropping the key would let GetLines fall
+    through to the build-time data/ copy and the "erased" file would reappear. }
+  asm
+    empty = [];
+  end;
+  PutLines(f.name, empty);
+  f.cursor := 0;
+  f.mode := 0;
 end;
 
 procedure ReadlnT(var f: Text; var s: string);

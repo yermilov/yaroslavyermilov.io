@@ -147,7 +147,16 @@ end;
 
 procedure CloseGraph;
 begin
-  // Nothing to release: the canvas stays on the page.
+  { Hand the canvas BACK to crt's text renderer. GraphActive is `Ctx <> nil`, and
+    crt dispatches on it, so leaving Ctx set meant a program that returned to text
+    mode kept writing into the (no longer presented) BGI surface and the screen
+    just stayed black — PINGPONG's Information screen does exactly that. WARWORK
+    is unaffected: its only CloseGraph is the last statement of the program.
+    Present already no-ops on a nil Ctx, so the rAF loop stays safe. }
+  Ctx := nil;
+  Canvas := nil;
+  Img := nil;
+  SetLength(FB, 0);
 end;
 
 function GraphResult: integer;
