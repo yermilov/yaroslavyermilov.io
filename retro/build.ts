@@ -61,7 +61,7 @@ const GAMES: GameDef[] = [
     dir: 'ANIMGAME',
     title: 'Cars',
     year: '2005',
-    note: { ua: 'Текстові анімації: машинка ▲ і зорепад (CARS1/CARS2).', en: 'Text animations: a car ▲ and a starfall (CARS1/CARS2).' },
+    note: { ua: 'Текстова анімація: кермуєш ▲ машинкою і ухиляєшся від зорепаду.', en: 'Text animation: drive the ▲ car and dodge the falling stars.' },
     controls: { ua: '← → — рухати машинку · Esc — вийти', en: '← → move the car · Esc to exit' },
     ports: [
       // The CARS animations were never compiled to an .EXE (sources only). Yarik
@@ -69,18 +69,27 @@ const GAMES: GameDef[] = [
       // other folders, so these `file`s are synthesized as cosmetic binary rows
       // (see scanFolder); the .PAS then stay as F3-viewable source.
       { slug: 'cars2', main: 'CARS2.pas', file: 'CARS/CARS2.EXE' },
-      { slug: 'cars1', main: 'CARS1.pas', file: 'CARS/CARS1.EXE' },
+      // No `file`, so no .EXE row: CARS2 IS CARS1 plus falling stars to dodge —
+      // the same car, the same ← → driving, with obstacles added. So this is the
+      // earlier, simpler cut of one animation rather than a second one, and the
+      // folder shows the better version only. The .PAS stays F3-viewable and the
+      // port still compiles; it is the panel that stops offering two.
+      { slug: 'cars1', main: 'CARS1.pas' },
     ],
   },
   {
     dir: 'QUIDDITC',
     title: 'Quidditch',
     year: '2008',
-    note: { ua: 'Квідичні матч-симулятори: SNITCH (інтерактивний) і RANDOM (авто).', en: 'Quidditch match sims: SNITCH (interactive) and RANDOM (auto).' },
+    note: { ua: 'Квідичний матч-симулятор: a та s — голи, ловці полюють на снитч.', en: 'Quidditch match sim: a and s score, seekers hunt the snitch.' },
     controls: { ua: 'введи команди/ловців/числа + Enter · у SNITCH: a та s — голи · Esc — вийти', en: 'enter teams/seekers/numbers + Enter · in SNITCH a and s score · Esc to exit' },
     ports: [
       { slug: 'snitch', main: 'SNITCH.pas', file: 'SNITCH.EXE' },
-      { slug: 'randommatch', main: 'RANDOM.pas', file: 'RANDOM.EXE' },
+      // No `file`, same reasoning: RANDOM is SNITCH with the player taken out.
+      // Diffing the two sources gives SEVENTEEN differing lines out of ~140 —
+      // SNITCH scores on a/s keypresses, RANDOM swaps that for a delay and asks
+      // for team accuracy up front. One match simulator, one of them on autopilot.
+      { slug: 'randommatch', main: 'RANDOM.pas' },
     ],
   },
   {
