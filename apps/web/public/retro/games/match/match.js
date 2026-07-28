@@ -4475,6 +4475,19 @@ rtl.module("tpfiles",["System"],function () {
   $impl.GetLines = function (name) {
     var Result = undefined;
     Result = null;
+    // In-memory overlay FIRST. The lab page runs every game inside a sandboxed
+    // iframe (Tier 3), which is an opaque origin — localStorage there THROWS on
+    // both get and set. Without this overlay a game that writes a file and reads
+    // it back in the same session loses the write silently: PINGPONG's shifr copy
+    // (DeShifrovka .cod -> .opt) vanished, Reset hit RTE(2) inside an async
+    // procedure, and the screen just stayed black. It worked standalone, where
+    // localStorage is writable, which is exactly why testing only the standalone
+    // page missed it.
+    window.__retroMem = window.__retroMem || {};
+    var memKey = (window.__retroSlug || 'game') + ':' + name;
+    if (Object.prototype.hasOwnProperty.call(window.__retroMem, memKey)) {
+      Result = window.__retroMem[memKey]; return Result;
+    }
     var ls = null;
     try { ls = localStorage.getItem('retro:' + (window.__retroSlug || 'game') + ':' + name); } catch (e) {}
     if (ls != null) { Result = JSON.parse(ls); return Result; }

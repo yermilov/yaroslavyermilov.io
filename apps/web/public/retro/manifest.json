@@ -14,6 +14,9 @@
     "en": "← → move the paddle · Esc to exit"
    },
    "run": "pingpong",
+   "runs": {
+    "PP.EXE": "pingpong"
+   },
    "files": [
     {
      "name": "1.BAK",
@@ -102,12 +105,6 @@
     {
      "name": "BLOCKS10/OPTIONS.COD",
      "size": 196,
-     "mtime": "2005",
-     "view": false
-    },
-    {
-     "name": "BLOCKS10/PP.EXE",
-     "size": 58608,
      "mtime": "2005",
      "view": false
     },
@@ -298,12 +295,6 @@
      "view": true
     },
     {
-     "name": "PP1.EXE",
-     "size": 45440,
-     "mtime": "2005",
-     "view": false
-    },
-    {
      "name": "PP1.PAS",
      "size": 25895,
      "mtime": "2005",
@@ -376,12 +367,6 @@
      "view": true
     },
     {
-     "name": "PP10/PINGPONG.EXE",
-     "size": 47408,
-     "mtime": "2005",
-     "view": false
-    },
-    {
      "name": "PP10/PINGPONG.PAS",
      "size": 39997,
      "mtime": "2005",
@@ -414,12 +399,6 @@
     {
      "name": "PP10/SIMP.CHR",
      "size": 8437,
-     "mtime": "2005",
-     "view": false
-    },
-    {
-     "name": "PP10/SUPERCOD.EXE",
-     "size": 5120,
      "mtime": "2005",
      "view": false
     },
@@ -468,12 +447,6 @@
     {
      "name": "SIMP.CHR",
      "size": 8437,
-     "mtime": "2005",
-     "view": false
-    },
-    {
-     "name": "SUPERCOD.EXE",
-     "size": 5120,
      "mtime": "2005",
      "view": false
     },
@@ -663,8 +636,8 @@
    "title": "Football",
    "year": "2005–2009",
    "note": {
-    "ua": "Симулятор матчу: 121 гравець, 8 команд. Двигун недописаний — чесні 0:0.",
-    "en": "Match sim: 121 players, 8 teams. The engine is unfinished — honest 0:0."
+    "ua": "Симулятор матчу: 121 гравець, 8 команд. Голи, картки, коментар.",
+    "en": "Match sim: 121 players, 8 teams. Goals, cards, commentary."
    },
    "controls": {
     "ua": "введи дві команди (напр. Dynamo і Milan) + Enter · Esc — вийти",
@@ -2236,12 +2209,6 @@
      "view": false
     },
     {
-     "name": "FOOTBALL/MATCH.EXE",
-     "size": 34768,
-     "mtime": "2005–2009",
-     "view": false
-    },
-    {
      "name": "FOOTBALL/MATCH.PAS",
      "size": 4837,
      "mtime": "2005–2009",
@@ -2342,12 +2309,6 @@
      "size": 13169,
      "mtime": "2005–2009",
      "view": true
-    },
-    {
-     "name": "MATCH1.EXE",
-     "size": 31360,
-     "mtime": "2005–2009",
-     "view": false
     },
     {
      "name": "MATCH1.PAS",

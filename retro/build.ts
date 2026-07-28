@@ -55,7 +55,7 @@ const GAMES: GameDef[] = [
     year: '2005',
     note: { ua: 'Арканоїд: платформа, мʼяч і стіна блоків.', en: 'Breakout: paddle, ball, wall of bricks.' },
     controls: { ua: '← → — рухати платформу · Esc — вийти', en: '← → move the paddle · Esc to exit' },
-    ports: [{ slug: 'pingpong', main: 'PINGPONG.pas' }],
+    ports: [{ slug: 'pingpong', main: 'PINGPONG.pas', file: 'PP.EXE' }],
   },
   {
     dir: 'ANIMGAME',
@@ -95,7 +95,7 @@ const GAMES: GameDef[] = [
     dir: 'FOOTBALL',
     title: 'Football',
     year: '2005–2009',
-    note: { ua: 'Симулятор матчу: 121 гравець, 8 команд. Двигун недописаний — чесні 0:0.', en: 'Match sim: 121 players, 8 teams. The engine is unfinished — honest 0:0.' },
+    note: { ua: 'Симулятор матчу: 121 гравець, 8 команд. Голи, картки, коментар.', en: 'Match sim: 121 players, 8 teams. Goals, cards, commentary.' },
     controls: { ua: 'введи дві команди (напр. Dynamo і Milan) + Enter · Esc — вийти', en: 'enter two teams (e.g. Dynamo and Milan) + Enter · Esc to exit' },
     ports: [{ slug: 'match', main: 'MATCH.pas', file: 'MATCH.EXE' }],
   },
@@ -215,8 +215,27 @@ function scanFolder(def: GameDef): { files: ManifestFile[] } {
       view: false, // binary: F3 shows "preview unavailable", same as real .EXEs
     });
   }
-  files.sort((a, b) => a.name.localeCompare(b.name));
-  return { files };
+  // ONE .EXE PER GAME in the panel (Yarik, twice: "each game/directory should have
+  // only 1 exe file"). These folders are 20-year-old working directories, so they
+  // carry drafts and leftovers beside the real binary — PINGPONG shipped SIX
+  // (PP/PP1/BLOCKS10/PP10/SUPERCOD…), FOOTBALL three. Only the .EXE a port
+  // actually declares survives; the rest are hidden from the listing.
+  //
+  // Per GAME, not per folder: ANIMGAME (CARS1+CARS2) and QUIDDITC (SNITCH+RANDOM)
+  // are two games each and legitimately keep two. That is also why this filters on
+  // the ports' own `file` set rather than "first .EXE wins" — the latter would have
+  // silently swallowed a real second game.
+  //
+  // Display-only. Nothing is deleted from ~/games; the originals are untouched.
+  const keepExe = new Set((def.ports ?? []).map((p) => p.file).filter(Boolean) as string[]);
+  const isExe = (n: string) => n.toLowerCase().endsWith('.exe');
+  const hidden = files.filter((f) => isExe(f.name) && !keepExe.has(f.name)).map((f) => f.name);
+  if (hidden.length > 0) {
+    console.log(`  · ${def.dir}: hiding ${hidden.length} extra .EXE (${hidden.join(', ')})`);
+  }
+  const kept = files.filter((f) => !isExe(f.name) || keepExe.has(f.name));
+  kept.sort((a, b) => a.name.localeCompare(b.name));
+  return { files: kept };
 }
 
 function compilePort(def: GameDef, port: { slug: string; main: string }): void {
