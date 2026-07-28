@@ -1587,6 +1587,15 @@ rtl.module("System",[],function () {
     };
     return Result;
   };
+  this.Write = function () {
+    var i = 0;
+    for (var $l = 0, $end = arguments.length - 1; $l <= $end; $l++) {
+      i = $l;
+      if ($impl.WriteCallBack != null) {
+        $impl.WriteCallBack(arguments[i],false)}
+       else $impl.WriteBuf = $impl.WriteBuf + ("" + arguments[i]);
+    };
+  };
   this.Writeln = function () {
     var i = 0;
     var l = 0;
@@ -2528,21 +2537,30 @@ rtl.module("graph",["System"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
+  this.ScreenW = 640;
+  this.ScreenH = 480;
   this.GraphActive = function () {
     var Result = false;
     Result = $impl.Ctx !== null;
     return Result;
   };
+  this.ClearDevice = function () {
+    var i = 0;
+    if (rtl.length($impl.FB) === 0) return;
+    for (i = 0; i <= 307199; i++) $impl.FB[i] = 0;
+  };
 },["JS","Web","weborworker","SysUtils","crt"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
+  $impl.FB = [];
   $impl.Ctx = null;
 });
 rtl.module("crt",["System","JS"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
+  this.Green = 2;
   this.KeyPressed = function () {
     var Result = false;
     $impl.Install();
@@ -2593,6 +2611,35 @@ rtl.module("crt",["System","JS"],function () {
       poll();
     });
     return Result;
+  };
+  this.TextBackground = function (c) {
+    $impl.TextEnsure();
+    $impl.CurBg = c & 15;
+  };
+  this.TextColor = function (c) {
+    $impl.TextEnsure();
+    $impl.CurFg = c & 15;
+  };
+  this.GotoXY = function (x, y) {
+    $impl.TextEnsure();
+    if ((x < 1) || (x > 80) || (y < 1) || (y > 25)) return;
+    $impl.CurX = x;
+    $impl.CurY = y;
+  };
+  this.ClrScr = function () {
+    var i = 0;
+    if (pas.graph.GraphActive()) {
+      pas.graph.ClearDevice();
+      return;
+    };
+    $impl.TextEnsure();
+    for (i = 0; i <= 1999; i++) {
+      $impl.CellCh[i] = " ";
+      $impl.CellFg[i] = $impl.CurFg;
+      $impl.CellBg[i] = $impl.CurBg;
+    };
+    $impl.CurX = 1;
+    $impl.CurY = 1;
   };
   this.Randomize = function () {
   };
@@ -2863,26 +2910,10 @@ rtl.module("crt",["System","JS"],function () {
     window.requestAnimationFrame($impl.TextPaint);
   };
 });
-rtl.module("nls",["System"],function () {
+rtl.module("EMatch",["System"],function () {
   "use strict";
   var $mod = this;
-  this.GameLang = function () {
-    var Result = "";
-    Result = "ua";
-    Result = (typeof window !== 'undefined' && window.__retroLang === 'en') ? 'en' : 'ua';
-    return Result;
-  };
-  this.Loc = function (en, ua) {
-    var Result = "";
-    if ($mod.GameLang() === "en") {
-      Result = en}
-     else Result = ua;
-    return Result;
-  };
-});
-rtl.module("EMatch",["System","JS"],function () {
-  "use strict";
-  var $mod = this;
+  this.Monthes = ["Января","Февраля","Марта","Апреля","Майя","Июня","Июля","Августа","Сентября","Октября","Ноября","Декабря"];
   this.FallType = {"0": "NoFall", NoFall: 0, "1": "YellowCard", YellowCard: 1, "2": "RedCard", RedCard: 2};
   rtl.recNewT($mod,"DateType",function () {
     this.date = 0;
@@ -2952,7 +2983,7 @@ rtl.module("EMatch",["System","JS"],function () {
       return this;
     };
   });
-  this.TFootballers$clone = function (a) {
+  this.FootballerArray$clone = function (a) {
     var r = [];
     for (var i = 0; i < 30; i++) r.push($mod.FootBaller.$clone(a[i]));
     return r;
@@ -2966,24 +2997,24 @@ rtl.module("EMatch",["System","JS"],function () {
       var r = Object.create(this);
       r.footballers = rtl.arraySetLength(null,$mod.FootBaller,30);
       r.state = $mod.StateType.$new();
-      r.StadiumTeam = $mod.StadiumType.$new();
+      r.stadiumteam = $mod.StadiumType.$new();
       return r;
     };
     this.$eq = function (b) {
-      return (this.name === b.name) && rtl.arrayEq(this.footballers,b.footballers) && this.state.$eq(b.state) && this.StadiumTeam.$eq(b.StadiumTeam) && (this.Mark === b.Mark) && (this.tiredness === b.tiredness) && (this.mood === b.mood);
+      return (this.name === b.name) && rtl.arrayEq(this.footballers,b.footballers) && this.state.$eq(b.state) && (this.Mark === b.Mark) && (this.tiredness === b.tiredness) && (this.mood === b.mood) && this.stadiumteam.$eq(b.stadiumteam);
     };
     this.$assign = function (s) {
       this.name = s.name;
-      this.footballers = $mod.TFootballers$clone(s.footballers);
+      this.footballers = $mod.FootballerArray$clone(s.footballers);
       this.state.$assign(s.state);
-      this.StadiumTeam.$assign(s.StadiumTeam);
       this.Mark = s.Mark;
       this.tiredness = s.tiredness;
       this.mood = s.mood;
+      this.stadiumteam.$assign(s.stadiumteam);
       return this;
     };
   });
-  this.TTeamPair$clone = function (a) {
+  this.FootballteamArr1$clone = function (a) {
     var r = [];
     for (var i = 0; i < 2; i++) r.push($mod.FootBallTeam.$clone(a[i]));
     return r;
@@ -3005,7 +3036,7 @@ rtl.module("EMatch",["System","JS"],function () {
     };
     this.$assign = function (s) {
       this.Stadium.$assign(s.Stadium);
-      this.Ft = $mod.TTeamPair$clone(s.Ft);
+      this.Ft = $mod.FootballteamArr1$clone(s.Ft);
       this.OnLooker = s.OnLooker;
       this.Score = s.Score.slice(0);
       this.HalfEnd = s.HalfEnd;
@@ -3014,8 +3045,28 @@ rtl.module("EMatch",["System","JS"],function () {
       return this;
     };
   });
+  var TTT = {"0": "g", g: 0, "1": "y", y: 1, "2": "r", r: 2, "3": "t", t: 3};
+  var Thing = rtl.recNewT(null,"",function () {
+    this.TT = 0;
+    this.Min = 0;
+    this.Surname = "";
+    this.flag = false;
+    this.StPlus = "";
+    this.HT = 0;
+    this.$eq = function (b) {
+      return (this.TT === b.TT) && (this.Min === b.Min) && (this.Surname === b.Surname) && (this.flag === b.flag) && (this.StPlus === b.StPlus) && (this.HT === b.HT);
+    };
+    this.$assign = function (s) {
+      this.TT = s.TT;
+      this.Min = s.Min;
+      this.Surname = s.Surname;
+      this.flag = s.flag;
+      this.StPlus = s.StPlus;
+      this.HT = s.HT;
+      return this;
+    };
+  });
   this.EmulMatch = async function (Match) {
-    var Result = null;
     var MinNow = 0;
     var MinEnd = 0;
     var EStrength = 0;
@@ -3023,63 +3074,1280 @@ rtl.module("EMatch",["System","JS"],function () {
     var EMood = 0;
     var ETiredness = 0;
     var N = 0;
+    var n0 = 0;
+    var n1 = 0;
     var At = 0;
+    var Pt = 0;
     var Half = 0;
     var TeamP = rtl.arraySetLength(null,0,2);
+    var PlayerP = rtl.arraySetLength(null,0,2);
     var St = "";
+    var St1 = "";
+    var st2 = "";
+    var st3 = "";
+    var Player1 = $mod.FootBaller.$new();
+    var Player2 = $mod.FootBaller.$new();
+    var PlayerU = $mod.FootBaller.$new();
+    var Things = rtl.arraySetLength(null,Thing,2,13);
+    var i = 0;
+    var j = 0;
+    var SP = "";
+    var flag = false;
+    var InOut = rtl.arraySetLength(null,0,2);
+    function NewThing(i, a, b, stp) {
+      var j = 0;
+      var abc = false;
+      j = 0;
+      abc = false;
+      do {
+        j += 1;
+        if (!Things[i - 1][j - 1].flag) {
+          Things[i - 1][j - 1].flag = true;
+          Things[i - 1][j - 1].TT = a;
+          Things[i - 1][j - 1].Min = MinNow;
+          Things[i - 1][j - 1].Surname = b;
+          Things[i - 1][j - 1].StPlus = stp;
+          Things[i - 1][j - 1].HT = Half;
+          abc = true;
+        };
+      } while (!(abc || (j === 13)));
+    };
     function DoTeamP() {
       var i = 0;
+      var j = 0;
       for (i = 1; i <= 2; i++) {
         EStrength = Match.Ft[i - 1].Mark;
         ERandom = pas.System.Random(51) - 25;
+        if (i === 1) ERandom = ERandom + 25;
+        for (j = 1; j <= 11; j++) if (Match.Ft[i - 1].footballers[j - 1].play === false) ERandom -= 1;
         EMood = Match.Ft[i - 1].mood;
         ETiredness = Match.Ft[i - 1].tiredness;
         TeamP[i - 1] = EStrength + ERandom + EMood + ETiredness;
       };
     };
+    function DoPlayerP() {
+      EStrength = Player1.mark;
+      ERandom = pas.System.Random(51) - 25;
+      EMood = Player1.mood;
+      ETiredness = Player1.tiredness;
+      PlayerP[0] = EStrength + ERandom + EMood + ETiredness;
+      EStrength = Player2.mark;
+      ERandom = pas.System.Random(51) - 25;
+      EMood = Player2.mood;
+      ETiredness = Player2.tiredness;
+      PlayerP[1] = EStrength + ERandom + EMood + ETiredness;
+    };
     function ChAt() {
       var $tmp = At;
       if ($tmp === 1) {
-        At = 2}
-       else if ($tmp === 2) At = 1;
+        At = 2;
+        Pt = 1;
+      } else if ($tmp === 2) {
+        At = 1;
+        Pt = 2;
+      };
     };
+    function WriteMinNow() {
+      var st1 = "";
+      var st2 = "";
+      var m = 0;
+      st1 = "" + MinNow;
+      if ((MinNow > 45) && (Half === 1)) {
+        st2 = "" + (MinNow - 45);
+        st1 = "45+" + st2;
+      };
+      if ((MinNow > 90) && (Half === 2)) {
+        st2 = "" + (MinNow - 90);
+        st1 = "90+" + st2;
+      };
+      if ((MinNow > 115) && (Half === 3)) {
+        st2 = "" + (MinNow - 115);
+        st1 = "115+" + st2;
+      };
+      if ((MinNow > 120) && (Half === 4)) {
+        st2 = "" + (MinNow - 120);
+        st1 = "120+" + st2;
+      };
+      if (Half !== 5) {
+        St = st1 + " минута матча";
+        m = St.length;
+        pas.crt.GotoXY(40 - Math.floor(m / 2),9);
+        pas.System.Write(St);
+      } else {
+        St = "Серия пенальти";
+        m = St.length;
+        pas.crt.GotoXY(40 - Math.floor(m / 2),9);
+        pas.System.Write(St);
+      };
+    };
+    function WriteMinT(M0, H0) {
+      var st1 = "";
+      var st2 = "";
+      st1 = "" + M0;
+      if ((M0 > 45) && (H0 === 1)) {
+        st2 = "" + (M0 - 45);
+        st1 = "45+" + st2;
+      };
+      if ((M0 > 90) && (H0 === 2)) {
+        st2 = "" + (M0 - 90);
+        st1 = "90+" + st2;
+      };
+      if ((M0 > 115) && (H0 === 3)) {
+        st2 = "" + (M0 - 115);
+        st1 = "115+" + st2;
+      };
+      if ((M0 > 120) && (H0 === 4)) {
+        st2 = "" + (M0 - 120);
+        st1 = "120+" + st2;
+      };
+      if (H0 === 5) st1 = "''";
+      St = st1 + "'";
+      pas.System.Write(St);
+    };
+    async function Comment() {
+      var i = 0;
+      var j = 0;
+      var m = 0;
+      var m1 = 0;
+      var m2 = 0;
+      var st01 = "";
+      var st02 = "";
+      var dur = 0.0;
+      pas.crt.ClrScr();
+      st01 = Match.Ft[0].name + " (" + Match.Ft[0].state.name + ")";
+      st02 = Match.Ft[1].name + " (" + Match.Ft[1].state.name + ")";
+      m = st01.length;
+      m = 35 - m;
+      pas.crt.GotoXY(m,2);
+      pas.System.Write(st01);
+      m = m + Math.floor(st01.length / 2);
+      pas.crt.GotoXY(m,4);
+      pas.System.Write(Match.Score[0]);
+      m = 45;
+      pas.crt.GotoXY(m,2);
+      pas.System.Write(st02);
+      pas.crt.GotoXY(m + Math.floor(st02.length / 2),4);
+      pas.System.Write(Match.Score[1]);
+      m = St.length;
+      pas.crt.GotoXY(40 - Math.floor(m / 2),7);
+      pas.System.Write(St);
+      var $tmp = m;
+      if (($tmp >= 1) && ($tmp <= 10)) {
+        dur = 0.75}
+       else if (($tmp >= 11) && ($tmp <= 20)) {
+        dur = 0.85}
+       else if (($tmp >= 21) && ($tmp <= 40)) {
+        dur = 0.95}
+       else {
+        dur = 1;
+      };
+      WriteMinNow();
+      m1 = 35 - st01.length;
+      m2 = 45;
+      for (i = 1; i <= 2; i++) for (j = 1; j <= 13; j++) {
+        if (Things[i - 1][j - 1].flag) {
+          var $tmp1 = i;
+          if ($tmp1 === 1) {
+            var $tmp2 = Things[i - 1][j - 1].TT;
+            if ($tmp2 === TTT.g) {
+              pas.crt.GotoXY(m1,9 + j);
+              pas.System.Write("\t"," ");
+            } else if ($tmp2 === TTT.y) {
+              pas.crt.GotoXY(m1,9 + j);
+              pas.crt.TextBackground(14);
+              pas.System.Write(" ");
+              pas.crt.TextBackground(0);
+              pas.System.Write(" ");
+            } else if ($tmp2 === TTT.r) {
+              pas.crt.GotoXY(m1,9 + j);
+              pas.crt.TextBackground(4);
+              pas.System.Write(" ");
+              pas.crt.TextBackground(0);
+              pas.System.Write(" ");
+            } else if ($tmp2 === TTT.t) {
+              pas.crt.GotoXY(m1,9 + j);
+              pas.crt.TextColor(4);
+              pas.System.Write("+ ");
+              pas.crt.TextColor(15);
+            };
+            WriteMinT(Things[i - 1][j - 1].Min,Things[i - 1][j - 1].HT);
+            pas.System.Write(" ",Things[i - 1][j - 1].Surname," ",Things[i - 1][j - 1].StPlus);
+          } else if ($tmp1 === 2) {
+            var $tmp3 = Things[i - 1][j - 1].TT;
+            if ($tmp3 === TTT.g) {
+              pas.crt.GotoXY(m2,9 + j);
+              pas.System.Write("\t"," ");
+            } else if ($tmp3 === TTT.y) {
+              pas.crt.GotoXY(m2,9 + j);
+              pas.crt.TextBackground(14);
+              pas.System.Write(" ");
+              pas.crt.TextBackground(0);
+              pas.System.Write(" ");
+            } else if ($tmp3 === TTT.r) {
+              pas.crt.GotoXY(m2,9 + j);
+              pas.crt.TextBackground(4);
+              pas.System.Write(" ");
+              pas.crt.TextBackground(0);
+              pas.System.Write(" ");
+            } else if ($tmp3 === TTT.t) {
+              pas.crt.GotoXY(m2,9 + j);
+              pas.crt.TextColor(4);
+              pas.System.Write("+ ");
+              pas.crt.TextColor(15);
+            };
+            WriteMinT(Things[i - 1][j - 1].Min,Things[i - 1][j - 1].HT);
+            pas.System.Write(" ",Things[i - 1][j - 1].Surname," ",Things[i - 1][j - 1].StPlus);
+          };
+        };
+      };
+      await pas.crt.Delay(Math.round(dur * 1000));
+    };
+    async function Sostav() {
+      var i = 0;
+      var j = 0;
+      var y = 0;
+      var k = 0;
+      var x1 = 0;
+      var x2 = 0;
+      pas.crt.GotoXY(1,10);
+      for (i = 10; i <= 24; i++) pas.System.Write("                                                           ");
+      x1 = (Match.Ft[0].name + " (" + Match.Ft[0].state.name + ")").length;
+      x2 = (Match.Ft[1].name + " (" + Match.Ft[1].state.name + ")").length;
+      x1 = Math.floor((30 - x1) / 2) + 1;
+      x2 = Math.floor((30 - x2) / 2) + 51;
+      for (i = 1; i <= 12; i++) {
+        await pas.crt.Delay(Math.round(1.5 * 1000));
+        pas.crt.GotoXY(x1,13);
+        pas.System.Write("                                              ");
+        pas.crt.GotoXY(x2,13);
+        pas.System.Write("                                              ");
+        pas.crt.GotoXY(x1,13);
+        pas.System.Write(Match.Ft[0].name," (",Match.Ft[0].state.name,")");
+        pas.crt.GotoXY(x2,13);
+        pas.System.Write(Match.Ft[1].name," (" + Match.Ft[1].state.name,")");
+        for (var $l = 1, $end = i; $l <= $end; $l++) {
+          j = $l;
+          for (k = 1; k <= 2; k++) {
+            y = j + 13;
+            var $tmp = k;
+            if ($tmp === 1) {
+              pas.crt.GotoXY(1,y)}
+             else if ($tmp === 2) pas.crt.GotoXY(50,y);
+            var $tmp1 = Match.Ft[k - 1].footballers[j - 1].fall;
+            if ($tmp1 === $mod.FallType.YellowCard) {
+              pas.crt.TextBackground(14);
+              pas.System.Write(" ");
+              pas.crt.TextBackground(0);
+            } else if ($tmp1 === $mod.FallType.RedCard) {
+              pas.crt.TextBackground(4);
+              pas.System.Write(" ");
+              pas.crt.TextBackground(0);
+            } else {
+              pas.System.Write(" ");
+            };
+            pas.System.Write(" № ",Match.Ft[k - 1].footballers[j - 1].number," ",Match.Ft[k - 1].footballers[j - 1].name," " + Match.Ft[k - 1].footballers[j - 1].surname);
+          };
+        };
+      };
+    };
+    async function HelpPr2() {
+      var st001 = "";
+      var st002 = "";
+      St1 = "" + Match.Stadium.Seats;
+      St = "Мы вновь приветствуем вас на стадионе " + Match.Stadium.name + " (" + St1 + " мест)";
+      await Comment();
+      St1 = "" + Match.Date.date;
+      st2 = $mod.Monthes[Match.Date.month - 1];
+      st3 = "" + Match.Date.year;
+      St = "Сегодня " + St1 + " " + st2 + " " + st3 + " года";
+      await Comment();
+      St1 = "" + Match.OnLooker;
+      St = St1 + " зрителей на стадионе собрались, чтобы посмотреть этот матч";
+      await Comment();
+      St = "Играют:";
+      await Comment();
+      St = Match.Ft[0].name + " (" + Match.Ft[0].state.name + ")";
+      await Comment();
+      St = "ПРОТИВ";
+      await Comment();
+      St = Match.Ft[1].name + " (" + Match.Ft[1].state.name + ")";
+      await Comment();
+      St = "Составы команд";
+      await Comment();
+      await Sostav();
+      n0 = pas.System.Random(100);
+      var $tmp = n0;
+      if (($tmp >= 0) && ($tmp <= 10)) {
+        st3 = "Идёт снег"}
+       else if (($tmp >= 11) && ($tmp <= 30)) {
+        st3 = "Идёт дождь"}
+       else if (($tmp >= 31) && ($tmp <= 60)) {
+        st3 = "Пасмурно"}
+       else {
+        st3 = "Солнечно";
+      };
+      St = "Погода на поле:";
+      await Comment();
+      St = st3;
+      await Comment();
+      st3 = "" + (Half - 1);
+      st001 = "" + Match.Score[0];
+      st002 = "" + Match.Score[1];
+      St = "Напоминаем, счёт после " + st3 + " тайма - " + st001 + ":" + st002;
+      await Comment();
+      St = "Ну что же команды готовы начать следующий тайм. Судья даёт свисток и ... ";
+      await Comment();
+      St = "";
+      await Comment();
+    };
+    async function HelpPr3() {
+      var st001 = "";
+      var st002 = "";
+      St = "" + Half;
+      st001 = "" + Match.Score[0];
+      st002 = "" + Match.Score[1];
+      St = "Итак, " + St + " тайм окончен и счёт - " + st001 + ":" + st002;
+      await Comment();
+    };
+    async function HelpPr4() {
+      var st001 = "";
+      var st002 = "";
+      st001 = "" + Match.Score[0];
+      st002 = "" + Match.Score[1];
+      St = "Итак, матч окончен и счёт - " + st001 + ":" + st002;
+      await Comment();
+    };
+    async function HelpPr1() {
+      St1 = "" + Match.Stadium.Seats;
+      St = "Мы приветствуем вас на стадионе " + Match.Stadium.name + " (" + St1 + " мест)";
+      await Comment();
+      St1 = "" + Match.Date.date;
+      st2 = $mod.Monthes[Match.Date.month - 1];
+      st3 = "" + Match.Date.year;
+      St = "Сегодня " + St1 + " " + st2 + " " + st3 + " года";
+      await Comment();
+      St1 = "" + Match.OnLooker;
+      St = St1 + " зрителей на стадионе собрались, чтобы посмотреть этот матч";
+      await Comment();
+      St = "Играют:";
+      await Comment();
+      St = Match.Ft[0].name + " (" + Match.Ft[0].state.name + ")";
+      await Comment();
+      St = "ПРОТИВ";
+      await Comment();
+      St = Match.Ft[1].name + " (" + Match.Ft[1].state.name + ")";
+      await Comment();
+      St = "Составы команд";
+      await Comment();
+      await Sostav();
+      n0 = pas.System.Random(100);
+      var $tmp = n0;
+      if (($tmp >= 0) && ($tmp <= 10)) {
+        st3 = "Идёт снег"}
+       else if (($tmp >= 11) && ($tmp <= 30)) {
+        st3 = "Идёт дождь"}
+       else if (($tmp >= 31) && ($tmp <= 60)) {
+        st3 = "Пасмурно"}
+       else {
+        st3 = "Солнечно";
+      };
+      St = "Погода на поле:";
+      await Comment();
+      St = st3;
+      await Comment();
+      St = "Ну что же команды готовы начать матч. Судья даёт свисток и ... ";
+      await Comment();
+      St = "";
+      await Comment();
+    };
+    async function HelpPr7(t, p1, p2) {
+      var m = 0;
+      if (t === 0) t = pas.System.Random(2) + 1;
+      if (p1 === 0) p1 = pas.System.Random(10) + 2;
+      if (p2 === 0) p2 = pas.System.Random(4) + 12;
+      St = "В команде " + Match.Ft[t - 1].name + " замена:";
+      await Comment();
+      St = "";
+      await Comment();
+      St = "\x19" + " " + Match.Ft[t - 1].footballers[p1 - 1].name + " " + Match.Ft[t - 1].footballers[p1 - 1].surname;
+      m = St.length;
+      pas.crt.GotoXY(40 - Math.floor(m / 2),7);
+      pas.crt.TextColor(4);
+      pas.System.Write("\x19");
+      pas.crt.TextColor(15);
+      pas.System.Write(" " + Match.Ft[t - 1].footballers[p1 - 1].name + " " + Match.Ft[t - 1].footballers[p1 - 1].surname);
+      await pas.crt.Delay(Math.round(1 * 1000));
+      St = "";
+      await Comment();
+      St = "\x18" + " " + Match.Ft[t - 1].footballers[p2 - 1].name + " " + Match.Ft[t - 1].footballers[p2 - 1].surname;
+      m = St.length;
+      pas.crt.GotoXY(40 - Math.floor(m / 2),7);
+      pas.crt.TextColor(2);
+      pas.System.Write("\x18");
+      pas.crt.TextColor(15);
+      pas.System.Write(" " + Match.Ft[t - 1].footballers[p2 - 1].name + " " + Match.Ft[t - 1].footballers[p2 - 1].surname);
+      await pas.crt.Delay(Math.round(1 * 1000));
+      Player1.$assign(Match.Ft[t - 1].footballers[p2 - 1]);
+      Match.Ft[t - 1].footballers[p2 - 1].$assign(Match.Ft[t - 1].footballers[p1 - 1]);
+      Match.Ft[t - 1].footballers[p1 - 1].$assign(Player1);
+      Match.Ft[t - 1].footballers[p2 - 1].here = false;
+      Match.Ft[t - 1].footballers[p1 - 1].play = true;
+      InOut[t - 1] -= 1;
+    };
+    async function HelpPr8(nt) {
+      var p1 = 0;
+      do {
+        p1 = pas.System.Random(10) + 2;
+        Player1.$assign(Match.Ft[nt - 1].footballers[p1 - 1]);
+      } while (!Player1.play);
+      St = "В команде " + Match.Ft[nt - 1].name + " травмирован " + Player1.name + " " + Player1.surname;
+      NewThing(nt,TTT.t,Player1.surname,"");
+      await Comment();
+      await HelpPr7(nt,p1,0);
+    };
+    async function EPr1() {
+      St = "Команда " + Match.Ft[At - 1].name + " разводит";
+      await Comment();
+      n0 = pas.System.Random(100) + 1;
+      var $tmp = n0;
+      if (($tmp >= 1) && ($tmp <= 50)) {
+        N = 2}
+       else {
+        N = 3;
+      };
+    };
+    async function EPr2() {
+      St = Match.Ft[At - 1].name + " распасовуется";
+      MinNow += 1;
+      await Comment();
+      n0 = (pas.System.Random(50) + TeamP[At - 1]) - TeamP[Pt - 1];
+      var $tmp = n0;
+      if (($tmp >= 0) && ($tmp <= 25)) {
+        N = 4}
+       else if (($tmp >= 26) && ($tmp <= 50)) {
+        N = 3}
+       else {
+        N = 2;
+      };
+    };
+    async function EPr3() {
+      var n00 = 0;
+      MinNow += 1;
+      St = Match.Ft[At - 1].name + " начинает свою атаку";
+      await Comment();
+      n0 = pas.System.Random(50);
+      n00 = (n0 + TeamP[At - 1]) - TeamP[Pt - 1];
+      if (n00 <= 25) {
+        N = 4}
+       else {
+        var $tmp = n0;
+        if (($tmp >= 0) && ($tmp <= 10)) {
+          N = 2}
+         else if (($tmp >= 11) && ($tmp <= 25)) {
+          N = 5}
+         else {
+          N = 6;
+        };
+      };
+    };
+    async function EPr4() {
+      MinNow += 1;
+      St = Match.Ft[Pt - 1].name + " перехватывает мяч";
+      await Comment();
+      n0 = pas.System.Random(100);
+      var $tmp = n0;
+      if (($tmp >= 0) && ($tmp <= 30)) {
+        N = 22}
+       else if (($tmp >= 31) && ($tmp <= 50)) {
+        N = 2}
+       else {
+        N = 3;
+      };
+      if (N !== 22) ChAt();
+    };
+    async function EPr5() {
+      var n00 = 0;
+      MinNow += 1;
+      do {
+        n0 = pas.System.Random(10) + 2;
+        Player1.$assign(Match.Ft[At - 1].footballers[n0 - 1]);
+      } while (!(Player1.play === true));
+      St = Player1.name + " " + Player1.surname + " проходит сам";
+      await Comment();
+      DoPlayerP();
+      n00 = Math.floor(((PlayerP[0] + pas.System.Random(51)) - 25) / 10);
+      if (n00 < 2) {
+        N = 4}
+       else {
+        n0 = pas.System.Random(100);
+        var $tmp = n0;
+        if (($tmp >= 0) && ($tmp <= 15)) {
+          N = 2}
+         else if (($tmp >= 16) && ($tmp <= 45)) {
+          N = 6}
+         else if (($tmp >= 46) && ($tmp <= 65)) {
+          N = 8}
+         else {
+          N = 7;
+        };
+      };
+    };
+    async function EPr6() {
+      var n00 = 0;
+      MinNow += 1;
+      do {
+        n0 = pas.System.Random(10) + 2;
+        Player2.$assign(Match.Ft[At - 1].footballers[n0 - 1]);
+      } while (!(Player2.play === true));
+      DoPlayerP();
+      n00 = Math.floor(((PlayerP[1] + pas.System.Random(51)) - 25) / 10);
+      n0 = pas.System.Random(100) + 1;
+      var $tmp = n0;
+      if (($tmp >= 1) && ($tmp <= 25)) {
+        St = "Пас на " + Player2.surname;
+        await Comment();
+        if (n00 < 2) {
+          N = 4}
+         else {
+          n0 = pas.System.Random(100);
+          var $tmp1 = n0;
+          if (($tmp1 >= 0) && ($tmp1 <= 15)) {
+            N = 2}
+           else if (($tmp1 >= 16) && ($tmp1 <= 45)) {
+            N = 6}
+           else if (($tmp1 >= 46) && ($tmp1 <= 65)) {
+            N = 8}
+           else {
+            N = 7;
+          };
+        };
+      } else if (($tmp >= 26) && ($tmp <= 50)) {
+        St = Player2.surname + " навешивает";
+        await Comment();
+        if (n00 < 2) {
+          N = 4}
+         else N = 8;
+      } else if (($tmp >= 51) && ($tmp <= 75)) {
+        St = Player2.surname + " простреливает в штрафную площадку";
+        await Comment();
+        if (n00 < 2) {
+          N = 4}
+         else N = 8;
+      } else {
+        N = 24;
+      };
+    };
+    function EPr7() {
+      n0 = pas.System.Random(100) + 1;
+      var $tmp = n0;
+      if (($tmp >= 1) && ($tmp <= 50)) {
+        N = 9}
+       else {
+        N = 22;
+      };
+    };
+    async function EPr8() {
+      do {
+        n0 = pas.System.Random(10) + 2;
+        Player1.$assign(Match.Ft[At - 1].footballers[n0 - 1]);
+      } while (!(Player1.play === true));
+      PlayerU.$assign(Player1);
+      MinNow += 1;
+      St = Player1.surname + " бъёт!";
+      await Comment();
+      DoPlayerP();
+      n0 = pas.System.Random(50) + PlayerP[0];
+      var $tmp = n0;
+      if ((($tmp >= 0) && ($tmp <= 65)) || (($tmp >= 125) && ($tmp <= 135))) {
+        N = 12}
+       else if (($tmp >= 66) && ($tmp <= 124)) {
+        N = 13}
+       else {
+        N = 11;
+      };
+    };
+    async function Epr9() {
+      n0 = pas.System.Random(100);
+      if (n0 < 25) await HelpPr8(Pt);
+      n0 = pas.System.Random(100);
+      do {
+        n1 = pas.System.Random(10) + 2;
+        Player1.$assign(Match.Ft[At - 1].footballers[n1 - 1]);
+      } while (!(Player1.play === true));
+      var $tmp = n0;
+      if (($tmp >= 0) && ($tmp <= 30)) {
+        n0 = pas.System.Random(100);
+        var $tmp1 = n0;
+        if (($tmp1 >= 0) && ($tmp1 <= 80)) {
+          St = Player1.surname + " нарушает правила и получает желтую карточку";
+          NewThing(At,TTT.y,Player1.surname,"");
+          await Comment();
+          if (Player1.fall === $mod.FallType.YellowCard) {
+            Match.Ft[At - 1].footballers[n1 - 1].fall = $mod.FallType.RedCard;
+            Match.Ft[At - 1].footballers[n1 - 1].play = false;
+            St = Player1.surname + " вновь фолит, зарабатывает вторую желтую карточку и уходит с поля";
+            NewThing(At,TTT.r,Player1.surname,"");
+            await Comment();
+          };
+          Match.Ft[At - 1].footballers[n1 - 1].fall = $mod.FallType.YellowCard;
+        } else {
+          Match.Ft[At - 1].footballers[n1 - 1].fall = $mod.FallType.RedCard;
+          Match.Ft[At - 1].footballers[n1 - 1].play = false;
+          NewThing(At,TTT.r,Player1.surname,"");
+          St = Player1.surname + " жестоко фолит, зарабатывает красною карточку и уходит с поля";
+          await Comment();
+        };
+      } else {
+        St = Player1.surname + " нарушает правила при проходе";
+        await Comment();
+      };
+      ChAt();
+      MinNow += 1;
+      St = Match.Ft[At - 1].name + " бъёт штрафной удар со своей половины поля";
+      await Comment();
+      n0 = pas.System.Random(100);
+      var $tmp2 = n0;
+      if (($tmp2 >= 0) && ($tmp2 <= 50)) {
+        N = 2}
+       else {
+        N = 3;
+      };
+    };
+    async function EPr10() {
+      do {
+        n0 = pas.System.Random(10) + 2;
+        Player1.$assign(Match.Ft[At - 1].footballers[n0 - 1]);
+      } while (!(Player1.play === true));
+      PlayerU.$assign(Player1);
+      MinNow += 1;
+      St = Player1.surname + " бъёт штрафной удар";
+      await Comment();
+      St = "УДАР!!!";
+      await Comment();
+      DoPlayerP();
+      n0 = pas.System.Random(50) + PlayerP[0];
+      var $tmp = n0;
+      if (($tmp >= 0) && ($tmp <= 75)) {
+        N = 12}
+       else if (($tmp >= 76) && ($tmp <= 150)) {
+        N = 13}
+       else {
+        N = 11;
+      };
+    };
+    async function EPr11() {
+      St = "Мяч попадает в игрока";
+      MinNow += 1;
+      await Comment();
+      n0 = pas.System.Random(100) + 1;
+      var $tmp = n0;
+      if (($tmp >= 1) && ($tmp <= 50)) {
+        N = 14}
+       else if (($tmp >= 51) && ($tmp <= 100)) N = 18;
+    };
+    async function Epr12() {
+      St = "МИМО ВОРОТ! Как же было опасно но ... мимо!";
+      MinNow += 1;
+      await Comment();
+      ChAt();
+      N = 16;
+    };
+    async function EPr13() {
+      var n00 = 0;
+      St = "ОПАСНО!!!";
+      await Comment();
+      Player1.$assign(PlayerU);
+      Player2.$assign(Match.Ft[At - 1].footballers[0]);
+      DoPlayerP();
+      n00 = (pas.System.Random(50) + PlayerP[0]) - PlayerP[1];
+      n0 = pas.System.Random(50) + PlayerP[0];
+      if (n00 < 25) {
+        N = 20}
+       else {
+        var $tmp = n0;
+        if (($tmp >= 26) && ($tmp <= 100)) {
+          N = 21}
+         else {
+          N = 19;
+        };
+      };
+    };
+    async function EPr14() {
+      St = "Мяч вышел за перделы поля";
+      await Comment();
+      n0 = pas.System.Random(100);
+      var $tmp = n0;
+      if (($tmp >= 25) && ($tmp <= 50)) {
+        if (InOut[0] !== 0) await HelpPr7(1,0,0)}
+       else if (($tmp >= 51) && ($tmp <= 75)) if (InOut[1] !== 0) await HelpPr7(2,0,0);
+      n0 = pas.System.Random(100) + 1;
+      var $tmp1 = n0;
+      if (($tmp1 >= 1) && ($tmp1 <= 50)) {
+        N = 141}
+       else {
+        N = 142;
+      };
+    };
+    async function EPr141() {
+      St = "Мяч выходит от игроков " + Match.Ft[At - 1].name;
+      await Comment();
+      ChAt();
+      n0 = pas.System.Random(100) + 1;
+      var $tmp = n0;
+      if (($tmp >= 1) && ($tmp <= 50)) {
+        N = 15}
+       else {
+        N = 16;
+      };
+    };
+    async function EPr142() {
+      St = "Мяч выходит от игроков " + Match.Ft[Pt - 1].name;
+      await Comment();
+      n0 = pas.System.Random(100) + 1;
+      var $tmp = n0;
+      if (($tmp >= 1) && ($tmp <= 50)) {
+        N = 15}
+       else {
+        N = 17;
+      };
+    };
+    async function EPr15() {
+      var np1 = 0;
+      var np2 = 0;
+      var n00 = 0;
+      MinNow += 1;
+      St = "Это аут";
+      await Comment();
+      do {
+        np1 = pas.System.Random(10) + 2;
+        np2 = pas.System.Random(10) + 2;
+        Player1.$assign(Match.Ft[At - 1].footballers[np1 - 1]);
+        Player2.$assign(Match.Ft[At - 1].footballers[np2 - 1]);
+      } while (!((np1 !== np2) && Player1.play && Player2.play));
+      St = Player1.name + " " + Player1.surname + " выбрасывает мяч на " + Player2.surname;
+      await Comment();
+      DoPlayerP();
+      n00 = pas.System.Random(50) + PlayerP[1];
+      n0 = pas.System.Random(100);
+      if (n00 < 25) {
+        N = 4}
+       else {
+        var $tmp = n0;
+        if (($tmp >= 0) && ($tmp <= 50)) {
+          N = 2}
+         else {
+          N = 3;
+        };
+      };
+    };
+    async function EPr16() {
+      var n00 = 0;
+      Player1.$assign(Match.Ft[At - 1].footballers[0]);
+      St = Player1.name + " " + Player1.surname + " выбивает мяч от ворот";
+      await Comment();
+      DoPlayerP();
+      n00 = pas.System.Random(50) + PlayerP[0];
+      n0 = pas.System.Random(100);
+      if (n00 < 25) {
+        N = 4}
+       else {
+        var $tmp = n0;
+        if (($tmp >= 0) && ($tmp <= 50)) {
+          N = 2}
+         else {
+          N = 3;
+        };
+      };
+    };
+    async function EPr17() {
+      var n00 = 0;
+      do {
+        n0 = pas.System.Random(10) + 2;
+        Player1.$assign(Match.Ft[At - 1].footballers[n0 - 1]);
+      } while (!Player1.play);
+      MinNow += 1;
+      St = "Это угловой";
+      await Comment();
+      St = Player1.name + " " + Player1.surname + " навешивает";
+      await Comment();
+      DoPlayerP();
+      n00 = pas.System.Random(50) + PlayerP[0];
+      if (n00 < 25) {
+        N = 4}
+       else N = 8;
+    };
+    async function EPr18() {
+      St = "Мяч остаётся в игре";
+      await Comment();
+      n0 = pas.System.Random(100);
+      var $tmp = n0;
+      if (($tmp >= 0) && ($tmp <= 31)) {
+        N = 2}
+       else if (($tmp >= 32) && ($tmp <= 63)) {
+        N = 3}
+       else if (($tmp >= 64) && ($tmp <= 94)) {
+        N = 4}
+       else {
+        N = 25;
+      };
+    };
+    async function EPr19() {
+      n0 = pas.System.Random(100);
+      var $tmp = n0;
+      if (($tmp >= 0) && ($tmp <= 50)) {
+        St = "Штанга!"}
+       else if (($tmp >= 51) && ($tmp <= 90)) {
+        St = "Перекладина!"}
+       else {
+        St = "Хрестовина!";
+      };
+      await Comment();
+      n0 = pas.System.Random(100);
+      var $tmp1 = n0;
+      if (($tmp1 >= 0) && ($tmp1 <= 25)) {
+        N = 21}
+       else if (($tmp1 >= 26) && ($tmp1 <= 40)) {
+        N = 141}
+       else if (($tmp1 >= 41) && ($tmp1 <= 65)) {
+        N = 2}
+       else if (($tmp1 >= 66) && ($tmp1 <= 80)) {
+        N = 3}
+       else {
+        N = 4;
+      };
+    };
+    async function EPr20() {
+      MinNow += 1;
+      n0 = pas.System.Random(100);
+      var $tmp = n0;
+      if (($tmp >= 0) && ($tmp <= 50)) {
+        St = "Вратарь хватает мяч в руки!";
+        await Comment();
+        ChAt();
+        N = 16;
+      } else {
+        n0 = pas.System.Random(100);
+        var $tmp1 = n0;
+        if (($tmp1 >= 0) && ($tmp1 <= 50)) {
+          St = "Вратарь отбивает мяч на угловой!";
+          await Comment();
+          N = 17;
+        };
+        if (n0 > 50) {
+          St = "Вратарь отбивает мяч перед собой";
+          await Comment();
+          St = "Игроки бегут на добивание!";
+          await Comment();
+          St = "ЭТО ОЧЕНЬ ОПАСНО!!!";
+          await Comment();
+          do {
+            n0 = pas.System.Random(10) + 2;
+            PlayerU.$assign(Match.Ft[At - 1].footballers[n0 - 1]);
+          } while (!PlayerU.play);
+          n0 = pas.System.Random(100);
+          var $tmp2 = n0;
+          if (($tmp2 >= 0) && ($tmp2 <= 50)) {
+            N = 21}
+           else {
+            N = 4;
+          };
+        };
+      };
+    };
+    async function EPr21() {
+      St = "ГОЛ!!!";
+      await Comment();
+      St = "ГОЛ!!!";
+      await Comment();
+      St = "ГОЛ!!!";
+      await Comment();
+      St = PlayerU.name + " " + PlayerU.surname + " забивает этот гол!!!";
+      NewThing(At,TTT.g,PlayerU.surname,SP);
+      Match.Score[At - 1] += 1;
+      SP = "";
+      await Comment();
+      ChAt();
+      N = 1;
+    };
+    async function Epr22() {
+      n0 = pas.System.Random(100);
+      if (n0 < 25) await HelpPr8(At);
+      n0 = pas.System.Random(100);
+      do {
+        n1 = pas.System.Random(10) + 2;
+        Player1.$assign(Match.Ft[Pt - 1].footballers[n1 - 1]);
+      } while (!(Player1.play === true));
+      var $tmp = n0;
+      if (($tmp >= 0) && ($tmp <= 30)) {
+        n0 = pas.System.Random(100);
+        var $tmp1 = n0;
+        if (($tmp1 >= 0) && ($tmp1 <= 80)) {
+          St = Player1.surname + " нарушает правила и получает желтую карточку";
+          NewThing(Pt,TTT.y,Player1.surname,"");
+          await Comment();
+          if (Player1.fall === $mod.FallType.YellowCard) {
+            Match.Ft[Pt - 1].footballers[n1 - 1].fall = $mod.FallType.RedCard;
+            Match.Ft[Pt - 1].footballers[n1 - 1].play = false;
+            St = Player1.surname + " вновь фолит, зарабатывает вторую желтую карточку и уходит с поля";
+            NewThing(Pt,TTT.r,Player1.surname,"");
+            await Comment();
+          };
+          Match.Ft[Pt - 1].footballers[n1 - 1].fall = $mod.FallType.YellowCard;
+        } else {
+          Match.Ft[Pt - 1].footballers[n1 - 1].fall = $mod.FallType.RedCard;
+          Match.Ft[Pt - 1].footballers[n1 - 1].play = false;
+          NewThing(Pt,TTT.r,Player1.surname,"");
+          St = Player1.surname + " жестоко фолит, зарабатывает красною карточку и уходит с поля";
+          await Comment();
+        };
+      } else {
+        St = Player1.surname + " нарушает правила при отборе мяча у противника";
+        await Comment();
+      };
+      MinNow += 1;
+      n0 = pas.System.Random(100);
+      var $tmp2 = n0;
+      if (($tmp2 >= 0) && ($tmp2 <= 85)) {
+        N = 10}
+       else {
+        N = 23;
+      };
+    };
+    async function EPr23() {
+      MinNow += 1;
+      St = 'Судья указывает на "точку"';
+      await Comment();
+      St = "Команде " + Match.Ft[At - 1].name + " предостовляется возможность ударить пенальти!!!";
+      await Comment();
+      SP = "п";
+      n0 = 11;
+      do {
+        PlayerU.$assign(Match.Ft[At - 1].footballers[n0 - 1]);
+        n0 -= 1;
+      } while (!PlayerU.play);
+      St = "К мячу подходит " + PlayerU.name + " " + PlayerU.surname;
+      await Comment();
+      St = "Он бъёт!!!";
+      await Comment();
+      n0 = pas.System.Random(100) + 1;
+      var $tmp = n0;
+      if (($tmp >= 0) && ($tmp <= 75)) {
+        St = "Вратарь с мячом разлетаются в разные углы!";
+        await Comment();
+        N = 21;
+      } else if (($tmp >= 76) && ($tmp <= 90)) {
+        St = "Вратарь ловит этот мяч!!!";
+        await Comment();
+        ChAt();
+        N = 16;
+      } else {
+        N = 12;
+      };
+    };
+    async function EPr24() {
+      var n1 = 0;
+      MinNow += 1;
+      St = "Потрясающий пас!";
+      await Comment();
+      do {
+        n0 = pas.System.Random(10) + 2;
+        PlayerU.$assign(Match.Ft[At - 1].footballers[n0 - 1]);
+      } while (!(PlayerU.play === true));
+      Player2.$assign(Match.Ft[Pt - 1].footballers[0]);
+      St = PlayerU.name + " " + PlayerU.surname + " выходит один на один с " + Player2.name + " " + Player2.surname;
+      await Comment();
+      n0 = pas.System.Random(100) + 1;
+      n1 = pas.System.Random(100) + 1;
+      var $tmp = n0;
+      if (($tmp >= 1) && ($tmp <= 25)) {
+        St = "Он бъёт!!!";
+        await Comment();
+        var $tmp1 = n1;
+        if (($tmp1 >= 1) && ($tmp1 <= 60)) {
+          N = 21}
+         else if (($tmp1 >= 61) && ($tmp1 <= 75)) {
+          N = 20}
+         else if (($tmp1 >= 76) && ($tmp1 <= 85)) {
+          N = 19}
+         else {
+          N = 12;
+        };
+      } else if (($tmp >= 26) && ($tmp <= 50)) {
+        St = "Он пускается обматывать вратаря!!!";
+        await Comment();
+        var $tmp2 = n1;
+        if (($tmp2 >= 1) && ($tmp2 <= 75)) {
+          N = 21}
+         else if (($tmp2 >= 76) && ($tmp2 <= 80)) {
+          N = 12}
+         else {
+          ChAt();
+          N = 16;
+        };
+      } else if (($tmp >= 51) && ($tmp <= 75)) {
+        do {
+          n0 = pas.System.Random(10) + 2;
+          PlayerU.$assign(Match.Ft[At - 1].footballers[n0 - 1]);
+        } while (!(PlayerU.play === true));
+        St = "Пас сквозь вратаря на " + PlayerU.surname;
+        await Comment();
+        var $tmp3 = n1;
+        if (($tmp3 >= 1) && ($tmp3 <= 75)) {
+          N = 21}
+         else if (($tmp3 >= 76) && ($tmp3 <= 85)) {
+          N = 12}
+         else if (($tmp3 >= 86) && ($tmp3 <= 90)) {
+          N = 19}
+         else {
+          ChAt();
+          N = 16;
+        };
+      } else {
+        St = "Неслыханое мужество!!!";
+        await Comment();
+        do {
+          n1 = pas.System.Random(10) + 2;
+          Player2.$assign(Match.Ft[Pt - 1].footballers[n1 - 1]);
+        } while (!(Player2.play === true));
+        St = Player2.name + " " + Player2.surname + " фоллит на " + PlayerU.surname;
+        await Comment();
+        St = 'Судья наказывает "героя" - красная карточка!!!';
+        Match.Ft[Pt - 1].footballers[n1 - 1].fall = $mod.FallType.RedCard;
+        Match.Ft[Pt - 1].footballers[n1 - 1].play = false;
+        NewThing(Pt,TTT.r,Player2.surname,"");
+        await Comment();
+        N = 23;
+      };
+    };
+    async function EPr25() {
+      var n00 = 0;
+      MinNow += 1;
+      do {
+        n00 = pas.System.Random(10) + 2;
+        PlayerU.$assign(Match.Ft[Pt - 1].footballers[n00 - 1]);
+      } while (!PlayerU.play);
+      St = "Мяч ударяется об " + PlayerU.surname + " и летит в направлении ворот!!!";
+      await Comment();
+      n0 = pas.System.Random(100);
+      if (n0 < 90) {
+        St = "Вратарь уже ничего не может сделать";
+        await Comment();
+        St = "Свой забил своим!";
+        await Comment();
+        St = "Вот уже откуда вратарь не ожидал удара!!!";
+        await Comment();
+        St = "Какой позор!!!";
+        await Comment();
+        n0 = pas.System.Random(100);
+        if ((n0 < 75) && (InOut[Pt - 1] !== 0)) await HelpPr7(Pt,n00,0);
+        SP = "аг";
+        N = 21;
+      } else {
+        St = "Вратарь достаёт до мяч, посланого своим же и спасает команду от позора!!!";
+        await Comment();
+        N = 16;
+      };
+    };
+    async function HelpPr5() {
+      n0 = pas.System.Random(5) + 1;
+      MinEnd = MinEnd + n0;
+      St = "" + n0;
+      St = "Судья добавил к основному времени " + St + " минут";
+      await Comment();
+    };
+    async function HelpPr6() {
+      var j = 0;
+      async function Penalti(i, t) {
+        var p = 0;
+        Half = 5;
+        SP = "сп";
+        St = "" + i;
+        St = "Команда " + Match.Ft[t - 1].name + " бъёт свой " + St + " пенальти";
+        await Comment();
+        do {
+          p = 12 - i;
+          i = i - 11;
+        } while (!((p >= 1) && (p <= 11)));
+        do {
+          PlayerU.$assign(Match.Ft[t - 1].footballers[p - 1]);
+          p -= 1;
+        } while (!PlayerU.play);
+        St = "К мячу подходит " + PlayerU.name + " " + PlayerU.surname;
+        await Comment();
+        St = "Он бъёт!!!";
+        await Comment();
+        n0 = pas.System.Random(100) + 1;
+        var $tmp = n0;
+        if (($tmp >= 0) && ($tmp <= 75)) {
+          St = "Вратарь с мячом разлетаются в разные углы!";
+          await Comment();
+          St = "ГОЛ!!!";
+          await Comment();
+          St = "ГОЛ!!!";
+          await Comment();
+          St = "ГОЛ!!!";
+          await Comment();
+          St = PlayerU.name + " " + PlayerU.surname + " забивает этот гол!!!";
+          NewThing(t,TTT.g,PlayerU.surname,SP);
+          Match.Score[t - 1] += 1;
+        } else if (($tmp >= 76) && ($tmp <= 90)) {
+          St = "Вратарь ловит этот мяч!!!";
+          await Comment();
+        } else {
+          St = "МИМО ВОРОТ!!!";
+          await Comment();
+        };
+      };
+      Half = 5;
+      St = "После 120 минут - ничья! Результат - серия пенальти!";
+      await Comment();
+      St = "Первой бъёт команда " + Match.Ft[At - 1].name;
+      await Comment();
+      j = 1;
+      do {
+        await Penalti(j,1);
+        await Penalti(j,2);
+        j += 1;
+      } while (!(j === 6));
+      while (Match.Score[0] === Match.Score[1]) {
+        await Penalti(j,1);
+        await Penalti(j,2);
+        j += 1;
+      };
+    };
+    pas.crt.TextColor(15);
     pas.crt.Randomize();
     Match.Score[0] = 0;
     Match.Score[1] = 0;
     Half = 0;
-    At = 2;
-    St = pas.nls.Loc("Welcome to the stadium ","Вітаємо вас на стадіоні ") + Match.Stadium.name;
-    pas.System.Writeln(St);
-    await pas.crt.Delay(1000);
+    MinNow = 0;
+    SP = "";
+    for (i = 1; i <= 2; i++) for (j = 1; j <= 13; j++) {
+      Things[i - 1][j - 1].flag = false;
+      Things[i - 1][j - 1].StPlus = "";
+      Things[i - 1][j - 1].Min = 0;
+      Things[i - 1][j - 1].HT = 0;
+      Things[i - 1][j - 1].Surname = "";
+    };
+    await HelpPr1();
+    InOut[0] = 3;
+    InOut[1] = 3;
     do {
       DoTeamP();
       Half += 1;
       var $tmp = Half;
       if ($tmp === 1) {
-        MinNow = 0;
+        At = 1;
+        Pt = 2;
+        MinNow = 1;
         MinEnd = 45;
       } else if ($tmp === 2) {
+        At = 2;
+        Pt = 1;
         MinNow = 45;
         MinEnd = 90;
       } else if ($tmp === 3) {
+        At = 1;
+        Pt = 2;
         MinNow = 90;
         MinEnd = 105;
       } else if ($tmp === 4) {
+        At = 2;
+        Pt = 1;
         MinNow = 105;
         MinEnd = 120;
+      } else if ($tmp === 5) {
+        At = 1;
+        Pt = 2;
+        await HelpPr6();
       };
-      N = 1;
-      ChAt();
+      if ((Half !== 1) && (Half !== 5)) {
+        n0 = pas.System.Random(100);
+        var $tmp1 = n0;
+        if (($tmp1 >= 25) && ($tmp1 <= 50)) {
+          if (InOut[0] !== 0) await HelpPr7(1,0,0)}
+         else if (($tmp1 >= 51) && ($tmp1 <= 75)) if (InOut[1] !== 0) await HelpPr7(2,0,0);
+        await HelpPr2();
+      };
+      if (N !== 5) {
+        N = 1}
+       else N = 0;
       do {
         if ((MinNow % 15) === 0) DoTeamP();
-        MinNow += 1;
-      } while (!(MinEnd === MinNow));
-    } while (!((MinNow === MinEnd) && (Half === Match.HalfEnd)));
-    pas.System.Writeln();
-    pas.System.Writeln(pas.nls.Loc("Final whistle! ","Фінальний свисток! "),Match.Ft[0].name," - ",Match.Ft[1].name,"  ",Match.Score[0],":",Match.Score[1]);
-    return Result;
+        var $tmp2 = N;
+        if ($tmp2 === 1) {
+          await EPr1()}
+         else if ($tmp2 === 2) {
+          await EPr2()}
+         else if ($tmp2 === 3) {
+          await EPr3()}
+         else if ($tmp2 === 4) {
+          await EPr4()}
+         else if ($tmp2 === 5) {
+          await EPr5()}
+         else if ($tmp2 === 6) {
+          await EPr6()}
+         else if ($tmp2 === 7) {
+          EPr7()}
+         else if ($tmp2 === 8) {
+          await EPr8()}
+         else if ($tmp2 === 9) {
+          await Epr9()}
+         else if ($tmp2 === 10) {
+          await EPr10()}
+         else if ($tmp2 === 11) {
+          await EPr11()}
+         else if ($tmp2 === 12) {
+          await Epr12()}
+         else if ($tmp2 === 13) {
+          await EPr13()}
+         else if ($tmp2 === 14) {
+          await EPr14()}
+         else if ($tmp2 === 141) {
+          await EPr141()}
+         else if ($tmp2 === 142) {
+          await EPr142()}
+         else if ($tmp2 === 15) {
+          await EPr15()}
+         else if ($tmp2 === 16) {
+          await EPr16()}
+         else if ($tmp2 === 17) {
+          await EPr17()}
+         else if ($tmp2 === 18) {
+          await EPr18()}
+         else if ($tmp2 === 19) {
+          await EPr19()}
+         else if ($tmp2 === 20) {
+          await EPr20()}
+         else if ($tmp2 === 21) {
+          await EPr21()}
+         else if ($tmp2 === 22) {
+          await Epr22()}
+         else if ($tmp2 === 23) {
+          await EPr23()}
+         else if ($tmp2 === 24) {
+          await EPr24()}
+         else if ($tmp2 === 25) await EPr25();
+        if ((MinNow === 45) && (Half === 1)) await HelpPr5();
+        if ((MinNow === 90) && (Half === 2)) await HelpPr5();
+        if ((MinNow === 115) && (Half === 3)) await HelpPr5();
+        if ((MinNow === 120) && (Half === 4)) await HelpPr5();
+      } while (!(MinNow === MinEnd));
+      await HelpPr3();
+      flag = Half === Match.HalfEnd;
+      if ((Match.HalfEnd === 5) && (Match.Score[0] !== Match.Score[1]) && (Half !== 1) && (Half !== 3)) flag = true;
+      if ((Match.HalfEnd === 5) && (Match.Score[0] === Match.Score[1]) && (Half === 2)) {
+        St = "Матч окончился ничьёй!";
+        await Comment();
+        St = "Сейчас будут сыграны дополнительные таймы";
+        await Comment();
+      };
+      if (Half === 5) flag = true;
+    } while (!(flag || (Half === 5)));
+    await HelpPr4();
+    await pas.crt.Delay(Math.round(2 * 1000));
   };
-},["crt","nls"]);
+},["JS","crt"]);
 rtl.module("dos",["System"],function () {
   "use strict";
   var $mod = this;
@@ -3221,6 +4489,23 @@ rtl.module("tpfiles",["System"],function () {
     return Result;
   };
 });
+rtl.module("nls",["System"],function () {
+  "use strict";
+  var $mod = this;
+  this.GameLang = function () {
+    var Result = "";
+    Result = "ua";
+    Result = (typeof window !== 'undefined' && window.__retroLang === 'en') ? 'en' : 'ua';
+    return Result;
+  };
+  this.Loc = function (en, ua) {
+    var Result = "";
+    if ($mod.GameLang() === "en") {
+      Result = en}
+     else Result = ua;
+    return Result;
+  };
+});
 rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],function () {
   "use strict";
   var $mod = this;
@@ -3343,7 +4628,7 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],functi
       $mod.Teams[$mod.i - 1].state.$assign($mod.Countries[$mod.m - 1]);
       $mod.m = pas.tpfiles.ReadLnNum($mod.f);
       pas.tpfiles.Close($mod.f);
-      $mod.Teams[$mod.i - 1].StadiumTeam.$assign($mod.Stadiums[$mod.m - 1]);
+      $mod.Teams[$mod.i - 1].stadiumteam.$assign($mod.Stadiums[$mod.m - 1]);
       $mod.Teams[$mod.i - 1].Mark = 0;
       $mod.Teams[$mod.i - 1].tiredness = 0;
       $mod.Teams[$mod.i - 1].mood = 0;
@@ -3383,7 +4668,7 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],functi
       pas.tpfiles.Halt();
     };
     var $with = $mod.NowMatch;
-    $with.Stadium.$assign($mod.Team1.StadiumTeam);
+    $with.Stadium.$assign($mod.Team1.stadiumteam);
     $with.Ft[0].$assign($mod.Team1);
     $with.Ft[1].$assign($mod.Team2);
     $with.OnLooker = pas.System.Random($with.Stadium.Seats) + 1;
