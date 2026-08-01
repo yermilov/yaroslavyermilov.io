@@ -29,6 +29,22 @@
     зависає намертво — Inkey не блокує, тож цикл крутиться, не віддаючи керування
     браузеру, і KeyPressed ніколи не стане true. Через це BestPlayers і Change
     теж стали async (разом 15).
+
+  РЕМОНТ (01.08.2026) — «фон поля малюється тільки до y≈300, під ним видно
+  попередній екран». Симптом косметичний, причина — ні: ДВА виклики async-
+  процедур лишились БЕЗ `await`, і кожен породжував паралельний цикл.
+  - `BallWalking(esc,nl)` у Game: без await він віддавав керування миттєво з
+    esc=nl=false, тож `until (flag) or (not(esc))` спрацьовував ОДРАЗУ, Game
+    поверталася в меню, а сам BallWalking лишався жити відчепленим і далі
+    малював платформу поверх меню.
+  - `ButtonPress(Choice)` у MainMenu: без await меню не чекало на гру, тож його
+    власний цикл (годинник, перемальовування кнопок) крутився ОДНОЧАСНО з грою.
+  Разом це й давало «до 300»: меню перемальовувало весь екран (Bar 0,0,641,481),
+  а відчеплений MakeBlocks зафарбовував лише 0..300 — нижче лишалося меню.
+  Кожен новий запуск додавав ще один цикл: малювання дублювалося (виміряно —
+  кожен Bar у логу двічі), і гра ставала дедалі швидшою.
+  ⚠️ Джерело читати марно — воно виглядає правильним (Bar(0,0,641,HeroY+25) на
+  місці й СПРАВДІ викликається). Діагноз дав лише лог викликів у браузері.
 }
 
 program PingPong;
@@ -1186,7 +1202,7 @@ end;
          repeat
                Time:=0;
                nl:=false;
-               BallWalking(esc,nl);
+               await(BallWalking(esc,nl));
                if nl then await(Game);
                if esc then flag:=await(SureLeave);
          until (flag) or (not(esc));
@@ -1644,7 +1660,7 @@ begin
                    if (MouseY>310) and (MouseY<360) then choice:=4;
                    if (MouseY>410) and (MouseY<460) then choice:=5;
               end;
-           if choice<>0 then ButtonPress(Choice);
+           if choice<>0 then await(ButtonPress(Choice));
            flag:=false;
            If ((MouseX>375) and (MouseX<625) and
            (MouseY>125) and (MouseY<375)) or

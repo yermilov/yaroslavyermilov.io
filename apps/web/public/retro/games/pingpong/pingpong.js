@@ -4912,7 +4912,7 @@ rtl.module("program",["System","JS","crt","graph","mouse","dos","tpfiles","shifr
     do {
       $mod.Time = 0;
       nl = false;
-      $mod.BallWalking({get: function () {
+      await $mod.BallWalking({get: function () {
           return esc;
         }, set: function (v) {
           esc = v;
@@ -5438,7 +5438,7 @@ rtl.module("program",["System","JS","crt","graph","mouse","dos","tpfiles","shifr
           if ((pas.mouse.MouseY() > 310) && (pas.mouse.MouseY() < 360)) choice = 4;
           if ((pas.mouse.MouseY() > 410) && (pas.mouse.MouseY() < 460)) choice = 5;
         };
-        if (choice !== 0) $mod.ButtonPress(choice);
+        if (choice !== 0) await $mod.ButtonPress(choice);
         flag = false;
         if (((pas.mouse.MouseX() > 375) && (pas.mouse.MouseX() < 625) && (pas.mouse.MouseY() > 125) && (pas.mouse.MouseY() < 375)) || ((pas.mouse.MouseX() > 350) && (pas.mouse.MouseX() < 460) && (pas.mouse.MouseY() > 435) && (pas.mouse.MouseY() < 480))) flag = true;
         if (flag) pas.mouse.HideMouse();
