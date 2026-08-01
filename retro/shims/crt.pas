@@ -90,14 +90,33 @@ procedure Randomize;
 procedure Readln;
 
 var
-  { The DOSBox-cycles knob. PINGPONG asks for Delay(3000) every frame — three
-    SECONDS. It was never playable at that rate: Turbo Pascal 7's Delay was
-    calibrated by a boot-time timing loop that overflowed on fast CPUs (the
-    famous RTE 200 bug), so on the machine this was written for Delay returned
-    almost immediately. Honouring the literal argument gives a technically
-    faithful port that is unplayable, so the wall-clock delay is scaled here.
-    1.0 = obey the source literally. }
+  { The DOSBox-cycles knob. Turbo Pascal 7's Delay was calibrated by a boot-time
+    timing loop that overflowed on fast CPUs (the famous RTE 200 bug), so on the
+    machine these games were written for Delay returned almost immediately.
+    Honouring the literal argument gives a technically faithful port that is
+    unplayable, so the wall-clock delay is scaled here. 1.0 = obey the source. }
   DelayScale: double = 0.004;
+  { ...but a linear scale alone CANNOT serve both ends of a game's range, and
+    that is what made most ports run at warp speed (Yarik, 2026-08-01: "most
+    games run too fast").
+
+    Measured across the ported sources, the per-frame delays are SMALL —
+    PINGPONG paces its loop with Delay(15) and Delay(duration*2) — while the
+    pauses are huge (Delay(50000), Delay(60000)). At 0.004 the frame ticks round
+    to ZERO, so every such loop fell through to the browser's ~4 ms nested-timer
+    clamp: roughly 250 fps, i.e. as fast as the tab can go. The old comment here
+    claimed PINGPONG asks for Delay(3000) every frame; that was true of the
+    245-line draft this port replaced, and the scale has been calibrated against
+    a number the game no longer uses ever since.
+
+    So short delays get a FLOOR instead of collapsing. 20 ms ≈ 50 fps: still
+    brisk, but a twelfth of the clamp it was running at. Long pauses are
+    untouched — Delay(50000) is 200 ms either way — so this only affects the
+    delays that were being rounded away.
+
+    Frame FEEL is a judgement call, not a fact: this is the one number to turn if
+    a game is still too quick or now too sluggish. }
+  MinDelayMs: integer = 20;
 
 implementation
 
@@ -203,11 +222,12 @@ var
 begin
   Install;
   wait := Round(ms * DelayScale);
-  { Deliberately setTimeout even when wait rounds to 0: the browser's ~4ms
-    nested-timer clamp IS the effective frame pacing of the Delay-driven game
-    loops (PINGPONG). Making this a fast yield once sent the game into warp
-    speed — five block rows in two seconds. Tight compute loops that only need
-    to stay responsive use Yield instead. }
+  { Floor it. Leaning on the browser's ~4 ms nested-timer clamp as the frame
+    pacing — which is what a scaled-to-zero delay did — means the loop runs as
+    fast as the tab allows, and that is exactly the "too fast" complaint. A real
+    floor makes the pacing ours instead of the browser's.
+    Tight compute loops that only need to stay responsive use Yield instead. }
+  if wait < MinDelayMs then wait := MinDelayMs;
   Result := TJSPromise.New(
     procedure(resolve, reject: TJSPromiseResolver)
     begin

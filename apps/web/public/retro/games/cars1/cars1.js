@@ -1590,6 +1590,7 @@ rtl.module("crt",["System","JS"],function () {
     var wait = 0;
     $impl.Install();
     wait = Math.round(ms * $mod.DelayScale);
+    if (wait < $mod.MinDelayMs) wait = $mod.MinDelayMs;
     Result = new Promise(function (resolve, reject) {
       window.setTimeout(function () {
         resolve(0);
@@ -1640,6 +1641,7 @@ rtl.module("crt",["System","JS"],function () {
     $impl.CurY = 1;
   };
   this.DelayScale = 0.004;
+  this.MinDelayMs = 20;
   $mod.$init = function () {
     if ($mod.KeyPressed()) $mod.ReadKey();
     pas.System.SetWriteCallBack(function (S, NewLine) {

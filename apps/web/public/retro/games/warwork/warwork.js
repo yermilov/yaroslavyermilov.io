@@ -1621,6 +1621,7 @@ rtl.module("crt",["System","JS"],function () {
     var wait = 0;
     $impl.Install();
     wait = Math.round(ms * $mod.DelayScale);
+    if (wait < $mod.MinDelayMs) wait = $mod.MinDelayMs;
     Result = new Promise(function (resolve, reject) {
       window.setTimeout(function () {
         resolve(0);
@@ -1709,6 +1710,7 @@ rtl.module("crt",["System","JS"],function () {
   this.Readln = function () {
   };
   this.DelayScale = 0.004;
+  this.MinDelayMs = 20;
   $mod.$init = function () {
     if ($mod.KeyPressed()) $mod.ReadKey();
     pas.System.SetWriteCallBack(function (S, NewLine) {
@@ -2317,7 +2319,7 @@ rtl.module("program",["System","JS","graph","crt","jarik","mouse","tpfiles","nls
   "use strict";
   var $mod = this;
   this.duration = 1000;
-  this.frameMs = 83;
+  this.frameMs = 50;
   this.zenitka = 2;
   this.plane = 1;
   this.tank = 3;
@@ -2916,7 +2918,7 @@ rtl.module("program",["System","JS","graph","crt","jarik","mouse","tpfiles","nls
           if ($mod.p[i - 1]) $mod.MakeHisPlane(i,4);
         };
       };
-      await pas.crt.FrameDelay(83);
+      await pas.crt.FrameDelay(50);
       pas.crt.NoSound();
     } while (!(!$mod.myplane || (key === "\x1B")));
   };
