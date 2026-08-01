@@ -1,0 +1,24 @@
+                              Ping-Pong
+                             Version  1.0
+                              July 2005
+       You steer with the arrow keys, and pause is the standard P.              
+And if you press space, the paddle starts to jump!
+       The best part is the options menu. You can change almost everything:
+from the ball colour and speed to the button, text and menu background colours.
+       The game is very simple: you knock out bricks, and they hand out
+(or take away) certain bonuses and points. Here they are:
+#       Colour          Bonus                           Points
+1       Black           Second "bad" ball               +100
+2       Red             Ball speeds up                  +200
+3       Magenta         Paddle slows down               +300
+4       Light red       Paddle narrows                  +400
+5       Light magenta   "Drunk" ball                    +500
+6       Brown           Second "good" ball              +600
+7       Light gray      Paddle widens                   +700
+8       Blue            Ball slows down                 +800
+9       Green           Paddle speeds up                +900
+10      Light blue      "Trail"                         +1000
+11      Light green     "Cannon" (key B)                +1500
+12      Yellow          "Platform"                      +2500
+13      White           One extra life                  +5000
+

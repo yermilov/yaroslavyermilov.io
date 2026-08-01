@@ -3468,7 +3468,24 @@ rtl.module("shifr",["System"],function () {
     pas.tpfiles.Close(fs);
   };
 });
-rtl.module("program",["System","JS","crt","graph","mouse","dos","tpfiles","shifr"],function () {
+rtl.module("nls",["System"],function () {
+  "use strict";
+  var $mod = this;
+  this.GameLang = function () {
+    var Result = "";
+    Result = "ua";
+    Result = (typeof window !== 'undefined' && window.__retroLang === 'en') ? 'en' : 'ua';
+    return Result;
+  };
+  this.Loc = function (en, ua) {
+    var Result = "";
+    if ($mod.GameLang() === "en") {
+      Result = en}
+     else Result = ua;
+    return Result;
+  };
+});
+rtl.module("program",["System","JS","crt","graph","mouse","dos","tpfiles","shifr","nls"],function () {
   "use strict";
   var $mod = this;
   rtl.recNewT($mod,"coordinates",function () {
@@ -3526,7 +3543,6 @@ rtl.module("program",["System","JS","crt","graph","mouse","dos","tpfiles","shifr
   this.pi180 = Math.PI / 180;
   this.by = 7;
   this.bx = 8;
-  this.Colors = ["Чёрный","Синий","Зелёный","Бирюзовый","Красный","Розовый","Коричневый","Светло-серый","Тёмно-серый","Светло-синий","Светло-зелёный","Светло-бирюзовый","Светло-красный","Светло-розовый","Желтый","Белый"];
   this.ball = $mod.coordinates.$new();
   this.fly = $mod.coordinates.$new();
   this.ud = $mod.coordinates.$new();
@@ -3842,6 +3858,46 @@ rtl.module("program",["System","JS","crt","graph","mouse","dos","tpfiles","shifr
     pas.graph.SetFillStyle(1,color);
     pas.graph.Circle(x,y,radius);
     pas.graph.FloodFill(x,y,color);
+  };
+  this.ColorName = function (i) {
+    var Result = "";
+    var $tmp = i;
+    if ($tmp === 0) {
+      Result = pas.nls.Loc("Black","Чорний")}
+     else if ($tmp === 1) {
+      Result = pas.nls.Loc("Blue","Синій")}
+     else if ($tmp === 2) {
+      Result = pas.nls.Loc("Green","Зелений")}
+     else if ($tmp === 3) {
+      Result = pas.nls.Loc("Cyan","Бірюзовий")}
+     else if ($tmp === 4) {
+      Result = pas.nls.Loc("Red","Червоний")}
+     else if ($tmp === 5) {
+      Result = pas.nls.Loc("Magenta","Рожевий")}
+     else if ($tmp === 6) {
+      Result = pas.nls.Loc("Brown","Коричневий")}
+     else if ($tmp === 7) {
+      Result = pas.nls.Loc("Light gray","Світло-сірий")}
+     else if ($tmp === 8) {
+      Result = pas.nls.Loc("Dark gray","Темно-сірий")}
+     else if ($tmp === 9) {
+      Result = pas.nls.Loc("Light blue","Світло-синій")}
+     else if ($tmp === 10) {
+      Result = pas.nls.Loc("Light green","Світло-зелений")}
+     else if ($tmp === 11) {
+      Result = pas.nls.Loc("Light cyan","Світло-бірюзовий")}
+     else if ($tmp === 12) {
+      Result = pas.nls.Loc("Light red","Світло-червоний")}
+     else if ($tmp === 13) {
+      Result = pas.nls.Loc("Light magenta","Світло-рожевий")}
+     else if ($tmp === 14) {
+      Result = pas.nls.Loc("Yellow","Жовтий")}
+     else if ($tmp === 15) {
+      Result = pas.nls.Loc("White","Білий")}
+     else {
+      Result = "";
+    };
+    return Result;
   };
   var r = 3;
   this.MakeSnaryad = function (color) {
@@ -4965,7 +5021,7 @@ rtl.module("program",["System","JS","crt","graph","mouse","dos","tpfiles","shifr
         pas.System.Writeln(str)}
        else pas.System.Write(str);
     };
-    pas.System.Write("Нажмите Esc для возврата в меню");
+    pas.System.Write(pas.nls.Loc("Press Esc to return to the menu","Натисни Esc, щоб повернутися в меню"));
     do {
     } while (!(String.fromCharCode(pas.System.Trunc(await pas.crt.ReadKeyA())) === "\x1B"));
     pas.tpfiles.Close(inffile);
@@ -4989,23 +5045,23 @@ rtl.module("program",["System","JS","crt","graph","mouse","dos","tpfiles","shifr
   this.OptionsText = function () {
     pas.crt.ClrScr();
     pas.crt.GotoXY(35,1);
-    pas.System.Write("Настройки");
+    pas.System.Write(pas.nls.Loc("Options","Налаштування"));
     pas.crt.GotoXY(1,3);
-    pas.System.Writeln("     Цвет мяча - ",$mod.Colors[$mod.ColorBall]);
-    pas.System.Writeln("     Цвет доски - ",$mod.Colors[$mod.ColorHero]);
-    pas.System.Writeln("     Цвет фона в игровом поле - ",$mod.Colors[$mod.ColorFon]);
-    pas.System.Writeln("     Цвет фона меню - ",$mod.Colors[$mod.ColorMenuFon]);
-    pas.System.Writeln("     Цвет кнопок - ",$mod.Colors[$mod.ColorButton]);
-    pas.System.Writeln("     Цвет фона меню в игре - ",$mod.Colors[$mod.ColorGameMenu]);
-    pas.System.Writeln("     Цвет текста в меню - ",$mod.Colors[$mod.ColorMenuText]);
-    pas.System.Writeln("     Цвет текста в игре - ",$mod.Colors[$mod.ColorGameText]);
-    pas.System.Writeln("     Цвет часов - ",$mod.Colors[$mod.ColorClock]);
-    pas.System.Writeln("     Цвет рамки выбора - ",$mod.Colors[$mod.ColorSelect]);
-    pas.System.Writeln("     Скорость мяча - ",$mod.BallSpeed," пикселей за один ход");
-    pas.System.Writeln("     Скорость доски - ",$mod.HeroSpeed," пикселей за один ход");
-    pas.System.Writeln("     Ширина доски - ",$mod.HeroB," пикселей");
-    pas.System.Writeln("     Задержка - ",$mod.Duration," милисекунд");
-    pas.System.Writeln("     Вернуть по умолчанию");
+    pas.System.Writeln(pas.nls.Loc("     Ball colour - ","     Колір мʼяча - "),$mod.ColorName($mod.ColorBall));
+    pas.System.Writeln(pas.nls.Loc("     Paddle colour - ","     Колір платформи - "),$mod.ColorName($mod.ColorHero));
+    pas.System.Writeln(pas.nls.Loc("     Playfield background - ","     Колір фону поля - "),$mod.ColorName($mod.ColorFon));
+    pas.System.Writeln(pas.nls.Loc("     Menu background - ","     Колір фону меню - "),$mod.ColorName($mod.ColorMenuFon));
+    pas.System.Writeln(pas.nls.Loc("     Button colour - ","     Колір кнопок - "),$mod.ColorName($mod.ColorButton));
+    pas.System.Writeln(pas.nls.Loc("     In-game menu background - ","     Колір фону меню у грі - "),$mod.ColorName($mod.ColorGameMenu));
+    pas.System.Writeln(pas.nls.Loc("     Menu text colour - ","     Колір тексту в меню - "),$mod.ColorName($mod.ColorMenuText));
+    pas.System.Writeln(pas.nls.Loc("     In-game text colour - ","     Колір тексту у грі - "),$mod.ColorName($mod.ColorGameText));
+    pas.System.Writeln(pas.nls.Loc("     Clock colour - ","     Колір годинника - "),$mod.ColorName($mod.ColorClock));
+    pas.System.Writeln(pas.nls.Loc("     Selection frame colour - ","     Колір рамки вибору - "),$mod.ColorName($mod.ColorSelect));
+    pas.System.Writeln(pas.nls.Loc("     Ball speed - ","     Швидкість мʼяча - "),$mod.BallSpeed,pas.nls.Loc(" pixels per step"," пікселів за один хід"));
+    pas.System.Writeln(pas.nls.Loc("     Paddle speed - ","     Швидкість платформи - "),$mod.HeroSpeed,pas.nls.Loc(" pixels per step"," пікселів за один хід"));
+    pas.System.Writeln(pas.nls.Loc("     Paddle width - ","     Ширина платформи - "),$mod.HeroB,pas.nls.Loc(" pixels"," пікселів"));
+    pas.System.Writeln(pas.nls.Loc("     Delay - ","     Затримка - "),$mod.Duration,pas.nls.Loc(" milliseconds"," мілісекунд"));
+    pas.System.Writeln(pas.nls.Loc("     Restore defaults","     Повернути за замовчуванням"));
   };
   this.Change = async function (n) {
     var st = "";
@@ -5022,37 +5078,37 @@ rtl.module("program",["System","JS","crt","graph","mouse","dos","tpfiles","shifr
         pas.crt.GotoXY(15,20);
         var $tmp = n;
         if ($tmp === 1) {
-          st = "     Цвет мяча - " + $mod.Colors[$mod.ColorBall]}
+          st = pas.nls.Loc("     Ball colour - ","     Колір мʼяча - ") + $mod.ColorName($mod.ColorBall)}
          else if ($tmp === 2) {
-          st = "     Цвет доски - " + $mod.Colors[$mod.ColorHero]}
+          st = pas.nls.Loc("     Paddle colour - ","     Колір платформи - ") + $mod.ColorName($mod.ColorHero)}
          else if ($tmp === 3) {
-          st = "     Цвет фона в игровом поле - " + $mod.Colors[$mod.ColorFon]}
+          st = pas.nls.Loc("     Playfield background - ","     Колір фону поля - ") + $mod.ColorName($mod.ColorFon)}
          else if ($tmp === 4) {
-          st = "     Цвет фона меню - " + $mod.Colors[$mod.ColorMenuFon]}
+          st = pas.nls.Loc("     Menu background - ","     Колір фону меню - ") + $mod.ColorName($mod.ColorMenuFon)}
          else if ($tmp === 5) {
-          st = "     Цвет кнопок - " + $mod.Colors[$mod.ColorButton]}
+          st = pas.nls.Loc("     Button colour - ","     Колір кнопок - ") + $mod.ColorName($mod.ColorButton)}
          else if ($tmp === 6) {
-          st = "     Цвет фона меню в игре - " + $mod.Colors[$mod.ColorGameMenu]}
+          st = pas.nls.Loc("     In-game menu background - ","     Колір фону меню у грі - ") + $mod.ColorName($mod.ColorGameMenu)}
          else if ($tmp === 7) {
-          st = "     Цвет текста в меню - " + $mod.Colors[$mod.ColorMenuText]}
+          st = pas.nls.Loc("     Menu text colour - ","     Колір тексту в меню - ") + $mod.ColorName($mod.ColorMenuText)}
          else if ($tmp === 8) {
-          st = "     Цвет текста в игре - " + $mod.Colors[$mod.ColorGameText]}
+          st = pas.nls.Loc("     In-game text colour - ","     Колір тексту у грі - ") + $mod.ColorName($mod.ColorGameText)}
          else if ($tmp === 9) {
-          st = "     Цвет часов - " + $mod.Colors[$mod.ColorClock]}
+          st = pas.nls.Loc("     Clock colour - ","     Колір годинника - ") + $mod.ColorName($mod.ColorClock)}
          else if ($tmp === 10) {
-          st = "     Цвет рамки выбора - " + $mod.Colors[$mod.ColorSelect]}
+          st = pas.nls.Loc("     Selection frame colour - ","     Колір рамки вибору - ") + $mod.ColorName($mod.ColorSelect)}
          else if ($tmp === 11) {
           s = "" + $mod.BallSpeed;
-          st = "     Скорость мяча - " + s + " пикселей за один ход";
+          st = pas.nls.Loc("     Ball speed - ","     Швидкість мʼяча - ") + s + pas.nls.Loc(" pixels per step"," пікселів за один хід");
         } else if ($tmp === 12) {
           s = "" + $mod.HeroSpeed;
-          st = "     Скорость доски - " + s + " пикселей за один ход";
+          st = pas.nls.Loc("     Paddle speed - ","     Швидкість платформи - ") + s + pas.nls.Loc(" pixels per step"," пікселів за один хід");
         } else if ($tmp === 13) {
           s = "" + $mod.HeroB;
-          st = "     Ширина доски - " + s + " пикселей";
+          st = pas.nls.Loc("     Paddle width - ","     Ширина платформи - ") + s + pas.nls.Loc(" pixels"," пікселів");
         } else if ($tmp === 14) {
           s = "" + $mod.Duration;
-          st = "     Задержка - " + s + " милисекунд";
+          st = pas.nls.Loc("     Delay - ","     Затримка - ") + s + pas.nls.Loc(" milliseconds"," мілісекунд");
         };
         pas.System.Write(st);
         pas.crt.GotoXY(80,25);

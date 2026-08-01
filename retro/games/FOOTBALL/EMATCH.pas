@@ -26,9 +26,7 @@ unit EMatch;
 
 interface
 
-const Monthes : array [1..12] of string =
-              ('Января','Февраля','Марта','Апреля','Майя','Июня','Июля',
-               'Августа','Сентября','Октября','Ноября','Декабря');
+
 
 type
     FallType = (NoFall,YellowCard,RedCard);
@@ -91,7 +89,7 @@ procedure EmulMatch (var Match:MatchType); async;
 
 implementation
 
-uses JS, crt;
+uses JS, crt, nls;
 
 procedure EmulMatch (var Match:MatchType); async;
 type TTT = (g,y,r,t);
@@ -117,6 +115,27 @@ var
    SP : string;
    flag:boolean;
    InOut : array [1..2] of InOutRange;
+
+{ Назви місяців були const-масивом; Loc не викликати в ініціалізаторі константи,
+  тож масив став функцією. Українські форми — родовий відмінок («5 січня»). }
+function MonthName(i:byte):string;
+begin
+     case i of
+     1:MonthName:=Loc('January','січня');
+     2:MonthName:=Loc('February','лютого');
+     3:MonthName:=Loc('March','березня');
+     4:MonthName:=Loc('April','квітня');
+     5:MonthName:=Loc('May','травня');
+     6:MonthName:=Loc('June','червня');
+     7:MonthName:=Loc('July','липня');
+     8:MonthName:=Loc('August','серпня');
+     9:MonthName:=Loc('September','вересня');
+     10:MonthName:=Loc('October','жовтня');
+     11:MonthName:=Loc('November','листопада');
+     12:MonthName:=Loc('December','грудня');
+     else MonthName:='';
+     end;
+end;
 
    procedure NewThing(i:byte;a:TTT;b,stp:string);
    var j:byte;
@@ -212,13 +231,13 @@ var
            end;
         if Half<>5 then
            begin
-                St:=st1 + ' минута матча';
+                St:=st1 + Loc(' minute of the match',' хвилина матчу');
                 m:=length(st);
                 Gotoxy(40 - m div 2,9);
                 Write(st);
            end
         else begin
-                St:='Серия пенальти';
+                St:=Loc('Penalty shootout','Серія пенальті');
                 m:=length(st);
                 Gotoxy(40 - m div 2,9);
                 Write(st);
@@ -415,44 +434,44 @@ var
        st001,st002:string;
    begin
         Str(Match.Stadium.Seats,st1);
-        St:='Мы вновь приветствуем вас на стадионе ' + Match.Stadium.Name + ' (' + st1 + ' мест)';
+        St:=Loc('We welcome you back to the ','Ми знову вітаємо вас на стадіоні ') + Match.Stadium.Name + ' (' + st1 + Loc(' seats)',' місць)');
         await(Comment);
         Str(Match.Date.Date,st1);
-        St2:=Monthes[Match.Date.Month];
+        St2:=MonthName(Match.Date.Month);
         Str(Match.Date.Year,st3);
-        St:='Сегодня ' + st1 + ' ' + st2 + ' ' + st3 + ' года';
+        St:=Loc('Today is ','Сьогодні ') + st1 + ' ' + st2 + ' ' + st3 + Loc('',' року');
         await(Comment);
         Str(Match.OnLooker,st1);
-        St:=st1 + ' зрителей на стадионе собрались, чтобы посмотреть этот матч';
+        St:=st1 + Loc(' spectators have gathered at the stadium to watch this match',' глядачів зібралися на стадіоні, щоб подивитися цей матч');
         await(Comment);
-        St:='Играют:';
+        St:=Loc('Playing:','Грають:');
         await(Comment);
         St:=Match.Ft[1].Name+' ('+Match.Ft[1].State.Name+')';
         await(Comment);
-        St:='ПРОТИВ';
+        St:=Loc('VERSUS','ПРОТИ');
         await(Comment);
         St:=Match.Ft[2].Name+' ('+Match.Ft[2].State.Name+')';
         await(Comment);
-        St:='Составы команд';
+        St:=Loc('Line-ups','Склади команд');
         await(Comment);
         await(Sostav);
         n0:=random(100);
         case n0 of
-        0..10:st3:='Идёт снег';
-        11..30:st3:='Идёт дождь';
-        31..60:st3:='Пасмурно'
-        else st3:='Солнечно';
+        0..10:st3:=Loc('Snowing','Іде сніг');
+        11..30:st3:=Loc('Raining','Іде дощ');
+        31..60:st3:=Loc('Overcast','Хмарно')
+        else st3:=Loc('Sunny','Сонячно');
         end;
-        St:='Погода на поле:';
+        St:=Loc('Weather on the pitch:','Погода на полі:');
         await(Comment);
         St:=st3;
         await(Comment);
         Str(Half-1,st3);
         Str(Match.Score[1],st001);
         Str(Match.Score[2],st002);
-        St:='Напоминаем, счёт после '+st3+' тайма - '+st001+':'+st002;
+        St:=Loc('A reminder, the score after ','Нагадуємо, рахунок після ')+st3+Loc(' half - ',' тайму - ')+st001+':'+st002;
         await(Comment);
-        St:='Ну что же команды готовы начать следующий тайм. Судья даёт свисток и ... ';
+        St:=Loc('The teams are ready for the next half. The referee whistles and ... ','Що ж, команди готові почати наступний тайм. Суддя дає свисток і ... ');
         await(Comment);
         St:='';
         await(Comment);
@@ -464,7 +483,7 @@ var
         Str(Half,st);
         Str(Match.Score[1],st001);
         Str(Match.Score[2],st002);
-        St:='Итак, '+st+' тайм окончен и счёт - '+st001+':'+st002;
+        St:=Loc('So, ','Отже, ')+st+Loc(' half is over and the score is - ',' тайм завершено, рахунок - ')+st001+':'+st002;
         await(Comment);
    end;
 
@@ -473,7 +492,7 @@ var
    begin
         Str(Match.Score[1],st001);
         Str(Match.Score[2],st002);
-        St:='Итак, матч окончен и счёт - '+st001+':'+st002;
+        St:=Loc('So, the match is over and the score is - ','Отже, матч завершено, рахунок - ')+st001+':'+st002;
         await(Comment);
    end;
 
@@ -481,39 +500,39 @@ var
    var i:byte;
    begin
         Str(Match.Stadium.Seats,st1);
-        St:='Мы приветствуем вас на стадионе ' + Match.Stadium.Name + ' (' + st1 + ' мест)';
+        St:=Loc('We welcome you to the ','Ми вітаємо вас на стадіоні ') + Match.Stadium.Name + ' (' + st1 + Loc(' seats)',' місць)');
         await(Comment);
         Str(Match.Date.Date,st1);
-        St2:=Monthes[Match.Date.Month];
+        St2:=MonthName(Match.Date.Month);
         Str(Match.Date.Year,st3);
-        St:='Сегодня ' + st1 + ' ' + st2 + ' ' + st3 + ' года';
+        St:=Loc('Today is ','Сьогодні ') + st1 + ' ' + st2 + ' ' + st3 + Loc('',' року');
         await(Comment);
         Str(Match.OnLooker,st1);
-        St:=st1 + ' зрителей на стадионе собрались, чтобы посмотреть этот матч';
+        St:=st1 + Loc(' spectators have gathered at the stadium to watch this match',' глядачів зібралися на стадіоні, щоб подивитися цей матч');
         await(Comment);
-        St:='Играют:';
+        St:=Loc('Playing:','Грають:');
         await(Comment);
         St:=Match.Ft[1].Name+' ('+Match.Ft[1].State.Name+')';
         await(Comment);
-        St:='ПРОТИВ';
+        St:=Loc('VERSUS','ПРОТИ');
         await(Comment);
         St:=Match.Ft[2].Name+' ('+Match.Ft[2].State.Name+')';
         await(Comment);
-        St:='Составы команд';
+        St:=Loc('Line-ups','Склади команд');
         await(Comment);
         await(Sostav);
         n0:=random(100);
         case n0 of
-        0..10:st3:='Идёт снег';
-        11..30:st3:='Идёт дождь';
-        31..60:st3:='Пасмурно'
-        else st3:='Солнечно';
+        0..10:st3:=Loc('Snowing','Іде сніг');
+        11..30:st3:=Loc('Raining','Іде дощ');
+        31..60:st3:=Loc('Overcast','Хмарно')
+        else st3:=Loc('Sunny','Сонячно');
         end;
-        St:='Погода на поле:';
+        St:=Loc('Weather on the pitch:','Погода на полі:');
         await(Comment);
         St:=st3;
         await(Comment);
-        St:='Ну что же команды готовы начать матч. Судья даёт свисток и ... ';
+        St:=Loc('The teams are ready to start. The referee whistles and ... ','Що ж, команди готові почати матч. Суддя дає свисток і ... ');
         await(Comment);
         St:='';
         await(Comment);
@@ -525,7 +544,7 @@ var
         if t=0 then t:=random(2)+1;
         if p1=0 then p1:=random(10)+2;
         if p2=0 then p2:=random(4)+12;
-        St:='В команде ' + Match.Ft[t].Name + ' замена:';
+        St:=Loc('In the ','У команді ') + Match.Ft[t].Name + Loc(' squad, a substitution:',' заміна:');
         await(Comment);
         St:='';
         await(Comment);
@@ -562,7 +581,7 @@ var
               p1:=random(10)+2;
               Player1:=Match.Ft[nt].FootBallers[p1];
         until Player1.Play;
-        St:='В команде ' + Match.Ft[nt].Name + ' травмирован '+ Player1.name + ' ' + Player1.surname;
+        St:=Loc('In the ','У команді ') + Match.Ft[nt].Name + Loc(' is injured ',' травмований ')+ Player1.name + ' ' + Player1.surname;
         NewThing(nt,t,Player1.surname,'');
         await(Comment);
         await(HelpPr7(nt,p1,0));
@@ -570,7 +589,7 @@ var
 
    procedure EPr1; async;
    begin
-        St:='Команда ' + Match.Ft[At].name + ' разводит';
+        St:=Loc('Team ','Команда ') + Match.Ft[At].name + Loc(' kicks off',' розігрує мʼяч');
         await(Comment);
         n0:=random(100)+1;
         case n0 of
@@ -581,7 +600,7 @@ var
 
    procedure EPr2; async;
    begin
-        St:=Match.Ft[At].name + ' распасовуется';
+        St:=Match.Ft[At].name + Loc(' knocks it around',' розпасовується');
         inc(MinNow);
         await(Comment);
         n0:= random(50) + TeamP[At] - TeamP[Pt];
@@ -596,7 +615,7 @@ var
    var n00:integer;
    begin
         inc(MinNow);
-        St:=Match.Ft[At].name + ' начинает свою атаку';
+        St:=Match.Ft[At].name + Loc(' starts an attack',' починає свою атаку');
         await(Comment);
         n0:= random(50);
         n00:=n0 + TeamP[At] - TeamP[Pt];
@@ -612,7 +631,7 @@ var
    procedure EPr4; async;
    begin
         Inc(MinNow);
-        St:=Match.Ft[Pt].Name + ' перехватывает мяч';
+        St:=Match.Ft[Pt].Name + Loc(' intercepts the ball',' перехоплює мʼяч');
         await(Comment);
         n0:=random(100);
         case n0 of
@@ -631,7 +650,7 @@ var
         n0:=random(10)+2;
         Player1:=Match.Ft[At].FootBallers[n0];
         until Player1.Play=true;
-        St:=Player1.name + ' ' + Player1.surname + ' проходит сам';
+        St:=Player1.name + ' ' + Player1.surname + Loc(' goes past on his own',' проходить сам');
         await(Comment);
         DoPlayerP;
         n00:=(PlayerP[1]+random(51)-25) div 10;
@@ -660,7 +679,7 @@ var
         n0:=random(100)+1;
         case n0 of
         1..25:begin
-                   St:='Пас на ' + Player2.surname;
+                   St:=Loc('A pass to ','Пас на ') + Player2.surname;
                    await(Comment);
                    if n00<2 then n:=4
                    else begin
@@ -674,13 +693,13 @@ var
                         end;
               end;
         26..50:begin
-                   St:=Player2.surname+' навешивает';
+                   St:=Player2.surname+Loc(' swings it in',' навішує');
                    await(Comment);
                    if n00<2 then n:=4
                             else n:=8;
                end;
         51..75:begin
-                   St:=Player2.surname+' простреливает в штрафную площадку';
+                   St:=Player2.surname+Loc(' drills it into the box',' прострілює у штрафний майданчик');
                    await(Comment);
                    if n00<2 then n:=4
                             else n:=8;
@@ -706,7 +725,7 @@ var
         until Player1.Play=true;
         PlayerU:=Player1;
         inc(MinNow);
-        St:=Player1.surname + ' бъёт!';
+        St:=Player1.surname + Loc(' shoots!',' бʼє!');
         await(Comment);
         DoPlayerP;
         n0:=random(50)+PlayerP[1];
@@ -735,14 +754,14 @@ var
                    n0:=random(100);
                    case n0 of
                    0..80:begin
-                              St:=Player1.surname+' нарушает правила и получает желтую карточку';
+                              St:=Player1.surname+Loc(' commits a foul and gets a yellow card',' порушує правила й отримує жовту картку');
                               NewThing(At,Y,Player1.surname,'');
                               await(Comment);
                               if Player1.Fall=YellowCard then
                                  begin
                                       Match.Ft[At].Footballers[n1].Fall:=RedCard;
                                       Match.Ft[At].Footballers[n1].Play:=False;
-                                      St:=Player1.surname+' вновь фолит, зарабатывает вторую желтую карточку и уходит с поля';
+                                      St:=Player1.surname+Loc(' fouls again, earns a second yellow and walks off the pitch',' знову фолить, заробляє другу жовту картку й залишає поле');
                                       NewThing(At,R,Player1.surname,'');
                                       await(Comment);
                                  end;
@@ -752,20 +771,20 @@ var
                            Match.Ft[At].Footballers[n1].Fall:=RedCard;
                            Match.Ft[At].Footballers[n1].Play:=False;
                            NewThing(At,R,Player1.surname,'');
-                           St:=Player1.surname+' жестоко фолит, зарабатывает красною карточку и уходит с поля';
+                           St:=Player1.surname+Loc(' fouls brutally, earns a red card and walks off the pitch',' жорстоко фолить, заробляє червону картку й залишає поле');
                            await(Comment);
                      end;
              end;
              end
              else
                begin
-                    St:=Player1.surname + ' нарушает правила при проходе';
+                    St:=Player1.surname + Loc(' fouls while being taken on',' порушує правила під час проходу');
                     await(Comment);
                end;
         end;
         ChAt;
         inc(MinNow);
-        St:=Match.Ft[At].name + ' бъёт штрафной удар со своей половины поля';
+        St:=Match.Ft[At].name + Loc(' takes a free kick from his own half',' бʼє штрафний зі своєї половини поля');
         await(Comment);
         n0:=random(100);
         case n0 of
@@ -782,9 +801,9 @@ var
         until Player1.Play=true;
         PlayerU:=Player1;
         inc(MinNow);
-        St:=Player1.surname + ' бъёт штрафной удар';
+        St:=Player1.surname + Loc(' takes a free kick',' бʼє штрафний');
         await(Comment);
-        St:='УДАР!!!';
+        St:=Loc('A SHOT!!!','УДАР!!!');
         await(Comment);
         DoPlayerP;
         n0:=random(50)+PlayerP[1];
@@ -797,7 +816,7 @@ var
 
    procedure EPr11; async;
    begin
-        St:='Мяч попадает в игрока';
+        St:=Loc('The ball hits a player','Мʼяч влучає в гравця');
         Inc(MinNow);
         await(Comment);
         n0:=random(100)+1;
@@ -809,7 +828,7 @@ var
 
    procedure Epr12; async;
    begin
-        St:='МИМО ВОРОТ! Как же было опасно но ... мимо!';
+        St:=Loc('WIDE! So dangerous, and yet ... wide!','ПОВЗ ВОРОТА! Як же було небезпечно, але ... повз!');
         inc(MinNow);
         await(Comment);
         ChAt;
@@ -819,7 +838,7 @@ var
    procedure EPr13; async;
    var n00:integer;
    begin
-        St:='ОПАСНО!!!';
+        St:=Loc('DANGEROUS!!!','НЕБЕЗПЕЧНО!!!');
         await(Comment);
         Player1:=PlayerU;
         Player2:=Match.Ft[At].FootBallers[1];
@@ -835,7 +854,7 @@ var
 
    procedure EPr14; async;
    begin
-        St:='Мяч вышел за перделы поля';
+        St:=Loc('The ball has gone out of play','Мʼяч вийшов за межі поля');
         await(Comment);
         n0:=random(100);
         case n0 of
@@ -851,7 +870,7 @@ var
 
    procedure EPr141; async;
    begin
-        St:='Мяч выходит от игроков ' + Match.Ft[At].Name;
+        St:=Loc('The ball goes out off ','Мʼяч виходить від гравців ') + Match.Ft[At].Name;
         await(Comment);
         ChAt;
         n0:=random(100)+1;
@@ -863,7 +882,7 @@ var
 
    procedure EPr142; async;
    begin
-        St:='Мяч выходит от игроков ' + Match.Ft[Pt].Name;
+        St:=Loc('The ball goes out off ','Мʼяч виходить від гравців ') + Match.Ft[Pt].Name;
         await(Comment);
         n0:=random(100)+1;
         case n0 of
@@ -877,7 +896,7 @@ var
        n00:integer;
    begin
         inc(MinNow);
-        St:='Это аут';
+        St:=Loc('That''s a throw-in','Це аут');
         await(Comment);
         repeat
               np1:=random(10)+2;
@@ -885,7 +904,7 @@ var
               Player1:=Match.Ft[At].FootBallers[np1];
               Player2:=Match.Ft[At].FootBallers[np2];
         until (np1<>np2) and (Player1.Play) and (Player2.Play);
-        St:=Player1.name + ' ' + Player1.surname + ' выбрасывает мяч на ' + Player2.Surname;
+        St:=Player1.name + ' ' + Player1.surname + Loc(' throws the ball to ',' викидає мʼяч на ') + Player2.Surname;
         await(Comment);
         DoPlayerP;
         n00:=random(50)+PlayerP[2];
@@ -901,7 +920,7 @@ var
    var n00:integer;
    begin
         Player1:=Match.Ft[At].FootBallers[1];
-        St:=Player1.Name + ' ' + Player1.surname + ' выбивает мяч от ворот';
+        St:=Player1.Name + ' ' + Player1.surname + Loc(' takes the goal kick',' вибиває мʼяч від воріт');
         await(Comment);
         DoPlayerP;
         n00:=random(50)+PlayerP[1];
@@ -921,9 +940,9 @@ var
               Player1:=Match.Ft[At].FootBallers[n0];
         until Player1.Play;
         inc(MinNow);
-        St:='Это угловой';
+        St:=Loc('That''s a corner','Це кутовий');
         await(Comment);
-        St:=Player1.Name + ' ' + Player1.Surname + ' навешивает';
+        St:=Player1.Name + ' ' + Player1.Surname + Loc(' swings it in',' навішує');
         await(Comment);
         DoPlayerP;
         n00:=random(50)+PlayerP[1];
@@ -933,7 +952,7 @@ var
 
    procedure EPr18; async;
    begin
-        St:='Мяч остаётся в игре';
+        St:=Loc('The ball stays in play','Мʼяч залишається у грі');
         await(Comment);
         n0:=random(100);
         case n0 of
@@ -948,9 +967,9 @@ var
    begin
         n0:=random(100);
         case n0 of
-        0..50:st:='Штанга!';
-        51..90:st:='Перекладина!'
-        else st:='Хрестовина!';
+        0..50:st:=Loc('Off the post!','Штанга!');
+        51..90:st:=Loc('Off the bar!','Перекладина!')
+        else st:=Loc('Off the angle!','Хрестовина!');
         end;
         await(Comment);
         n0:=random(100);
@@ -969,7 +988,7 @@ var
         n0:=random(100);
         case n0 of
         0..50:begin
-                   St:='Вратарь хватает мяч в руки!';
+                   St:=Loc('The keeper gathers it in his hands!','Воротар бере мʼяч у руки!');
                    await(Comment);
                    ChAt;
                    n:=16;
@@ -978,18 +997,18 @@ var
                   n0:=random(100);
                   case n0 of
                   0..50:begin
-                             St:='Вратарь отбивает мяч на угловой!';
+                             St:=Loc('The keeper tips it out for a corner!','Воротар відбиває мʼяч на кутовий!');
                              await(Comment);
                              n:=17;
                         end;
                   end;
                   if n0>50 then
                      begin
-                          St:='Вратарь отбивает мяч перед собой';
+                          St:=Loc('The keeper parries it in front of himself','Воротар відбиває мʼяч перед собою');
                           await(Comment);
-                          St:='Игроки бегут на добивание!';
+                          St:=Loc('Players rush in for the rebound!','Гравці біжать на добивання!');
                           await(Comment);
-                          St:='ЭТО ОЧЕНЬ ОПАСНО!!!';
+                          St:=Loc('THIS IS VERY DANGEROUS!!!','ЦЕ ДУЖЕ НЕБЕЗПЕЧНО!!!');
                           await(Comment);
                           repeat
                           n0:=random(10)+2;
@@ -1007,13 +1026,13 @@ var
 
    procedure EPr21; async;
    begin
-        St:='ГОЛ!!!';
+        St:=Loc('GOAL!!!','ГОЛ!!!');
         await(Comment);
-        St:='ГОЛ!!!';
+        St:=Loc('GOAL!!!','ГОЛ!!!');
         await(Comment);
-        St:='ГОЛ!!!';
+        St:=Loc('GOAL!!!','ГОЛ!!!');
         await(Comment);
-        St:=PlayerU.Name + ' ' + PlayerU.Surname + ' забивает этот гол!!!';
+        St:=PlayerU.Name + ' ' + PlayerU.Surname + Loc(' scores it!!!',' забиває цей гол!!!');
         NewThing(At,G,PlayerU.Surname,sp);
         inc(Match.Score[At]);
         sp:='';
@@ -1037,14 +1056,14 @@ var
                    n0:=random(100);
                    case n0 of
                    0..80:begin
-                              St:=Player1.surname+' нарушает правила и получает желтую карточку';
+                              St:=Player1.surname+Loc(' commits a foul and gets a yellow card',' порушує правила й отримує жовту картку');
                               NewThing(Pt,Y,Player1.surname,'');
                               await(Comment);
                               if Player1.Fall=YellowCard then
                                  begin
                                       Match.Ft[Pt].Footballers[n1].Fall:=RedCard;
                                       Match.Ft[Pt].Footballers[n1].Play:=False;
-                                      St:=Player1.surname+' вновь фолит, зарабатывает вторую желтую карточку и уходит с поля';
+                                      St:=Player1.surname+Loc(' fouls again, earns a second yellow and walks off the pitch',' знову фолить, заробляє другу жовту картку й залишає поле');
                                       NewThing(Pt,R,Player1.surname,'');
                                       await(Comment);
                                  end;
@@ -1054,14 +1073,14 @@ var
                            Match.Ft[Pt].Footballers[n1].Fall:=RedCard;
                            Match.Ft[Pt].Footballers[n1].Play:=False;
                            NewThing(Pt,R,Player1.surname,'');
-                           St:=Player1.surname+' жестоко фолит, зарабатывает красною карточку и уходит с поля';
+                           St:=Player1.surname+Loc(' fouls brutally, earns a red card and walks off the pitch',' жорстоко фолить, заробляє червону картку й залишає поле');
                            await(Comment);
                      end;
              end;
              end
              else
                begin
-                    St:=Player1.surname + ' нарушает правила при отборе мяча у противника';
+                    St:=Player1.surname + Loc(' fouls while tackling an opponent',' порушує правила під час відбору мʼяча');
                     await(Comment);
                end;
         end;
@@ -1076,29 +1095,29 @@ var
    procedure EPr23; async;
    begin
         Inc(MinNow);
-        St:='Судья указывает на "точку"';
+        St:=Loc('The referee points to the spot','Суддя вказує на «точку»');
         await(Comment);
-        St:='Команде ' + Match.Ft[At].Name + ' предостовляется возможность ударить пенальти!!!';
+        St:=Loc('Team ','Команді ') + Match.Ft[At].Name + Loc(' has been awarded a penalty!!!',' надається можливість пробити пенальті!!!');
         await(Comment);
-        sp:='п';
+        sp:=Loc('p','п');
         n0:=11;
         repeat
               PlayerU:=Match.Ft[At].FootBallers[n0];
               dec(n0);
         until PlayerU.Play;
-        St:='К мячу подходит ' + PlayerU.name + ' ' + PlayerU.surname;
+        St:=Loc('Stepping up to the ball is ','До мʼяча підходить ') + PlayerU.name + ' ' + PlayerU.surname;
         await(Comment);
-        St:='Он бъёт!!!';
+        St:=Loc('He shoots!!!','Він бʼє!!!');
         await(Comment);
         n0:=random(100)+1;
         case n0 of
         0..75:begin
-                   St:='Вратарь с мячом разлетаются в разные углы!';
+                   St:=Loc('Keeper and ball fly into opposite corners!','Воротар і мʼяч розлітаються в різні кути!');
                    await(Comment);
                    n:=21;
               end;
         76..90:begin
-                    St:='Вратарь ловит этот мяч!!!';
+                    St:=Loc('The keeper saves it!!!','Воротар ловить цей мʼяч!!!');
                     await(Comment);
                     ChAt;
                     n:=16;
@@ -1111,20 +1130,20 @@ var
    var n1:byte;
    begin
         Inc(MinNow);
-        St:='Потрясающий пас!';
+        St:=Loc('A stunning pass!','Приголомшливий пас!');
         await(Comment);
         repeat
         n0:=random(10)+2;
         PlayerU:=Match.Ft[At].FootBallers[n0];
         until PlayerU.Play=true;
         Player2:=Match.Ft[Pt].FootBallers[1];
-        St:=PlayerU.name + ' ' + PlayerU.surname + ' выходит один на один с ' + Player2.name + ' ' + Player2.surname;
+        St:=PlayerU.name + ' ' + PlayerU.surname + Loc(' is through one on one with ',' виходить сам на сам з ') + Player2.name + ' ' + Player2.surname;
         await(Comment);
         n0:=random(100)+1;
         n1:=random(100)+1;
         case n0 of
         1..25:begin
-                   St:='Он бъёт!!!';
+                   St:=Loc('He shoots!!!','Він бʼє!!!');
                    await(Comment);
                    case n1 of
                    1..60:n:=21;
@@ -1134,7 +1153,7 @@ var
                    end;
               end;
         26..50:begin
-                    St:='Он пускается обматывать вратаря!!!';
+                    St:=Loc('He goes to dribble round the keeper!!!','Він іде обігравати воротаря!!!');
                     await(Comment);
                     case n1 of
                     1..75:n:=21;
@@ -1147,7 +1166,7 @@ var
                     n0:=random(10)+2;
                     PlayerU:=Match.Ft[At].FootBallers[n0];
                     until PlayerU.Play=true;
-                    St:='Пас сквозь вратаря на ' + PlayerU.surname;
+                    St:=Loc('A pass past the keeper to ','Пас повз воротаря на ') + PlayerU.surname;
                     await(Comment);
                     case n1 of
                     1..75:n:=21;
@@ -1157,15 +1176,15 @@ var
                     end;
                end
         else begin
-                  St:='Неслыханое мужество!!!';
+                  St:=Loc('Unheard-of courage!!!','Нечувана сміливість!!!');
                   await(Comment);
                   repeat
                   n1:=random(10)+2;
                   Player2:=Match.Ft[Pt].FootBallers[n1];
                   until Player2.Play=true;
-                  St:=Player2.name + ' ' + Player2.surname + ' фоллит на ' + PlayerU.surname;
+                  St:=Player2.name + ' ' + Player2.surname + Loc(' fouls ',' фолить на ') + PlayerU.surname;
                   await(Comment);
-                  St:='Судья наказывает "героя" - красная карточка!!!';
+                  St:=Loc('The referee punishes the "hero" - a red card!!!','Суддя карає «героя» — червона картка!!!');
                   Match.Ft[Pt].Footballers[n1].Fall:=RedCard;
                   Match.Ft[Pt].Footballers[n1].Play:=False;
                   NewThing(Pt,R,Player2.surname,'');
@@ -1183,27 +1202,27 @@ var
               n00:=random(10)+2;
               PlayerU:=Match.Ft[Pt].FootBallers[n00];
         until PlayerU.Play;
-        St:='Мяч ударяется об ' + PlayerU.surname + ' и летит в направлении ворот!!!';
+        St:=Loc('The ball hits ','Мʼяч влучає в ') + PlayerU.surname + Loc(' and flies towards the goal!!!',' і летить у бік воріт!!!');
         await(Comment);
         n0:=random(100);
         if n0<90 then
            begin
-                St:='Вратарь уже ничего не может сделать';
+                St:=Loc('The keeper can do nothing about it','Воротар уже нічого не може вдіяти');
                 await(Comment);
-                St:='Свой забил своим!';
+                St:=Loc('An own goal!','Свій забив своїм!');
                 await(Comment);
-                St:='Вот уже откуда вратарь не ожидал удара!!!';
+                St:=Loc('That is the last place the keeper expected a shot from!!!','Ось звідки воротар удару не чекав!!!');
                 await(Comment);
-                St:='Какой позор!!!';
+                St:=Loc('What a disgrace!!!','Яка ганьба!!!');
                 await(Comment);
                 n0:=random(100);
                 if (n0<75) and (InOut[Pt]<>0) then await(HelpPr7(Pt,n00,0));
-                sp:='аг';
+                sp:=Loc('og','аг');
                 n:=21;
            end
         else
             begin
-                 St:='Вратарь достаёт до мяч, посланого своим же и спасает команду от позора!!!';
+                 St:=Loc('The keeper reaches his teammate''s ball and saves the day!!!','Воротар дістає свій же мʼяч і рятує команду від ганьби!!!');
                  await(Comment);
                  n:=16;
             end;
@@ -1214,7 +1233,7 @@ var
         n0:=random(5)+1;
         MinEnd:=MinEnd+n0;
         str(n0,st);
-        St:='Судья добавил к основному времени '+st+' минут';
+        St:=Loc('The referee has added to normal time ','Суддя додав до основного часу ')+st+Loc(' minutes',' хвилин');
         await(Comment);
    end;
 
@@ -1225,9 +1244,9 @@ var
              var p:byte;
              begin
                   Half:=5;
-                  sp:='сп';
+                  sp:=Loc('so','сп');
                   str(i,st);
-                  St:='Команда ' + Match.Ft[t].Name + ' бъёт свой ' + st + ' пенальти';
+                  St:=Loc('Team ','Команда ') + Match.Ft[t].Name + Loc(' takes his ',' бʼє свій ') + st + Loc(' penalty',' пенальті');
                   await(Comment);
                   repeat
                         p:=12-i;
@@ -1237,40 +1256,40 @@ var
                         PlayerU:=Match.Ft[t].FootBallers[p];
                         dec(p);
                   until PlayerU.Play;
-                  St:='К мячу подходит ' + PlayerU.name + ' ' + PlayerU.surname;
+                  St:=Loc('Stepping up to the ball is ','До мʼяча підходить ') + PlayerU.name + ' ' + PlayerU.surname;
                   await(Comment);
-                  St:='Он бъёт!!!';
+                  St:=Loc('He shoots!!!','Він бʼє!!!');
                   await(Comment);
                   n0:=random(100)+1;
                   case n0 of
                   0..75:begin
-                             St:='Вратарь с мячом разлетаются в разные углы!';
+                             St:=Loc('Keeper and ball fly into opposite corners!','Воротар і мʼяч розлітаються в різні кути!');
                              await(Comment);
-                             St:='ГОЛ!!!';
+                             St:=Loc('GOAL!!!','ГОЛ!!!');
                              await(Comment);
-                             St:='ГОЛ!!!';
+                             St:=Loc('GOAL!!!','ГОЛ!!!');
                              await(Comment);
-                             St:='ГОЛ!!!';
+                             St:=Loc('GOAL!!!','ГОЛ!!!');
                              await(Comment);
-                             St:=PlayerU.Name + ' ' + PlayerU.Surname + ' забивает этот гол!!!';
+                             St:=PlayerU.Name + ' ' + PlayerU.Surname + Loc(' scores it!!!',' забиває цей гол!!!');
                              NewThing(T,G,PlayerU.Surname,sp);
                              inc(Match.Score[t]);
                              end;
                   76..90:begin
-                              St:='Вратарь ловит этот мяч!!!';
+                              St:=Loc('The keeper saves it!!!','Воротар ловить цей мʼяч!!!');
                               await(Comment);
                          end
                   else begin
-                            St:='МИМО ВОРОТ!!!';
+                            St:=Loc('WIDE!!!','ПОВЗ ВОРОТА!!!');
                             await(Comment);
                        end;
                   end;
              end;
    begin
         Half:=5;
-        St:='После 120 минут - ничья! Результат - серия пенальти!';
+        St:=Loc('After 120 minutes it is a draw! It goes to a penalty shootout!','Після 120 хвилин — нічия! Результат — серія пенальті!');
         await(Comment);
-        St:='Первой бъёт команда ' + Match.Ft[At].Name;
+        St:=Loc('First to shoot is ','Першою бʼє команда ') + Match.Ft[At].Name;
         await(Comment);
         j:=1;
         repeat
@@ -1367,9 +1386,9 @@ var
            if (Match.HalfEnd=5) and (Match.Score[1]<>Match.Score[2]) and (Half<>1) and (Half<>3) then Flag:=true;
            if (Match.HalfEnd=5) and (Match.Score[1]=Match.Score[2]) and (Half=2) then
               begin
-                   St:='Матч окончился ничьёй!';
+                   St:=Loc('The match ended in a draw!','Матч завершився внічию!');
                    await(Comment);
-                   St:='Сейчас будут сыграны дополнительные таймы';
+                   St:=Loc('Extra time will now be played','Зараз будуть зіграні додаткові тайми');
                    await(Comment);
               end;
            if Half=5 then flag:=true;

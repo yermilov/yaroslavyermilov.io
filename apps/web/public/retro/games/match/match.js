@@ -2910,10 +2910,26 @@ rtl.module("crt",["System","JS"],function () {
     window.requestAnimationFrame($impl.TextPaint);
   };
 });
+rtl.module("nls",["System"],function () {
+  "use strict";
+  var $mod = this;
+  this.GameLang = function () {
+    var Result = "";
+    Result = "ua";
+    Result = (typeof window !== 'undefined' && window.__retroLang === 'en') ? 'en' : 'ua';
+    return Result;
+  };
+  this.Loc = function (en, ua) {
+    var Result = "";
+    if ($mod.GameLang() === "en") {
+      Result = en}
+     else Result = ua;
+    return Result;
+  };
+});
 rtl.module("EMatch",["System"],function () {
   "use strict";
   var $mod = this;
-  this.Monthes = ["Января","Февраля","Марта","Апреля","Майя","Июня","Июля","Августа","Сентября","Октября","Ноября","Декабря"];
   this.FallType = {"0": "NoFall", NoFall: 0, "1": "YellowCard", YellowCard: 1, "2": "RedCard", RedCard: 2};
   rtl.recNewT($mod,"DateType",function () {
     this.date = 0;
@@ -3094,6 +3110,38 @@ rtl.module("EMatch",["System"],function () {
     var SP = "";
     var flag = false;
     var InOut = rtl.arraySetLength(null,0,2);
+    function MonthName(i) {
+      var Result = "";
+      var $tmp = i;
+      if ($tmp === 1) {
+        Result = pas.nls.Loc("January","січня")}
+       else if ($tmp === 2) {
+        Result = pas.nls.Loc("February","лютого")}
+       else if ($tmp === 3) {
+        Result = pas.nls.Loc("March","березня")}
+       else if ($tmp === 4) {
+        Result = pas.nls.Loc("April","квітня")}
+       else if ($tmp === 5) {
+        Result = pas.nls.Loc("May","травня")}
+       else if ($tmp === 6) {
+        Result = pas.nls.Loc("June","червня")}
+       else if ($tmp === 7) {
+        Result = pas.nls.Loc("July","липня")}
+       else if ($tmp === 8) {
+        Result = pas.nls.Loc("August","серпня")}
+       else if ($tmp === 9) {
+        Result = pas.nls.Loc("September","вересня")}
+       else if ($tmp === 10) {
+        Result = pas.nls.Loc("October","жовтня")}
+       else if ($tmp === 11) {
+        Result = pas.nls.Loc("November","листопада")}
+       else if ($tmp === 12) {
+        Result = pas.nls.Loc("December","грудня")}
+       else {
+        Result = "";
+      };
+      return Result;
+    };
     function NewThing(i, a, b, stp) {
       var j = 0;
       var abc = false;
@@ -3169,12 +3217,12 @@ rtl.module("EMatch",["System"],function () {
         st1 = "120+" + st2;
       };
       if (Half !== 5) {
-        St = st1 + " минута матча";
+        St = st1 + pas.nls.Loc(" minute of the match"," хвилина матчу");
         m = St.length;
         pas.crt.GotoXY(40 - Math.floor(m / 2),9);
         pas.System.Write(St);
       } else {
-        St = "Серия пенальти";
+        St = pas.nls.Loc("Penalty shootout","Серія пенальті");
         m = St.length;
         pas.crt.GotoXY(40 - Math.floor(m / 2),9);
         pas.System.Write(St);
@@ -3354,48 +3402,48 @@ rtl.module("EMatch",["System"],function () {
       var st001 = "";
       var st002 = "";
       St1 = "" + Match.Stadium.Seats;
-      St = "Мы вновь приветствуем вас на стадионе " + Match.Stadium.name + " (" + St1 + " мест)";
+      St = pas.nls.Loc("We welcome you back to the ","Ми знову вітаємо вас на стадіоні ") + Match.Stadium.name + " (" + St1 + pas.nls.Loc(" seats)"," місць)");
       await Comment();
       St1 = "" + Match.Date.date;
-      st2 = $mod.Monthes[Match.Date.month - 1];
+      st2 = MonthName(Match.Date.month);
       st3 = "" + Match.Date.year;
-      St = "Сегодня " + St1 + " " + st2 + " " + st3 + " года";
+      St = pas.nls.Loc("Today is ","Сьогодні ") + St1 + " " + st2 + " " + st3 + pas.nls.Loc(""," року");
       await Comment();
       St1 = "" + Match.OnLooker;
-      St = St1 + " зрителей на стадионе собрались, чтобы посмотреть этот матч";
+      St = St1 + pas.nls.Loc(" spectators have gathered at the stadium to watch this match"," глядачів зібралися на стадіоні, щоб подивитися цей матч");
       await Comment();
-      St = "Играют:";
+      St = pas.nls.Loc("Playing:","Грають:");
       await Comment();
       St = Match.Ft[0].name + " (" + Match.Ft[0].state.name + ")";
       await Comment();
-      St = "ПРОТИВ";
+      St = pas.nls.Loc("VERSUS","ПРОТИ");
       await Comment();
       St = Match.Ft[1].name + " (" + Match.Ft[1].state.name + ")";
       await Comment();
-      St = "Составы команд";
+      St = pas.nls.Loc("Line-ups","Склади команд");
       await Comment();
       await Sostav();
       n0 = pas.System.Random(100);
       var $tmp = n0;
       if (($tmp >= 0) && ($tmp <= 10)) {
-        st3 = "Идёт снег"}
+        st3 = pas.nls.Loc("Snowing","Іде сніг")}
        else if (($tmp >= 11) && ($tmp <= 30)) {
-        st3 = "Идёт дождь"}
+        st3 = pas.nls.Loc("Raining","Іде дощ")}
        else if (($tmp >= 31) && ($tmp <= 60)) {
-        st3 = "Пасмурно"}
+        st3 = pas.nls.Loc("Overcast","Хмарно")}
        else {
-        st3 = "Солнечно";
+        st3 = pas.nls.Loc("Sunny","Сонячно");
       };
-      St = "Погода на поле:";
+      St = pas.nls.Loc("Weather on the pitch:","Погода на полі:");
       await Comment();
       St = st3;
       await Comment();
       st3 = "" + (Half - 1);
       st001 = "" + Match.Score[0];
       st002 = "" + Match.Score[1];
-      St = "Напоминаем, счёт после " + st3 + " тайма - " + st001 + ":" + st002;
+      St = pas.nls.Loc("A reminder, the score after ","Нагадуємо, рахунок після ") + st3 + pas.nls.Loc(" half - "," тайму - ") + st001 + ":" + st002;
       await Comment();
-      St = "Ну что же команды готовы начать следующий тайм. Судья даёт свисток и ... ";
+      St = pas.nls.Loc("The teams are ready for the next half. The referee whistles and ... ","Що ж, команди готові почати наступний тайм. Суддя дає свисток і ... ");
       await Comment();
       St = "";
       await Comment();
@@ -3406,7 +3454,7 @@ rtl.module("EMatch",["System"],function () {
       St = "" + Half;
       st001 = "" + Match.Score[0];
       st002 = "" + Match.Score[1];
-      St = "Итак, " + St + " тайм окончен и счёт - " + st001 + ":" + st002;
+      St = pas.nls.Loc("So, ","Отже, ") + St + pas.nls.Loc(" half is over and the score is - "," тайм завершено, рахунок - ") + st001 + ":" + st002;
       await Comment();
     };
     async function HelpPr4() {
@@ -3414,48 +3462,48 @@ rtl.module("EMatch",["System"],function () {
       var st002 = "";
       st001 = "" + Match.Score[0];
       st002 = "" + Match.Score[1];
-      St = "Итак, матч окончен и счёт - " + st001 + ":" + st002;
+      St = pas.nls.Loc("So, the match is over and the score is - ","Отже, матч завершено, рахунок - ") + st001 + ":" + st002;
       await Comment();
     };
     async function HelpPr1() {
       St1 = "" + Match.Stadium.Seats;
-      St = "Мы приветствуем вас на стадионе " + Match.Stadium.name + " (" + St1 + " мест)";
+      St = pas.nls.Loc("We welcome you to the ","Ми вітаємо вас на стадіоні ") + Match.Stadium.name + " (" + St1 + pas.nls.Loc(" seats)"," місць)");
       await Comment();
       St1 = "" + Match.Date.date;
-      st2 = $mod.Monthes[Match.Date.month - 1];
+      st2 = MonthName(Match.Date.month);
       st3 = "" + Match.Date.year;
-      St = "Сегодня " + St1 + " " + st2 + " " + st3 + " года";
+      St = pas.nls.Loc("Today is ","Сьогодні ") + St1 + " " + st2 + " " + st3 + pas.nls.Loc(""," року");
       await Comment();
       St1 = "" + Match.OnLooker;
-      St = St1 + " зрителей на стадионе собрались, чтобы посмотреть этот матч";
+      St = St1 + pas.nls.Loc(" spectators have gathered at the stadium to watch this match"," глядачів зібралися на стадіоні, щоб подивитися цей матч");
       await Comment();
-      St = "Играют:";
+      St = pas.nls.Loc("Playing:","Грають:");
       await Comment();
       St = Match.Ft[0].name + " (" + Match.Ft[0].state.name + ")";
       await Comment();
-      St = "ПРОТИВ";
+      St = pas.nls.Loc("VERSUS","ПРОТИ");
       await Comment();
       St = Match.Ft[1].name + " (" + Match.Ft[1].state.name + ")";
       await Comment();
-      St = "Составы команд";
+      St = pas.nls.Loc("Line-ups","Склади команд");
       await Comment();
       await Sostav();
       n0 = pas.System.Random(100);
       var $tmp = n0;
       if (($tmp >= 0) && ($tmp <= 10)) {
-        st3 = "Идёт снег"}
+        st3 = pas.nls.Loc("Snowing","Іде сніг")}
        else if (($tmp >= 11) && ($tmp <= 30)) {
-        st3 = "Идёт дождь"}
+        st3 = pas.nls.Loc("Raining","Іде дощ")}
        else if (($tmp >= 31) && ($tmp <= 60)) {
-        st3 = "Пасмурно"}
+        st3 = pas.nls.Loc("Overcast","Хмарно")}
        else {
-        st3 = "Солнечно";
+        st3 = pas.nls.Loc("Sunny","Сонячно");
       };
-      St = "Погода на поле:";
+      St = pas.nls.Loc("Weather on the pitch:","Погода на полі:");
       await Comment();
       St = st3;
       await Comment();
-      St = "Ну что же команды готовы начать матч. Судья даёт свисток и ... ";
+      St = pas.nls.Loc("The teams are ready to start. The referee whistles and ... ","Що ж, команди готові почати матч. Суддя дає свисток і ... ");
       await Comment();
       St = "";
       await Comment();
@@ -3465,7 +3513,7 @@ rtl.module("EMatch",["System"],function () {
       if (t === 0) t = pas.System.Random(2) + 1;
       if (p1 === 0) p1 = pas.System.Random(10) + 2;
       if (p2 === 0) p2 = pas.System.Random(4) + 12;
-      St = "В команде " + Match.Ft[t - 1].name + " замена:";
+      St = pas.nls.Loc("In the ","У команді ") + Match.Ft[t - 1].name + pas.nls.Loc(" squad, a substitution:"," заміна:");
       await Comment();
       St = "";
       await Comment();
@@ -3500,13 +3548,13 @@ rtl.module("EMatch",["System"],function () {
         p1 = pas.System.Random(10) + 2;
         Player1.$assign(Match.Ft[nt - 1].footballers[p1 - 1]);
       } while (!Player1.play);
-      St = "В команде " + Match.Ft[nt - 1].name + " травмирован " + Player1.name + " " + Player1.surname;
+      St = pas.nls.Loc("In the ","У команді ") + Match.Ft[nt - 1].name + pas.nls.Loc(" is injured "," травмований ") + Player1.name + " " + Player1.surname;
       NewThing(nt,TTT.t,Player1.surname,"");
       await Comment();
       await HelpPr7(nt,p1,0);
     };
     async function EPr1() {
-      St = "Команда " + Match.Ft[At - 1].name + " разводит";
+      St = pas.nls.Loc("Team ","Команда ") + Match.Ft[At - 1].name + pas.nls.Loc(" kicks off"," розігрує мʼяч");
       await Comment();
       n0 = pas.System.Random(100) + 1;
       var $tmp = n0;
@@ -3517,7 +3565,7 @@ rtl.module("EMatch",["System"],function () {
       };
     };
     async function EPr2() {
-      St = Match.Ft[At - 1].name + " распасовуется";
+      St = Match.Ft[At - 1].name + pas.nls.Loc(" knocks it around"," розпасовується");
       MinNow += 1;
       await Comment();
       n0 = (pas.System.Random(50) + TeamP[At - 1]) - TeamP[Pt - 1];
@@ -3533,7 +3581,7 @@ rtl.module("EMatch",["System"],function () {
     async function EPr3() {
       var n00 = 0;
       MinNow += 1;
-      St = Match.Ft[At - 1].name + " начинает свою атаку";
+      St = Match.Ft[At - 1].name + pas.nls.Loc(" starts an attack"," починає свою атаку");
       await Comment();
       n0 = pas.System.Random(50);
       n00 = (n0 + TeamP[At - 1]) - TeamP[Pt - 1];
@@ -3552,7 +3600,7 @@ rtl.module("EMatch",["System"],function () {
     };
     async function EPr4() {
       MinNow += 1;
-      St = Match.Ft[Pt - 1].name + " перехватывает мяч";
+      St = Match.Ft[Pt - 1].name + pas.nls.Loc(" intercepts the ball"," перехоплює мʼяч");
       await Comment();
       n0 = pas.System.Random(100);
       var $tmp = n0;
@@ -3572,7 +3620,7 @@ rtl.module("EMatch",["System"],function () {
         n0 = pas.System.Random(10) + 2;
         Player1.$assign(Match.Ft[At - 1].footballers[n0 - 1]);
       } while (!(Player1.play === true));
-      St = Player1.name + " " + Player1.surname + " проходит сам";
+      St = Player1.name + " " + Player1.surname + pas.nls.Loc(" goes past on his own"," проходить сам");
       await Comment();
       DoPlayerP();
       n00 = Math.floor(((PlayerP[0] + pas.System.Random(51)) - 25) / 10);
@@ -3604,7 +3652,7 @@ rtl.module("EMatch",["System"],function () {
       n0 = pas.System.Random(100) + 1;
       var $tmp = n0;
       if (($tmp >= 1) && ($tmp <= 25)) {
-        St = "Пас на " + Player2.surname;
+        St = pas.nls.Loc("A pass to ","Пас на ") + Player2.surname;
         await Comment();
         if (n00 < 2) {
           N = 4}
@@ -3622,13 +3670,13 @@ rtl.module("EMatch",["System"],function () {
           };
         };
       } else if (($tmp >= 26) && ($tmp <= 50)) {
-        St = Player2.surname + " навешивает";
+        St = Player2.surname + pas.nls.Loc(" swings it in"," навішує");
         await Comment();
         if (n00 < 2) {
           N = 4}
          else N = 8;
       } else if (($tmp >= 51) && ($tmp <= 75)) {
-        St = Player2.surname + " простреливает в штрафную площадку";
+        St = Player2.surname + pas.nls.Loc(" drills it into the box"," прострілює у штрафний майданчик");
         await Comment();
         if (n00 < 2) {
           N = 4}
@@ -3653,7 +3701,7 @@ rtl.module("EMatch",["System"],function () {
       } while (!(Player1.play === true));
       PlayerU.$assign(Player1);
       MinNow += 1;
-      St = Player1.surname + " бъёт!";
+      St = Player1.surname + pas.nls.Loc(" shoots!"," бʼє!");
       await Comment();
       DoPlayerP();
       n0 = pas.System.Random(50) + PlayerP[0];
@@ -3679,13 +3727,13 @@ rtl.module("EMatch",["System"],function () {
         n0 = pas.System.Random(100);
         var $tmp1 = n0;
         if (($tmp1 >= 0) && ($tmp1 <= 80)) {
-          St = Player1.surname + " нарушает правила и получает желтую карточку";
+          St = Player1.surname + pas.nls.Loc(" commits a foul and gets a yellow card"," порушує правила й отримує жовту картку");
           NewThing(At,TTT.y,Player1.surname,"");
           await Comment();
           if (Player1.fall === $mod.FallType.YellowCard) {
             Match.Ft[At - 1].footballers[n1 - 1].fall = $mod.FallType.RedCard;
             Match.Ft[At - 1].footballers[n1 - 1].play = false;
-            St = Player1.surname + " вновь фолит, зарабатывает вторую желтую карточку и уходит с поля";
+            St = Player1.surname + pas.nls.Loc(" fouls again, earns a second yellow and walks off the pitch"," знову фолить, заробляє другу жовту картку й залишає поле");
             NewThing(At,TTT.r,Player1.surname,"");
             await Comment();
           };
@@ -3694,16 +3742,16 @@ rtl.module("EMatch",["System"],function () {
           Match.Ft[At - 1].footballers[n1 - 1].fall = $mod.FallType.RedCard;
           Match.Ft[At - 1].footballers[n1 - 1].play = false;
           NewThing(At,TTT.r,Player1.surname,"");
-          St = Player1.surname + " жестоко фолит, зарабатывает красною карточку и уходит с поля";
+          St = Player1.surname + pas.nls.Loc(" fouls brutally, earns a red card and walks off the pitch"," жорстоко фолить, заробляє червону картку й залишає поле");
           await Comment();
         };
       } else {
-        St = Player1.surname + " нарушает правила при проходе";
+        St = Player1.surname + pas.nls.Loc(" fouls while being taken on"," порушує правила під час проходу");
         await Comment();
       };
       ChAt();
       MinNow += 1;
-      St = Match.Ft[At - 1].name + " бъёт штрафной удар со своей половины поля";
+      St = Match.Ft[At - 1].name + pas.nls.Loc(" takes a free kick from his own half"," бʼє штрафний зі своєї половини поля");
       await Comment();
       n0 = pas.System.Random(100);
       var $tmp2 = n0;
@@ -3720,9 +3768,9 @@ rtl.module("EMatch",["System"],function () {
       } while (!(Player1.play === true));
       PlayerU.$assign(Player1);
       MinNow += 1;
-      St = Player1.surname + " бъёт штрафной удар";
+      St = Player1.surname + pas.nls.Loc(" takes a free kick"," бʼє штрафний");
       await Comment();
-      St = "УДАР!!!";
+      St = pas.nls.Loc("A SHOT!!!","УДАР!!!");
       await Comment();
       DoPlayerP();
       n0 = pas.System.Random(50) + PlayerP[0];
@@ -3736,7 +3784,7 @@ rtl.module("EMatch",["System"],function () {
       };
     };
     async function EPr11() {
-      St = "Мяч попадает в игрока";
+      St = pas.nls.Loc("The ball hits a player","Мʼяч влучає в гравця");
       MinNow += 1;
       await Comment();
       n0 = pas.System.Random(100) + 1;
@@ -3746,7 +3794,7 @@ rtl.module("EMatch",["System"],function () {
        else if (($tmp >= 51) && ($tmp <= 100)) N = 18;
     };
     async function Epr12() {
-      St = "МИМО ВОРОТ! Как же было опасно но ... мимо!";
+      St = pas.nls.Loc("WIDE! So dangerous, and yet ... wide!","ПОВЗ ВОРОТА! Як же було небезпечно, але ... повз!");
       MinNow += 1;
       await Comment();
       ChAt();
@@ -3754,7 +3802,7 @@ rtl.module("EMatch",["System"],function () {
     };
     async function EPr13() {
       var n00 = 0;
-      St = "ОПАСНО!!!";
+      St = pas.nls.Loc("DANGEROUS!!!","НЕБЕЗПЕЧНО!!!");
       await Comment();
       Player1.$assign(PlayerU);
       Player2.$assign(Match.Ft[At - 1].footballers[0]);
@@ -3773,7 +3821,7 @@ rtl.module("EMatch",["System"],function () {
       };
     };
     async function EPr14() {
-      St = "Мяч вышел за перделы поля";
+      St = pas.nls.Loc("The ball has gone out of play","Мʼяч вийшов за межі поля");
       await Comment();
       n0 = pas.System.Random(100);
       var $tmp = n0;
@@ -3789,7 +3837,7 @@ rtl.module("EMatch",["System"],function () {
       };
     };
     async function EPr141() {
-      St = "Мяч выходит от игроков " + Match.Ft[At - 1].name;
+      St = pas.nls.Loc("The ball goes out off ","Мʼяч виходить від гравців ") + Match.Ft[At - 1].name;
       await Comment();
       ChAt();
       n0 = pas.System.Random(100) + 1;
@@ -3801,7 +3849,7 @@ rtl.module("EMatch",["System"],function () {
       };
     };
     async function EPr142() {
-      St = "Мяч выходит от игроков " + Match.Ft[Pt - 1].name;
+      St = pas.nls.Loc("The ball goes out off ","Мʼяч виходить від гравців ") + Match.Ft[Pt - 1].name;
       await Comment();
       n0 = pas.System.Random(100) + 1;
       var $tmp = n0;
@@ -3816,7 +3864,7 @@ rtl.module("EMatch",["System"],function () {
       var np2 = 0;
       var n00 = 0;
       MinNow += 1;
-      St = "Это аут";
+      St = pas.nls.Loc("That's a throw-in","Це аут");
       await Comment();
       do {
         np1 = pas.System.Random(10) + 2;
@@ -3824,7 +3872,7 @@ rtl.module("EMatch",["System"],function () {
         Player1.$assign(Match.Ft[At - 1].footballers[np1 - 1]);
         Player2.$assign(Match.Ft[At - 1].footballers[np2 - 1]);
       } while (!((np1 !== np2) && Player1.play && Player2.play));
-      St = Player1.name + " " + Player1.surname + " выбрасывает мяч на " + Player2.surname;
+      St = Player1.name + " " + Player1.surname + pas.nls.Loc(" throws the ball to "," викидає мʼяч на ") + Player2.surname;
       await Comment();
       DoPlayerP();
       n00 = pas.System.Random(50) + PlayerP[1];
@@ -3843,7 +3891,7 @@ rtl.module("EMatch",["System"],function () {
     async function EPr16() {
       var n00 = 0;
       Player1.$assign(Match.Ft[At - 1].footballers[0]);
-      St = Player1.name + " " + Player1.surname + " выбивает мяч от ворот";
+      St = Player1.name + " " + Player1.surname + pas.nls.Loc(" takes the goal kick"," вибиває мʼяч від воріт");
       await Comment();
       DoPlayerP();
       n00 = pas.System.Random(50) + PlayerP[0];
@@ -3866,9 +3914,9 @@ rtl.module("EMatch",["System"],function () {
         Player1.$assign(Match.Ft[At - 1].footballers[n0 - 1]);
       } while (!Player1.play);
       MinNow += 1;
-      St = "Это угловой";
+      St = pas.nls.Loc("That's a corner","Це кутовий");
       await Comment();
-      St = Player1.name + " " + Player1.surname + " навешивает";
+      St = Player1.name + " " + Player1.surname + pas.nls.Loc(" swings it in"," навішує");
       await Comment();
       DoPlayerP();
       n00 = pas.System.Random(50) + PlayerP[0];
@@ -3877,7 +3925,7 @@ rtl.module("EMatch",["System"],function () {
        else N = 8;
     };
     async function EPr18() {
-      St = "Мяч остаётся в игре";
+      St = pas.nls.Loc("The ball stays in play","Мʼяч залишається у грі");
       await Comment();
       n0 = pas.System.Random(100);
       var $tmp = n0;
@@ -3895,11 +3943,11 @@ rtl.module("EMatch",["System"],function () {
       n0 = pas.System.Random(100);
       var $tmp = n0;
       if (($tmp >= 0) && ($tmp <= 50)) {
-        St = "Штанга!"}
+        St = pas.nls.Loc("Off the post!","Штанга!")}
        else if (($tmp >= 51) && ($tmp <= 90)) {
-        St = "Перекладина!"}
+        St = pas.nls.Loc("Off the bar!","Перекладина!")}
        else {
-        St = "Хрестовина!";
+        St = pas.nls.Loc("Off the angle!","Хрестовина!");
       };
       await Comment();
       n0 = pas.System.Random(100);
@@ -3921,7 +3969,7 @@ rtl.module("EMatch",["System"],function () {
       n0 = pas.System.Random(100);
       var $tmp = n0;
       if (($tmp >= 0) && ($tmp <= 50)) {
-        St = "Вратарь хватает мяч в руки!";
+        St = pas.nls.Loc("The keeper gathers it in his hands!","Воротар бере мʼяч у руки!");
         await Comment();
         ChAt();
         N = 16;
@@ -3929,16 +3977,16 @@ rtl.module("EMatch",["System"],function () {
         n0 = pas.System.Random(100);
         var $tmp1 = n0;
         if (($tmp1 >= 0) && ($tmp1 <= 50)) {
-          St = "Вратарь отбивает мяч на угловой!";
+          St = pas.nls.Loc("The keeper tips it out for a corner!","Воротар відбиває мʼяч на кутовий!");
           await Comment();
           N = 17;
         };
         if (n0 > 50) {
-          St = "Вратарь отбивает мяч перед собой";
+          St = pas.nls.Loc("The keeper parries it in front of himself","Воротар відбиває мʼяч перед собою");
           await Comment();
-          St = "Игроки бегут на добивание!";
+          St = pas.nls.Loc("Players rush in for the rebound!","Гравці біжать на добивання!");
           await Comment();
-          St = "ЭТО ОЧЕНЬ ОПАСНО!!!";
+          St = pas.nls.Loc("THIS IS VERY DANGEROUS!!!","ЦЕ ДУЖЕ НЕБЕЗПЕЧНО!!!");
           await Comment();
           do {
             n0 = pas.System.Random(10) + 2;
@@ -3955,13 +4003,13 @@ rtl.module("EMatch",["System"],function () {
       };
     };
     async function EPr21() {
-      St = "ГОЛ!!!";
+      St = pas.nls.Loc("GOAL!!!","ГОЛ!!!");
       await Comment();
-      St = "ГОЛ!!!";
+      St = pas.nls.Loc("GOAL!!!","ГОЛ!!!");
       await Comment();
-      St = "ГОЛ!!!";
+      St = pas.nls.Loc("GOAL!!!","ГОЛ!!!");
       await Comment();
-      St = PlayerU.name + " " + PlayerU.surname + " забивает этот гол!!!";
+      St = PlayerU.name + " " + PlayerU.surname + pas.nls.Loc(" scores it!!!"," забиває цей гол!!!");
       NewThing(At,TTT.g,PlayerU.surname,SP);
       Match.Score[At - 1] += 1;
       SP = "";
@@ -3982,13 +4030,13 @@ rtl.module("EMatch",["System"],function () {
         n0 = pas.System.Random(100);
         var $tmp1 = n0;
         if (($tmp1 >= 0) && ($tmp1 <= 80)) {
-          St = Player1.surname + " нарушает правила и получает желтую карточку";
+          St = Player1.surname + pas.nls.Loc(" commits a foul and gets a yellow card"," порушує правила й отримує жовту картку");
           NewThing(Pt,TTT.y,Player1.surname,"");
           await Comment();
           if (Player1.fall === $mod.FallType.YellowCard) {
             Match.Ft[Pt - 1].footballers[n1 - 1].fall = $mod.FallType.RedCard;
             Match.Ft[Pt - 1].footballers[n1 - 1].play = false;
-            St = Player1.surname + " вновь фолит, зарабатывает вторую желтую карточку и уходит с поля";
+            St = Player1.surname + pas.nls.Loc(" fouls again, earns a second yellow and walks off the pitch"," знову фолить, заробляє другу жовту картку й залишає поле");
             NewThing(Pt,TTT.r,Player1.surname,"");
             await Comment();
           };
@@ -3997,11 +4045,11 @@ rtl.module("EMatch",["System"],function () {
           Match.Ft[Pt - 1].footballers[n1 - 1].fall = $mod.FallType.RedCard;
           Match.Ft[Pt - 1].footballers[n1 - 1].play = false;
           NewThing(Pt,TTT.r,Player1.surname,"");
-          St = Player1.surname + " жестоко фолит, зарабатывает красною карточку и уходит с поля";
+          St = Player1.surname + pas.nls.Loc(" fouls brutally, earns a red card and walks off the pitch"," жорстоко фолить, заробляє червону картку й залишає поле");
           await Comment();
         };
       } else {
-        St = Player1.surname + " нарушает правила при отборе мяча у противника";
+        St = Player1.surname + pas.nls.Loc(" fouls while tackling an opponent"," порушує правила під час відбору мʼяча");
         await Comment();
       };
       MinNow += 1;
@@ -4015,28 +4063,28 @@ rtl.module("EMatch",["System"],function () {
     };
     async function EPr23() {
       MinNow += 1;
-      St = 'Судья указывает на "точку"';
+      St = pas.nls.Loc("The referee points to the spot","Суддя вказує на «точку»");
       await Comment();
-      St = "Команде " + Match.Ft[At - 1].name + " предостовляется возможность ударить пенальти!!!";
+      St = pas.nls.Loc("Team ","Команді ") + Match.Ft[At - 1].name + pas.nls.Loc(" has been awarded a penalty!!!"," надається можливість пробити пенальті!!!");
       await Comment();
-      SP = "п";
+      SP = pas.nls.Loc("p","п");
       n0 = 11;
       do {
         PlayerU.$assign(Match.Ft[At - 1].footballers[n0 - 1]);
         n0 -= 1;
       } while (!PlayerU.play);
-      St = "К мячу подходит " + PlayerU.name + " " + PlayerU.surname;
+      St = pas.nls.Loc("Stepping up to the ball is ","До мʼяча підходить ") + PlayerU.name + " " + PlayerU.surname;
       await Comment();
-      St = "Он бъёт!!!";
+      St = pas.nls.Loc("He shoots!!!","Він бʼє!!!");
       await Comment();
       n0 = pas.System.Random(100) + 1;
       var $tmp = n0;
       if (($tmp >= 0) && ($tmp <= 75)) {
-        St = "Вратарь с мячом разлетаются в разные углы!";
+        St = pas.nls.Loc("Keeper and ball fly into opposite corners!","Воротар і мʼяч розлітаються в різні кути!");
         await Comment();
         N = 21;
       } else if (($tmp >= 76) && ($tmp <= 90)) {
-        St = "Вратарь ловит этот мяч!!!";
+        St = pas.nls.Loc("The keeper saves it!!!","Воротар ловить цей мʼяч!!!");
         await Comment();
         ChAt();
         N = 16;
@@ -4047,20 +4095,20 @@ rtl.module("EMatch",["System"],function () {
     async function EPr24() {
       var n1 = 0;
       MinNow += 1;
-      St = "Потрясающий пас!";
+      St = pas.nls.Loc("A stunning pass!","Приголомшливий пас!");
       await Comment();
       do {
         n0 = pas.System.Random(10) + 2;
         PlayerU.$assign(Match.Ft[At - 1].footballers[n0 - 1]);
       } while (!(PlayerU.play === true));
       Player2.$assign(Match.Ft[Pt - 1].footballers[0]);
-      St = PlayerU.name + " " + PlayerU.surname + " выходит один на один с " + Player2.name + " " + Player2.surname;
+      St = PlayerU.name + " " + PlayerU.surname + pas.nls.Loc(" is through one on one with "," виходить сам на сам з ") + Player2.name + " " + Player2.surname;
       await Comment();
       n0 = pas.System.Random(100) + 1;
       n1 = pas.System.Random(100) + 1;
       var $tmp = n0;
       if (($tmp >= 1) && ($tmp <= 25)) {
-        St = "Он бъёт!!!";
+        St = pas.nls.Loc("He shoots!!!","Він бʼє!!!");
         await Comment();
         var $tmp1 = n1;
         if (($tmp1 >= 1) && ($tmp1 <= 60)) {
@@ -4073,7 +4121,7 @@ rtl.module("EMatch",["System"],function () {
           N = 12;
         };
       } else if (($tmp >= 26) && ($tmp <= 50)) {
-        St = "Он пускается обматывать вратаря!!!";
+        St = pas.nls.Loc("He goes to dribble round the keeper!!!","Він іде обігравати воротаря!!!");
         await Comment();
         var $tmp2 = n1;
         if (($tmp2 >= 1) && ($tmp2 <= 75)) {
@@ -4089,7 +4137,7 @@ rtl.module("EMatch",["System"],function () {
           n0 = pas.System.Random(10) + 2;
           PlayerU.$assign(Match.Ft[At - 1].footballers[n0 - 1]);
         } while (!(PlayerU.play === true));
-        St = "Пас сквозь вратаря на " + PlayerU.surname;
+        St = pas.nls.Loc("A pass past the keeper to ","Пас повз воротаря на ") + PlayerU.surname;
         await Comment();
         var $tmp3 = n1;
         if (($tmp3 >= 1) && ($tmp3 <= 75)) {
@@ -4103,15 +4151,15 @@ rtl.module("EMatch",["System"],function () {
           N = 16;
         };
       } else {
-        St = "Неслыханое мужество!!!";
+        St = pas.nls.Loc("Unheard-of courage!!!","Нечувана сміливість!!!");
         await Comment();
         do {
           n1 = pas.System.Random(10) + 2;
           Player2.$assign(Match.Ft[Pt - 1].footballers[n1 - 1]);
         } while (!(Player2.play === true));
-        St = Player2.name + " " + Player2.surname + " фоллит на " + PlayerU.surname;
+        St = Player2.name + " " + Player2.surname + pas.nls.Loc(" fouls "," фолить на ") + PlayerU.surname;
         await Comment();
-        St = 'Судья наказывает "героя" - красная карточка!!!';
+        St = pas.nls.Loc('The referee punishes the "hero" - a red card!!!',"Суддя карає «героя» — червона картка!!!");
         Match.Ft[Pt - 1].footballers[n1 - 1].fall = $mod.FallType.RedCard;
         Match.Ft[Pt - 1].footballers[n1 - 1].play = false;
         NewThing(Pt,TTT.r,Player2.surname,"");
@@ -4126,24 +4174,24 @@ rtl.module("EMatch",["System"],function () {
         n00 = pas.System.Random(10) + 2;
         PlayerU.$assign(Match.Ft[Pt - 1].footballers[n00 - 1]);
       } while (!PlayerU.play);
-      St = "Мяч ударяется об " + PlayerU.surname + " и летит в направлении ворот!!!";
+      St = pas.nls.Loc("The ball hits ","Мʼяч влучає в ") + PlayerU.surname + pas.nls.Loc(" and flies towards the goal!!!"," і летить у бік воріт!!!");
       await Comment();
       n0 = pas.System.Random(100);
       if (n0 < 90) {
-        St = "Вратарь уже ничего не может сделать";
+        St = pas.nls.Loc("The keeper can do nothing about it","Воротар уже нічого не може вдіяти");
         await Comment();
-        St = "Свой забил своим!";
+        St = pas.nls.Loc("An own goal!","Свій забив своїм!");
         await Comment();
-        St = "Вот уже откуда вратарь не ожидал удара!!!";
+        St = pas.nls.Loc("That is the last place the keeper expected a shot from!!!","Ось звідки воротар удару не чекав!!!");
         await Comment();
-        St = "Какой позор!!!";
+        St = pas.nls.Loc("What a disgrace!!!","Яка ганьба!!!");
         await Comment();
         n0 = pas.System.Random(100);
         if ((n0 < 75) && (InOut[Pt - 1] !== 0)) await HelpPr7(Pt,n00,0);
-        SP = "аг";
+        SP = pas.nls.Loc("og","аг");
         N = 21;
       } else {
-        St = "Вратарь достаёт до мяч, посланого своим же и спасает команду от позора!!!";
+        St = pas.nls.Loc("The keeper reaches his teammate's ball and saves the day!!!","Воротар дістає свій же мʼяч і рятує команду від ганьби!!!");
         await Comment();
         N = 16;
       };
@@ -4152,7 +4200,7 @@ rtl.module("EMatch",["System"],function () {
       n0 = pas.System.Random(5) + 1;
       MinEnd = MinEnd + n0;
       St = "" + n0;
-      St = "Судья добавил к основному времени " + St + " минут";
+      St = pas.nls.Loc("The referee has added to normal time ","Суддя додав до основного часу ") + St + pas.nls.Loc(" minutes"," хвилин");
       await Comment();
     };
     async function HelpPr6() {
@@ -4160,9 +4208,9 @@ rtl.module("EMatch",["System"],function () {
       async function Penalti(i, t) {
         var p = 0;
         Half = 5;
-        SP = "сп";
+        SP = pas.nls.Loc("so","сп");
         St = "" + i;
-        St = "Команда " + Match.Ft[t - 1].name + " бъёт свой " + St + " пенальти";
+        St = pas.nls.Loc("Team ","Команда ") + Match.Ft[t - 1].name + pas.nls.Loc(" takes his "," бʼє свій ") + St + pas.nls.Loc(" penalty"," пенальті");
         await Comment();
         do {
           p = 12 - i;
@@ -4172,36 +4220,36 @@ rtl.module("EMatch",["System"],function () {
           PlayerU.$assign(Match.Ft[t - 1].footballers[p - 1]);
           p -= 1;
         } while (!PlayerU.play);
-        St = "К мячу подходит " + PlayerU.name + " " + PlayerU.surname;
+        St = pas.nls.Loc("Stepping up to the ball is ","До мʼяча підходить ") + PlayerU.name + " " + PlayerU.surname;
         await Comment();
-        St = "Он бъёт!!!";
+        St = pas.nls.Loc("He shoots!!!","Він бʼє!!!");
         await Comment();
         n0 = pas.System.Random(100) + 1;
         var $tmp = n0;
         if (($tmp >= 0) && ($tmp <= 75)) {
-          St = "Вратарь с мячом разлетаются в разные углы!";
+          St = pas.nls.Loc("Keeper and ball fly into opposite corners!","Воротар і мʼяч розлітаються в різні кути!");
           await Comment();
-          St = "ГОЛ!!!";
+          St = pas.nls.Loc("GOAL!!!","ГОЛ!!!");
           await Comment();
-          St = "ГОЛ!!!";
+          St = pas.nls.Loc("GOAL!!!","ГОЛ!!!");
           await Comment();
-          St = "ГОЛ!!!";
+          St = pas.nls.Loc("GOAL!!!","ГОЛ!!!");
           await Comment();
-          St = PlayerU.name + " " + PlayerU.surname + " забивает этот гол!!!";
+          St = PlayerU.name + " " + PlayerU.surname + pas.nls.Loc(" scores it!!!"," забиває цей гол!!!");
           NewThing(t,TTT.g,PlayerU.surname,SP);
           Match.Score[t - 1] += 1;
         } else if (($tmp >= 76) && ($tmp <= 90)) {
-          St = "Вратарь ловит этот мяч!!!";
+          St = pas.nls.Loc("The keeper saves it!!!","Воротар ловить цей мʼяч!!!");
           await Comment();
         } else {
-          St = "МИМО ВОРОТ!!!";
+          St = pas.nls.Loc("WIDE!!!","ПОВЗ ВОРОТА!!!");
           await Comment();
         };
       };
       Half = 5;
-      St = "После 120 минут - ничья! Результат - серия пенальти!";
+      St = pas.nls.Loc("After 120 minutes it is a draw! It goes to a penalty shootout!","Після 120 хвилин — нічия! Результат — серія пенальті!");
       await Comment();
-      St = "Первой бъёт команда " + Match.Ft[At - 1].name;
+      St = pas.nls.Loc("First to shoot is ","Першою бʼє команда ") + Match.Ft[At - 1].name;
       await Comment();
       j = 1;
       do {
@@ -4337,9 +4385,9 @@ rtl.module("EMatch",["System"],function () {
       flag = Half === Match.HalfEnd;
       if ((Match.HalfEnd === 5) && (Match.Score[0] !== Match.Score[1]) && (Half !== 1) && (Half !== 3)) flag = true;
       if ((Match.HalfEnd === 5) && (Match.Score[0] === Match.Score[1]) && (Half === 2)) {
-        St = "Матч окончился ничьёй!";
+        St = pas.nls.Loc("The match ended in a draw!","Матч завершився внічию!");
         await Comment();
-        St = "Сейчас будут сыграны дополнительные таймы";
+        St = pas.nls.Loc("Extra time will now be played","Зараз будуть зіграні додаткові тайми");
         await Comment();
       };
       if (Half === 5) flag = true;
@@ -4347,7 +4395,7 @@ rtl.module("EMatch",["System"],function () {
     await HelpPr4();
     await pas.crt.Delay(Math.round(2 * 1000));
   };
-},["JS","crt"]);
+},["JS","crt","nls"]);
 rtl.module("dos",["System"],function () {
   "use strict";
   var $mod = this;
@@ -4499,23 +4547,6 @@ rtl.module("tpfiles",["System"],function () {
     }
     var m = window.__retroFiles || {};
     Result = Object.prototype.hasOwnProperty.call(m, name) ? m[name] : null;
-    return Result;
-  };
-});
-rtl.module("nls",["System"],function () {
-  "use strict";
-  var $mod = this;
-  this.GameLang = function () {
-    var Result = "";
-    Result = "ua";
-    Result = (typeof window !== 'undefined' && window.__retroLang === 'en') ? 'en' : 'ua';
-    return Result;
-  };
-  this.Loc = function (en, ua) {
-    var Result = "";
-    if ($mod.GameLang() === "en") {
-      Result = en}
-     else Result = ua;
     return Result;
   };
 });

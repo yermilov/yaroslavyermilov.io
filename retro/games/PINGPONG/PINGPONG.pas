@@ -48,7 +48,7 @@
 }
 
 program PingPong;
-uses JS, crt, graph, mouse, dos, tpfiles, shifr;
+uses JS, crt, graph, mouse, dos, tpfiles, shifr, nls;
 type coordinates = record
      x,y:integer;
      end;
@@ -65,11 +65,7 @@ type coordinates = record
 const pi180 = pi/180;
       by=7;
       bx=8;
-      Colors: array [0..15] of string =
-              ('Чёрный','Синий','Зелёный','Бирюзовый','Красный','Розовый',
-              'Коричневый','Светло-серый','Тёмно-серый','Светло-синий',
-              'Светло-зелёный','Светло-бирюзовый','Светло-красный',
-              'Светло-розовый','Желтый','Белый');
+
 
 var ball,fly,ud:coordinates;
     alfa,c,HeroX:integer;
@@ -349,6 +345,31 @@ var ball,fly,ud:coordinates;
          Circle(x,y,radius);
          FloodFill(x,y,color);
     end;
+
+{ Назви кольорів були const-масивом; Loc не можна викликати в ініціалізаторі
+  константи, тож масив став функцією. Індекси — ті самі 0..15 BGI-кольори. }
+function ColorName(i:byte):string;
+begin
+     case i of
+     0:ColorName:=Loc('Black','Чорний');
+     1:ColorName:=Loc('Blue','Синій');
+     2:ColorName:=Loc('Green','Зелений');
+     3:ColorName:=Loc('Cyan','Бірюзовий');
+     4:ColorName:=Loc('Red','Червоний');
+     5:ColorName:=Loc('Magenta','Рожевий');
+     6:ColorName:=Loc('Brown','Коричневий');
+     7:ColorName:=Loc('Light gray','Світло-сірий');
+     8:ColorName:=Loc('Dark gray','Темно-сірий');
+     9:ColorName:=Loc('Light blue','Світло-синій');
+     10:ColorName:=Loc('Light green','Світло-зелений');
+     11:ColorName:=Loc('Light cyan','Світло-бірюзовий');
+     12:ColorName:=Loc('Light red','Світло-червоний');
+     13:ColorName:=Loc('Light magenta','Світло-рожевий');
+     14:ColorName:=Loc('Yellow','Жовтий');
+     15:ColorName:=Loc('White','Білий');
+     else ColorName:='';
+     end;
+end;
 
     procedure MakeSnaryad(color:byte);
     const r=3;
@@ -1243,7 +1264,7 @@ begin
               if i<>4 then Writeln(str)
                       else write(str);
          end;
-     Write('Нажмите Esc для возврата в меню');
+     Write(Loc('Press Esc to return to the menu','Натисни Esc, щоб повернутися в меню'));
      repeat until chr(trunc(await(double, ReadKeyA)))=#27;
      close(inffile);
      gd:=Detect;
@@ -1261,23 +1282,23 @@ procedure OptionsText;
 begin
      ClrScr;
      GotoXy(35,1);
-     Write('Настройки');
+     Write(Loc('Options','Налаштування'));
      Gotoxy(1,3);
-     Writeln('     Цвет мяча - ',Colors[ColorBall]);
-     Writeln('     Цвет доски - ',Colors[ColorHero]);
-     Writeln('     Цвет фона в игровом поле - ',Colors[ColorFon]);
-     Writeln('     Цвет фона меню - ',Colors[ColorMenuFon]);
-     Writeln('     Цвет кнопок - ',Colors[ColorButton]);
-     Writeln('     Цвет фона меню в игре - ',Colors[ColorGameMenu]);
-     Writeln('     Цвет текста в меню - ',Colors[ColorMenuText]);
-     Writeln('     Цвет текста в игре - ',Colors[ColorGameText]);
-     Writeln('     Цвет часов - ',Colors[ColorClock]);
-     Writeln('     Цвет рамки выбора - ',Colors[ColorSelect]);
-     Writeln('     Скорость мяча - ',BallSpeed,' пикселей за один ход');
-     Writeln('     Скорость доски - ',HeroSpeed,' пикселей за один ход');
-     Writeln('     Ширина доски - ',HeroB,' пикселей');
-     Writeln('     Задержка - ',Duration,' милисекунд');
-     Writeln('     Вернуть по умолчанию');
+     Writeln(Loc('     Ball colour - ','     Колір мʼяча - '),ColorName(ColorBall));
+     Writeln(Loc('     Paddle colour - ','     Колір платформи - '),ColorName(ColorHero));
+     Writeln(Loc('     Playfield background - ','     Колір фону поля - '),ColorName(ColorFon));
+     Writeln(Loc('     Menu background - ','     Колір фону меню - '),ColorName(ColorMenuFon));
+     Writeln(Loc('     Button colour - ','     Колір кнопок - '),ColorName(ColorButton));
+     Writeln(Loc('     In-game menu background - ','     Колір фону меню у грі - '),ColorName(ColorGameMenu));
+     Writeln(Loc('     Menu text colour - ','     Колір тексту в меню - '),ColorName(ColorMenuText));
+     Writeln(Loc('     In-game text colour - ','     Колір тексту у грі - '),ColorName(ColorGameText));
+     Writeln(Loc('     Clock colour - ','     Колір годинника - '),ColorName(ColorClock));
+     Writeln(Loc('     Selection frame colour - ','     Колір рамки вибору - '),ColorName(ColorSelect));
+     Writeln(Loc('     Ball speed - ','     Швидкість мʼяча - '),BallSpeed,Loc(' pixels per step',' пікселів за один хід'));
+     Writeln(Loc('     Paddle speed - ','     Швидкість платформи - '),HeroSpeed,Loc(' pixels per step',' пікселів за один хід'));
+     Writeln(Loc('     Paddle width - ','     Ширина платформи - '),HeroB,Loc(' pixels',' пікселів'));
+     Writeln(Loc('     Delay - ','     Затримка - '),Duration,Loc(' milliseconds',' мілісекунд'));
+     Writeln(Loc('     Restore defaults','     Повернути за замовчуванням'));
 end;
 
 procedure Change(n:byte); async;
@@ -1293,27 +1314,27 @@ begin
      Write('                                                  ');
      gotoxy(15,20);
      case n of
-     1:st:='     Цвет мяча - '+Colors[ColorBall];
-     2:st:='     Цвет доски - '+Colors[ColorHero];
-     3:st:='     Цвет фона в игровом поле - '+Colors[ColorFon];
-     4:st:='     Цвет фона меню - '+Colors[ColorMenuFon];
-     5:st:='     Цвет кнопок - '+Colors[ColorButton];
-     6:st:='     Цвет фона меню в игре - '+Colors[ColorGameMenu];
-     7:st:='     Цвет текста в меню - '+Colors[ColorMenuText];
-     8:st:='     Цвет текста в игре - '+Colors[ColorGameText];
-     9:st:='     Цвет часов - '+Colors[ColorClock];
-     10:st:='     Цвет рамки выбора - '+Colors[ColorSelect];
+     1:st:=Loc('     Ball colour - ','     Колір мʼяча - ')+ColorName(ColorBall);
+     2:st:=Loc('     Paddle colour - ','     Колір платформи - ')+ColorName(ColorHero);
+     3:st:=Loc('     Playfield background - ','     Колір фону поля - ')+ColorName(ColorFon);
+     4:st:=Loc('     Menu background - ','     Колір фону меню - ')+ColorName(ColorMenuFon);
+     5:st:=Loc('     Button colour - ','     Колір кнопок - ')+ColorName(ColorButton);
+     6:st:=Loc('     In-game menu background - ','     Колір фону меню у грі - ')+ColorName(ColorGameMenu);
+     7:st:=Loc('     Menu text colour - ','     Колір тексту в меню - ')+ColorName(ColorMenuText);
+     8:st:=Loc('     In-game text colour - ','     Колір тексту у грі - ')+ColorName(ColorGameText);
+     9:st:=Loc('     Clock colour - ','     Колір годинника - ')+ColorName(ColorClock);
+     10:st:=Loc('     Selection frame colour - ','     Колір рамки вибору - ')+ColorName(ColorSelect);
      11:begin str(BallSpeed,s);
-              st:='     Скорость мяча - '+s+' пикселей за один ход';
+              st:=Loc('     Ball speed - ','     Швидкість мʼяча - ')+s+Loc(' pixels per step',' пікселів за один хід');
         end;
      12:begin str(HeroSpeed,s);
-              st:='     Скорость доски - '+s+' пикселей за один ход';
+              st:=Loc('     Paddle speed - ','     Швидкість платформи - ')+s+Loc(' pixels per step',' пікселів за один хід');
         end;
      13:begin str(HeroB,s);
-              st:='     Ширина доски - '+s+' пикселей';
+              st:=Loc('     Paddle width - ','     Ширина платформи - ')+s+Loc(' pixels',' пікселів');
         end;
      14:begin str(Duration,s);
-              st:='     Задержка - '+s+' милисекунд';
+              st:=Loc('     Delay - ','     Затримка - ')+s+Loc(' milliseconds',' мілісекунд');
         end;
      end;
      Write(St);
