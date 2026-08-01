@@ -4,7 +4,14 @@ import { LOCALES, t, localePath, languageBadge, bcp47Locale, localized, type Loc
 import BaseLayout from '@layouts/BaseLayout.astro';
 import Timeline from '@components/Timeline.astro';
 import RelativeDays from '@components/RelativeDays.tsx';
-import { bookSlug, getStampedBooks, getStampedLinks, getTalks, getWritingTalkingTimeline } from '@lib/content';
+import {
+  bookSlug,
+  getAnnouncements,
+  getStampedBooks,
+  getStampedLinks,
+  getTalks,
+  getWritingTalkingTimeline,
+} from '@lib/content';
 
 export async function getStaticPaths() {
   return LOCALES.map((locale) => ({ params: { locale } }));
@@ -22,9 +29,79 @@ function atMidnight(d: Date): Date {
 }
 
 const allTalks = await getTalks();
-const upcoming = allTalks
+const upcomingTalks = allTalks
   .filter((talk) => atMidnight(talk.data.date) >= today)
   .reverse(); // soonest first
+
+/* "Catch me at" shows two different things that read as one list.
+ *
+ *  - A future-dated `talks` entry: an appearance already written up in the archive.
+ *  - An `announcements` entry: announced, not yet delivered, and deliberately NOT in
+ *    the archive — see content/config.ts for why they are separate collections.
+ *
+ * Normalised here into one shape so the block below stays a single template rather
+ * than two near-identical ones. Announcements link OUT (conference site or the post
+ * that announced it) because there is no detail page to link IN to yet.
+ *
+ * De-duplicated on event+day: once a talk graduates into the archive, its
+ * announcement may still be sitting there, and the same appearance must not print
+ * twice. The archive entry wins — it is the richer record. */
+interface ProgrammeItem {
+  key: string;
+  date: Date;
+  /** Last day this stays listed. Differs from `date` for a multi-day conference:
+      the tile shows the START, but the item must survive until the event ENDS. */
+  until: Date;
+  event: string;
+  title: string;
+  href: string;
+  external: boolean;
+  language?: 'en' | 'ua';
+  videoUrl?: string;
+}
+/* Calendar day as YYYY-MM-DD, read in UTC.
+   `z.coerce.date()` turns date-only frontmatter into midnight UTC. Serialising that as
+   an instant and re-parsing it client-side lands on the PREVIOUS day for any viewer west
+   of UTC — which would hide a 26–27 Nov conference through the whole of the 27th in New
+   York. Comparing plain date strings sidesteps time zones entirely. */
+const utcDay = (date: Date) =>
+  `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+const dayKey = (event: string, date: Date) => `${event.toLowerCase()}|${atMidnight(date).getTime()}`;
+
+const talkItems: ProgrammeItem[] = upcomingTalks.map((talk) => ({
+  key: talk.slug,
+  date: talk.data.date,
+  until: talk.data.date,
+  event: talk.data.event,
+  title: talk.data.title,
+  href: localePath(locale, `talks/${talk.slug}`),
+  external: false,
+  ...(talk.data.language ? { language: talk.data.language } : {}),
+  ...(talk.data.videoUrl ? { videoUrl: talk.data.videoUrl } : {}),
+}));
+
+const announcementItems: ProgrammeItem[] = (await getAnnouncements()).map((a) => ({
+  key: a.data.talkSlug ?? dayKey(a.data.event, a.data.date),
+  date: a.data.date,
+  until: a.data.endDate ?? a.data.date,
+  event: (locale === 'ua' ? a.data.eventUk : undefined) ?? a.data.event,
+  title: (locale === 'ua' ? a.data.titleUk : undefined) ?? a.data.title,
+  href: a.data.eventUrl ?? a.data.announcementUrl ?? '',
+  external: true,
+  ...(a.data.language ? { language: a.data.language } : {}),
+}));
+
+/* Both identities go in: an announcement matches EITHER by its explicit talkSlug or,
+   when it has none, by event+day. Seeding the set with only one of them would make the
+   documented fallback unreachable and print the same appearance twice. */
+const seen = new Set([
+  ...allTalks.map((t) => t.slug),
+  ...allTalks.map((t) => dayKey(t.data.event, t.data.date)),
+]);
+const upcoming: ProgrammeItem[] = [
+  ...talkItems,
+  ...announcementItems.filter((a) => !seen.has(a.key)),
+].sort((a, b) => a.date.getTime() - b.date.getTime());
 
 /* Recent stream: render the merged writing & talking timeline plus hidden
  * upcoming-talk candidates. Static builds can go stale overnight: the
@@ -141,42 +218,56 @@ function calMonth(date: Date): string {
       <section class="programme" data-programme="upcoming" hidden={upcoming.length === 0}>
         <p class="workbench programme-label">→ {strings.home.catchMeAt}</p>
         <ul class="programme-list" role="list">
-          {upcoming.map((talk) => {
-            const detailHref = localePath(locale, `talks/${talk.slug}`);
+          {upcoming.map((item) => {
             return (
-              <li class="programme-item" data-iso={talk.data.date.toISOString()}>
+              <li
+                class="programme-item"
+                data-iso={item.date.toISOString()}
+                data-until={utcDay(item.until)}
+              >
                 <div class="cal-tile" aria-hidden="true">
-                  <span class="cal-mo">{calMonth(talk.data.date)}</span>
-                  <span class="cal-day">{talk.data.date.getDate()}</span>
-                  <span class="cal-yr">{talk.data.date.getFullYear()}</span>
+                  <span class="cal-mo">{calMonth(item.date)}</span>
+                  <span class="cal-day">{item.date.getDate()}</span>
+                  <span class="cal-yr">{item.date.getFullYear()}</span>
                 </div>
                 <div class="programme-content">
                   <p class="workbench event">
-                    ▸ <span>{talk.data.event}</span>
+                    ▸ <span>{item.event}</span>
                   </p>
                   <h2 class="programme-title">
-                    <a href={detailHref}>{talk.data.title}</a>
+                    {item.href ? (
+                      <a
+                        href={item.href}
+                        {...(item.external ? { target: '_blank', rel: 'noopener' } : {})}
+                      >
+                        {item.title}
+                      </a>
+                    ) : (
+                      /* Announced with nowhere to point yet — a speaker is often named
+                         before the organiser publishes a page. Show it anyway. */
+                      item.title
+                    )}
                   </h2>
                   <p class="workbench meta">
                     <RelativeDays
                       client:idle
-                      iso={talk.data.date.toISOString()}
+                      iso={item.date.toISOString()}
                       bcp47={bcp47Locale(locale)}
-                      fallback={rtf.format(daysFromToday(talk.data.date), 'day')}
-                      serverDays={daysFromToday(talk.data.date)}
+                      fallback={rtf.format(daysFromToday(item.date), 'day')}
+                      serverDays={daysFromToday(item.date)}
                     />
-                    {talk.data.language && (
+                    {item.language && (
                       <>
                         <span aria-hidden="true">·</span>
-                        <span>{languageBadge(talk.data.language)}</span>
+                        <span>{languageBadge(item.language)}</span>
                       </>
                     )}
-                    {talk.data.videoUrl && (
+                    {item.videoUrl && (
                       <>
                         <span aria-hidden="true">·</span>
                         <a
                           class="youtube-glyph"
-                          href={talk.data.videoUrl}
+                          href={item.videoUrl}
                           rel="noopener"
                           aria-label={strings.labels.video}
                           title={strings.labels.video}
@@ -254,15 +345,25 @@ function calMonth(date: Date): string {
   {
     const section = document.querySelector<HTMLElement>('[data-programme="upcoming"]');
     if (section) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const now = new Date();
+      const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       let visible = 0;
       section.querySelectorAll<HTMLElement>('.programme-item').forEach((item) => {
+        // Expire on data-until (the event's LAST day), not data-iso (its first) —
+        // otherwise a 26–27 Nov conference disappears on the 27th, mid-event.
+        // data-until is a plain YYYY-MM-DD (the event's LAST day). Compared as a
+        // string against the viewer's LOCAL calendar day, so no time zone can shift it
+        // — an instant would read as the previous day anywhere west of UTC.
+        const until = item.getAttribute('data-until');
         const iso = item.getAttribute('data-iso');
-        if (!iso) return;
-        const d = new Date(iso);
-        d.setHours(0, 0, 0, 0);
-        if (d < today) item.hidden = true;
+        if (!until && !iso) return;
+        const expires =
+          until ??
+          (() => {
+            const d = new Date(iso as string);
+            return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+          })();
+        if (expires < todayKey) item.hidden = true;
         else visible += 1;
       });
       if (visible === 0) section.hidden = true;
@@ -288,9 +389,15 @@ function calMonth(date: Date): string {
           const iso = li.getAttribute('data-iso');
           const isUpcomingTalk = li.hasAttribute('data-upcomable');
           if (iso && isUpcomingTalk) {
+            // Plain calendar-day comparison, same as the programme block above.
+            // Parsing the midnight-UTC instant here instead would land on the previous
+            // local day west of UTC and reveal the row while the programme still shows
+            // it — the same appearance printed in both sections all day.
             const d = new Date(iso);
-            d.setHours(0, 0, 0, 0);
-            if (d >= today) {
+            const isoDay = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+            const nowR = new Date();
+            const todayDay = `${nowR.getFullYear()}-${String(nowR.getMonth() + 1).padStart(2, '0')}-${String(nowR.getDate()).padStart(2, '0')}`;
+            if (isoDay >= todayDay) {
               li.hidden = true;
               return;
             }

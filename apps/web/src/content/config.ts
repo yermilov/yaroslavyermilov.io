@@ -234,4 +234,66 @@ const links = defineCollection({
   }),
 });
 
-export const collections = { posts, talks, labs, gallery, books, links };
+/**
+ * ANNOUNCEMENTS — talks that are announced but have NOT happened yet.
+ *
+ * Deliberately its own collection rather than a future-dated `talks` entry. `talks`
+ * is an archive of what an appearance ACTUALLY WAS: its schema requires an
+ * `abstract`, and its entries carry photos, video, slides and audience feedback —
+ * all of which exist only afterwards. An announcement has none of that. What it has
+ * instead is a poster and a date somebody else controls.
+ *
+ * Keeping them apart means neither has to pretend: the archive never contains an
+ * event that has not happened, and an announcement is never a half-empty talk page.
+ * When the talk is delivered, it graduates into `talks` with the material it earned.
+ */
+const announcements = defineCollection({
+  type: 'content',
+  schema: z.object({
+    /** The talk's title. May be provisional until the organiser publishes the programme. */
+    title: z.string(),
+    /** Conference / meetup name, as the organiser writes it. */
+    event: z.string(),
+    /** When it happens. Drives the countdown and the automatic disappearance. */
+    date: z.coerce.date(),
+    /** Multi-day conferences: the last day, so the entry survives its whole run. */
+    endDate: z.coerce.date().optional(),
+    /** "Warsaw Expo XXI" — shown as-is, not geocoded. */
+    location: z.string().optional(),
+    /** Short pitch for the card. Optional on purpose: a conference often announces a
+        speaker before the programme, and an announcement with no abstract yet is
+        still worth showing — that is the whole reason this collection exists. */
+    summary: z.string().optional(),
+    /** Language the talk will be delivered in. */
+    language: localeEnum.optional(),
+    /** Ukrainian overrides shown on /ua/; fall back to the English defaults. */
+    titleUk: z.string().optional(),
+    eventUk: z.string().optional(),
+    locationUk: z.string().optional(),
+    summaryUk: z.string().optional(),
+    /** The conference site. */
+    eventUrl: z.string().url().optional(),
+    /** Where the appearance was announced (a LinkedIn post, the programme page). */
+    announcementUrl: z.string().url().optional(),
+    /** Key art / poster, path under public/, e.g. "/announcements/<slug>.png". */
+    cover: z.string().optional(),
+    /** Alt text for `cover`. Required whenever a cover is set — the poster carries
+        the date and venue, so a screen reader that skips it loses real information. */
+    coverAlt: z.string().optional(),
+    /** Slug of the `talks` entry this becomes once delivered. Set it when the archive
+        entry lands so the home page can tell the two records apart as ONE appearance —
+        matching on the event name does not work, because the archive usually spells it
+        differently ("WAW TECH by DOU" vs "WAW TECH by DOU, Warsaw"). */
+    talkSlug: z.string().optional(),
+    /** Hide without deleting, e.g. an appearance that fell through. */
+    draft: z.boolean().default(false),
+  })
+  // The poster carries the date and the venue, so a reader who cannot see it loses
+  // real information — alt text is not optional decoration here.
+  .refine((d) => !d.cover || (d.coverAlt !== undefined && d.coverAlt.trim().length > 0), {
+    message: 'coverAlt is required whenever cover is set',
+    path: ['coverAlt'],
+  }),
+});
+
+export const collections = { posts, talks, labs, gallery, books, links, announcements };

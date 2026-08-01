@@ -3,6 +3,7 @@ import type { Locale } from '@lib/i18n';
 
 type PostEntry = CollectionEntry<'posts'>;
 type TalkEntry = CollectionEntry<'talks'>;
+export type AnnouncementEntry = CollectionEntry<'announcements'>;
 type LabEntry = CollectionEntry<'labs'>;
 type BookEntry = CollectionEntry<'books'>;
 type LinkEntry = CollectionEntry<'links'>;
@@ -69,6 +70,30 @@ export async function getAllCanonicalSlugs(): Promise<string[]> {
 export async function getTalks(): Promise<TalkEntry[]> {
   const all = await getCollection('talks');
   return all.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+}
+
+/**
+ * Announced-but-not-yet-delivered talks, soonest first.
+ *
+ * Filters by date rather than by hand: an announcement disappears on its own the day
+ * after it happens, so nobody has to remember to delete it. `endDate` keeps a
+ * multi-day conference listed for its whole run instead of vanishing on day two.
+ * Drafts are dropped so a cancelled appearance can be kept without being shown.
+ */
+export async function getAnnouncements(now = new Date()): Promise<AnnouncementEntry[]> {
+  /* Compared as CALENDAR DAYS, not instants. `z.coerce.date()` parses date-only
+     frontmatter as midnight UTC, while a local midnight is a LATER UTC instant for any
+     builder west of UTC — so an instant comparison drops a single-day announcement
+     throughout its own event day, and a multi-day one on its final day, before the
+     client-side correction ever runs. Plain YYYY-MM-DD strings have no time zone. */
+  const utcDay = (d: Date) =>
+    `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+  const localDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const all = await getCollection('announcements');
+  return all
+    .filter((a) => !a.data.draft)
+    .filter((a) => utcDay(a.data.endDate ?? a.data.date) >= localDay)
+    .sort((a, b) => a.data.date.getTime() - b.data.date.getTime());
 }
 
 /**
