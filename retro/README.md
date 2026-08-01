@@ -85,11 +85,59 @@ and launches each game as `index.html?lang=en|ua`; build.ts sets
   build.ts's `scanFolder` mints cosmetic `CARS1.EXE`/`CARS2.EXE` rows for any
   port `file` absent from disk (`view:false`, size/date mirrored off the sibling
   `.PAS`); the `runs` map then launches those. Cosmetic-only — no real binary.
-- **Russian removed** from all playable text (QUIDDITC commentary, BAKKARA,
-  FOOTBALL were Russian; the rest were Ukrainian/English). The **original
-  F3-viewable sources are left byte-for-byte** as the historical exhibit — only
-  the ported/playable text is localised. Verify a game by RUNNING it in both
-  `?lang=en` and `?lang=ua`.
+- **Russian removed** from all playable text. The **original F3-viewable sources
+  are left byte-for-byte** as the historical exhibit — only the ported/playable
+  text is localised, and editing `retro/games/` gives that for free (the F3
+  viewer is generated from the untouched originals in `RETRO_GAMES_DIR`).
+  Verify a game by RUNNING it in both `?lang=en` and `?lang=ua`.
+  ⚠️ This line used to claim the job was finished when it was not — on
+  2026-08-01 an audit found **109** Russian literals still live in
+  `FOOTBALL/EMATCH.pas` (the whole match commentary; the engine was ported on
+  28.07 and never got `uses nls`) plus PINGPONG's Options/Information screens,
+  colour names and `data/README.HLP`. Don't trust this paragraph — re-run the
+  check: a literal is suspect if it holds `ё ы э ъ`, and every Cyrillic literal
+  in a port should sit inside a `Loc(...)` call.
+  **A `const` array of strings cannot be localised in place** — `Loc` is a
+  function call and Pascal forbids that in a constant initialiser. `Colors`
+  (PINGPONG) and `Monthes` (EMATCH) became `case` functions instead.
+  **Watch the 80-column centring.** `EMatch.Comment` positions text with
+  `GotoXY(40 - Length(St) div 2, 7)`; an English string longer than 78 chars
+  yields a negative column, the crt shim ignores the move, and the commentary
+  lands on the scoreboard. Keep localised literals short — codex review caught
+  three at 78-88 chars before they shipped.
+
+## An un-awaited `async` call forks a second game loop (2026-08-01)
+
+PINGPONG's reported bug was cosmetic — "the playfield background only fills to
+y≈300, the previous screen shows through below it". The cause was not: **two
+calls to `async` procedures had no `await`**, and each left a concurrent loop
+running.
+
+- `BallWalking(esc,nl)` in `Game` returned instantly with `esc=nl=false`, so
+  `until (flag) or (not(esc))` fired on the first pass — `Game` returned to the
+  menu while `BallWalking` kept running detached, still drawing the paddle.
+- `ButtonPress(Choice)` in `MainMenu` meant the menu never waited for the game,
+  so its clock and button repaints ran *during* play.
+
+That composition is the whole symptom: the menu repaints everything with
+`Bar(0,0,641,481)`, the orphaned `MakeBlocks` repaints only `0..300`, and the
+menu stays visible below y=300. Each new launch added another loop — every draw
+call arrived twice, and the game got faster each time.
+
+**Reading the Pascal cannot find this.** The source looks right, and
+`Bar(0,0,641,HeroY+25)` really is called. What found it was instrumenting the
+shim in the browser and reading the call ORDER:
+
+```js
+const g = window.pas.graph, o = g.Bar;
+g.Bar = (a,b,c,d) => { log.push(`Bar(${a},${b},${c},${d})`); return o(a,b,c,d); };
+```
+
+Identical consecutive draws = a duplicated loop. Zero duplicates over 162 frames
+is the fixed state. **Audit every port the same way**: grep each `async`
+routine's call sites and confirm each is inside `await(...)`. pas2js does not
+warn — a dropped `await` compiles clean and only shows up as "the graphics are
+weird".
 
 ## Porting order (simplest → hardest)
 
