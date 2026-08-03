@@ -1709,8 +1709,8 @@ rtl.module("crt",["System","JS"],function () {
   };
   this.Readln = function () {
   };
-  this.DelayScale = 0.004;
-  this.MinDelayMs = 20;
+  this.DelayScale = 0.008;
+  this.MinDelayMs = 40;
   $mod.$init = function () {
     if ($mod.KeyPressed()) $mod.ReadKey();
     pas.System.SetWriteCallBack(function (S, NewLine) {
@@ -2319,7 +2319,7 @@ rtl.module("program",["System","JS","graph","crt","jarik","mouse","tpfiles","nls
   "use strict";
   var $mod = this;
   this.duration = 1000;
-  this.frameMs = 50;
+  this.frameMs = 45;
   this.zenitka = 2;
   this.plane = 1;
   this.tank = 3;
@@ -2918,7 +2918,7 @@ rtl.module("program",["System","JS","graph","crt","jarik","mouse","tpfiles","nls
           if ($mod.p[i - 1]) $mod.MakeHisPlane(i,4);
         };
       };
-      await pas.crt.FrameDelay(50);
+      await pas.crt.FrameDelay(45);
       pas.crt.NoSound();
     } while (!(!$mod.myplane || (key === "\x1B")));
   };
@@ -3081,6 +3081,8 @@ rtl.module("program",["System","JS","graph","crt","jarik","mouse","tpfiles","nls
     pas.graph.CloseGraph();
   };
   $mod.$main = function () {
+    pas.crt.DelayScale = 0.004;
+    pas.crt.MinDelayMs = 20;
     $mod.InitGraphWarWork();
   };
 });

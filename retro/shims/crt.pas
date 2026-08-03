@@ -43,7 +43,11 @@ function Delay(ms: integer): TJSPromise;
   for the frame instead would make Game Over take 20 s.
 
   So: pace the frame with FrameDelay (real ms, what the source literally
-  says), and leave the long waits to Delay/DelayScale. }
+  says), and leave the long waits to Delay/DelayScale.
+
+  That split is also why WARWORK can be made faster in the same commit that
+  makes every other game slower: FrameDelay is the only thing setting its speed,
+  and it is immune to DelayScale by construction. }
 function FrameDelay(ms: integer): TJSPromise;
 { DOS-style numeric prompt for ports of programs that ReadLn from the console.
   Renders a white-on-black prompt line over the canvas and resolves with the
@@ -94,8 +98,27 @@ var
     timing loop that overflowed on fast CPUs (the famous RTE 200 bug), so on the
     machine these games were written for Delay returned almost immediately.
     Honouring the literal argument gives a technically faithful port that is
-    unplayable, so the wall-clock delay is scaled here. 1.0 = obey the source. }
-  DelayScale: double = 0.004;
+    unplayable, so the wall-clock delay is scaled here. 1.0 = obey the source.
+
+    0.004 -> 0.008 on 2026-08-02: Yarik, having played the 50-fps build, asked
+    for "всіх інших ще в два рази повільніше" (everything except WARWORK twice
+    as slow again). MinDelayMs below is doubled in the same breath, and the two
+    together are what make that exact: every effective wait is max(ms * scale,
+    floor), so doubling BOTH doubles every wait — the floored frame ticks and
+    the unfloored long pauses alike.
+
+    The floor alone would NOT have done it, which is why this number moves too.
+    Measured across the ports: PINGPONG/CARS1/CARS2/FOOTBALL pace on delays that
+    round below the floor, so the floor governs them — but QUIDDITC (SNITCH,
+    RANDOM) spends `Delay(60000)` EVERY iteration, which is 240 ms at 0.004 and
+    sails far over any plausible floor. Raising the floor 20 -> 40 would have
+    slowed those two bundles by 2%, and Yarik would rightly have come back
+    saying quidditch never changed.
+
+    WARWORK opts OUT of both numbers — see the pin at the top of WW3.pas. Its
+    speed is FrameDelay (real ms), so a global slowdown could only touch its
+    scene pauses, and it is the one game asked to get FASTER. }
+  DelayScale: double = 0.008;
   { ...but a linear scale alone CANNOT serve both ends of a game's range, and
     that is what made most ports run at warp speed (Yarik, 2026-08-01: "most
     games run too fast").
@@ -109,14 +132,22 @@ var
     245-line draft this port replaced, and the scale has been calibrated against
     a number the game no longer uses ever since.
 
-    So short delays get a FLOOR instead of collapsing. 20 ms ≈ 50 fps: still
-    brisk, but a twelfth of the clamp it was running at. Long pauses are
-    untouched — Delay(50000) is 200 ms either way — so this only affects the
+    So short delays get a FLOOR instead of collapsing. Long pauses stay above it
+    and are governed by DelayScale alone, so the floor only ever affects the
     delays that were being rounded away.
+
+    20 -> 40 ms on 2026-08-02 (≈50 fps -> ≈25 fps): Yarik played the 50-fps build
+    and asked for everything except WARWORK to be twice as slow again. This is
+    the half of that change that reaches the frame-paced games — PINGPONG
+    (Delay(15) and Delay(Duration*2), Duration=15 in data/OPTIONS.COD), CARS1
+    (Delay(3000)), CARS2 (Delay(5000), which sat EXACTLY on the old floor) and
+    FOOTBALL's match commentary (Delay(1000..2000)). All four round below the
+    floor, so for them the floor IS the frame period and doubling it is exactly
+    2× slower.
 
     Frame FEEL is a judgement call, not a fact: this is the one number to turn if
     a game is still too quick or now too sluggish. }
-  MinDelayMs: integer = 20;
+  MinDelayMs: integer = 40;
 
 implementation
 

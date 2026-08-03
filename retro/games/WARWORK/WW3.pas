@@ -21,17 +21,21 @@ uses JS,graph,crt,jarik,mouse,tpfiles,nls;
 const duration=1000;
       { Frame period of the main loop. The source paces at `duration div 10` =
         100 ms (10 fps); then 83 ms (12 fps) at Yarik's request after playing the
-        real-time-paced build; now 50 ms (20 fps) — he still reported it "too
+        real-time-paced build; then 50 ms (20 fps) — he still reported it "too
         slow" on 2026-08-01, in the same breath as every OTHER game being too
-        fast, so both ends moved toward each other.
+        fast, so both ends moved toward each other; now 45 ms (≈22 fps), the
+        "ще на 10% швидше" he asked for on 2026-08-02 after playing that build.
         Note the arithmetic: the game advances a fixed amount per iteration, so
-        the frame PERIOD is the speed. 100 -> 83 was +20% frames; 83 -> 50 is
-        +66%, i.e. 12 fps -> 20 fps.
+        the frame PERIOD is the speed — and a 10% SPEED-UP is a period divided
+        by 1.1, not multiplied by 0.9. 50 / 1.1 = 45.45, so 45 ms is the nearest
+        whole millisecond (+11.1%, against +8.7% for 46) and a fraction is not
+        something the browser's timer would honour anyway.
+        Earlier steps: 100 -> 83 was +20% frames; 83 -> 50 was +66% (12 -> 20).
         Deliberately a constant HERE rather than a scale factor inside
         FrameDelay: FrameDelay's entire job is "real milliseconds, unscaled",
         and hiding a multiplier in it would rebuild the very coupling that made
         this game unplayable (see the comment above FrameDelay in crt.pas). }
-      frameMs=50;
+      frameMs=45;
       zenitka=2;
       plane=1;
       tank=3;
@@ -682,11 +686,13 @@ begin
       округлявся до 0 мс і гра йшла ~в 14 разів швидше: ворожий літак
       підрівнювався по висоті й збивав тебе за ~1.5 с — «літак одразу
       падає». FrameDelay дає реальні мілісекунди, як і написано в оригіналі.
-      frameMs пройшов 100 -> 83 -> 50 мс (10 -> 12 -> 20 к/с): спершу +20% кадрів
-      на прохання після першої гри, потім ще, бо 01.08.2026 Ярик усе одно сказав
-      «занадто повільно» — тим самим повідомленням, у якому решта ігор були
-      «занадто швидко». Період кадру ТУТ і є швидкість: гра рухається на
-      фіксовану величину за ітерацію. }
+      frameMs пройшов 100 -> 83 -> 50 -> 45 мс (10 -> 12 -> 20 -> ~22 к/с):
+      спершу +20% кадрів на прохання після першої гри, потім ще, бо 01.08.2026
+      Ярик усе одно сказав «занадто повільно» — тим самим повідомленням, у якому
+      решта ігор були «занадто швидко»; і 02.08.2026 «ще на 10% швидше».
+      Період кадру ТУТ і є швидкість: гра рухається на фіксовану величину за
+      ітерацію, тож +10% швидкості — це період ПОДІЛЕНИЙ на 1.1. Точне число —
+      у коментарі біля самої константи, щоб не розходилось із ним. }
     await(FrameDelay(frameMs));
     NoSound;
     until (not (myplane)) or (key=#27);
@@ -850,5 +856,20 @@ If ErrorCode=GrOk then
 end;
 
 begin
+{ РЕМОНТ: WARWORK не бере участі в глобальному сповільненні.
+  02.08.2026 Ярик попросив дві протилежні речі одним реченням: «треба зробити
+  warwork ще на 10% швидше, а всіх інших ще в два рази повільніше». Швидкість
+  цієї гри задає ВИКЛЮЧНО FrameDelay(frameMs) — реальні мілісекунди, які
+  DelayScale не чіпає за побудовою, тож перша половина прохання — це frameMs
+  50 -> 45 вище. А от подвоєні crt.DelayScale/MinDelayMs, якими сповільнено
+  решту ігор, дістали б тут лише ПАУЗИ (сцени загибелі Delay(50000) 200 -> 400
+  мс, дрібні Delay(500)/Delay(1000) 20 -> 40 мс) — тобто зробили б частину
+  єдиної гри, яку просили ПРИСКОРИТИ, повільнішою.
+  Тому прибиваємо обидва числа до значень, за яких цю гру востаннє грали.
+  Це можливо тому, що в crt вони — типізовані константи (var), а не const.
+  Якщо колись знадобиться крутнути паузи саме WARWORK — крутити тут, а не
+  глобально: глобальне значення обслуговує сім інших бандлів. }
+DelayScale := 0.004;
+MinDelayMs := 20;
 InitGraphWarWork;               {Основной блок программы}
 end.

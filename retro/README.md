@@ -211,5 +211,36 @@ against 10 consumed per second — a 1-second hold became ~5 seconds of plane st
 climbing after release. `Push` now caps the queue at 16 like the BIOS type-ahead
 buffer did; the overhang is back under half a second.
 
+## The three pacing knobs, and which game answers to which
+
+Every wait a port takes is `max(round(ms * crt.DelayScale), crt.MinDelayMs)`,
+**except** `crt.FrameDelay(ms)`, which is real milliseconds and answers to
+neither. So there are exactly three knobs, and a speed request has to be aimed:
+
+| knob | where | now | governs |
+|---|---|---|---|
+| `MinDelayMs` | `shims/crt.pas` | 40 ms | every wait that rounds *below* the floor — i.e. the frame tick of PINGPONG, CARS1, CARS2, FOOTBALL |
+| `DelayScale` | `shims/crt.pas` | 0.008 | every wait *above* the floor — the long pauses, and QUIDDITC's per-iteration `Delay(60000)` |
+| `frameMs` | `games/WARWORK/WW3.pas` | 45 ms | WARWORK's speed, and nothing else |
+
+**Reaching for the floor alone is the trap.** 2026-08-02, "всіх інших ще в два
+рази повільніше": doubling `MinDelayMs` 20 → 40 makes PINGPONG/CARS1/CARS2/
+FOOTBALL exactly 2× slower, because for them the floor *is* the frame period —
+but QUIDDITC (SNITCH, RANDOM) spends `Delay(60000)` **every iteration**, which is
+240 ms at 0.004 and never touches any plausible floor. Floor-only would have
+slowed those two bundles by **2%**. Doubling *both* numbers is what makes the 2×
+uniform, since doubling the scale and the floor together doubles both branches of
+that `max`. Measured, per call site: PINGPONG frame 20 → 40, CARS1 20 → 40,
+CARS2 20 → 40, FOOTBALL commentary 20 → 40, QUIDDITC per iteration 293 → 587 ms
+— all ×2.00. **BAKKARA has no `Delay` call site at all**, so no global knob can
+slow it; it is turn-based on `readln` and there is nothing to pace.
+
+**WARWORK pins both globals back to 0.004/20 in its own program body** (they are
+typed constants, i.e. assignable `var`s, and `Delay` reads them per call — not
+captured at init). Same request asked for WARWORK to get *faster*, so leaving it
+in the global slowdown would have doubled the very scene pauses of the one game
+being sped up. Its speed is `frameMs` alone: 100 → 83 → 50 → 45 ms. Note a
+speed-up is the period **divided**, not multiplied — +10% is 50/1.1 = 45.45 → 45.
+
 The IBM VGA web font under `apps/web/public/retro/fonts/` is from The Ultimate
 Oldschool PC Font Pack v2.2 by VileR (int10h.org), CC BY-SA 4.0.
