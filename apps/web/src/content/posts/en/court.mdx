@@ -1,0 +1,27 @@
+---
+title: 'Why Claude says court'
+canonicalSlug: 'court'
+language: 'en'
+publishedAt: 2026-07-28
+summary: 'An agent is a language model. The control token normally wins by a wide margin, but sometimes sampling slips to its neighbour — and court shows up in the output. Practical advice: time to run /clear.'
+translations:
+  en: 'court'
+  ua: 'court'
+---
+
+the dog says woof, the cat says meow<br />
+Claude says court court<br />
+court<br />
+court
+
+<figure>
+  <img src="/blog/court/court.jpg" alt="Screenshot of Claude Code in Remote control: a bare line reading “court” sits under each of two agent messages." width="1080" height="2400" loading="lazy" decoding="async" style={{ display: 'block', width: 'auto', maxWidth: 'min(300px, 100%)', maxHeight: '70vh', margin: '0 auto', borderRadius: '6px' }} />
+</figure>
+
+it's actually a reminder that agents are built on top of language models. language models generate the next word based on the previous words and there is no more magic than that
+
+when an agent needs to perform an action, the model generates prose about that action in the same stream, but with specially reserved tokens. the harness catches that markup, parses it and executes it
+
+there is an element of randomness in generating the next token. normally the control token wins by a wide margin, but sometimes sampling slips to the one that stood second - to the "neighbouring" token. for ordinary words the neighbour is most likely a synonym, but for control tokens it's just a random word from their zone of the vocabulary - most often court, sometimes call, count, courtesy
+
+so that there's some practical advice out of this: court in the output means the context has drifted and it's time to do /clear or at least /compact
