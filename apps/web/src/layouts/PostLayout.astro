@@ -78,6 +78,9 @@ const fmt = new Intl.DateTimeFormat(bcp47Locale(locale), { dateStyle: 'long' });
 
 <style>
   .post {
+    /* width of the companion-figure column — a phone screenshot reads well
+       around 300px and, at the reading measure, still fits inside .page-frame */
+    --aside-column: 19rem;
     padding: var(--space-5) var(--space-3) var(--space-6);
   }
   .post-header {
@@ -105,6 +108,58 @@ const fmt = new Intl.DateTimeFormat(bcp47Locale(locale), { dateStyle: 'long' });
     height: auto;
     border-radius: 6px;
     border: 1px solid var(--rule);
+  }
+  /* ── Companion figure (`<figure class="post-aside">`) ──────────────
+     A tall portrait screenshot is a companion to the text, not an illustration
+     that wants the full measure: at the reading width it eats a whole screen and
+     leaves the column beside it empty. Narrow viewports keep it in the flow,
+     capped to phone width; from 60rem it sits beside the text (below). Its place
+     in the MDX source is never changed, so the stacked order — and what a screen
+     reader hears — stays the author's. */
+  .post-body :global(figure.post-aside img) {
+    display: block;
+    width: auto;
+    max-width: min(var(--aside-column), 100%);
+    max-height: 70vh;
+    margin-inline: auto;
+  }
+  @media (min-width: 60rem) {
+    /* Header and body both widen by exactly one aside column, so the title, the
+       date stamp and every paragraph keep one shared left edge and one shared
+       reading width — only the frame around them grew. */
+    .post:has(figure.post-aside) .post-header,
+    .post:has(figure.post-aside) .post-cover,
+    .post:has(figure.post-aside) .post-body {
+      max-width: calc(var(--measure) + var(--space-5) + var(--aside-column));
+    }
+    /* a float, not a grid column: a grid row would tie the figure's height to
+       whichever block shares its row and open a screen of dead space under that
+       block. Floating decouples them — the text simply continues underneath. */
+    .post:has(figure.post-aside) .post-body {
+      display: flow-root;
+    }
+    /* `calc`, not `--measure`, because `--measure` is `68ch` and `ch` re-resolves
+       against each element's own font-size: on the h1 that is ~1700px, i.e. no cap
+       at all. Subtracting from 100% keeps the cap in the container's own units and
+       shrinks it in step with the frame. `:global` on all three because a bare `*`
+       is scoped to an attribute selector that skips any child rendered by ANOTHER
+       component — which is exactly what the translation-pending banner is. */
+    .post:has(figure.post-aside) .post-header > :global(*),
+    .post:has(figure.post-aside) .post-cover > :global(*),
+    .post:has(figure.post-aside) .post-body > :global(*) {
+      max-width: calc(100% - var(--space-5) - var(--aside-column));
+    }
+    .post:has(figure.post-aside) .post-body > :global(figure.post-aside) {
+      float: right;
+      width: var(--aside-column);
+      max-width: none;
+      margin: 0 0 var(--space-3) var(--space-5);
+    }
+    .post-body :global(figure.post-aside img) {
+      /* the column already IS the image's width, so no viewport-height cap */
+      width: 100%;
+      max-height: none;
+    }
   }
   /* Restore default list bullets/numbers — Tailwind Preflight strips them
      globally and we don't use the typography plugin, so prose lists need

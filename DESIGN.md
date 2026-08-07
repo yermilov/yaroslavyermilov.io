@@ -126,6 +126,19 @@ otherwise favors crisp edges and rules over rounded cards.
   date stamps and serif year milestones structure the Field Journal "volumes".
 - **Reading measure** — body text is capped at `~68ch` (`--measure`) at
   `1.075rem` / `1.65` line-height for comfortable long-form reading.
+  ⚠️ `--measure` is in `ch`, and `ch` re-resolves against **each element's own
+  font-size** — `max-width: var(--measure)` on an `h1` at `2.85rem` is ~1700px,
+  i.e. no cap at all. Put it on a container that is in body type (that is what
+  `.prose-column` is), or subtract from `100%` in the container's own units.
+- **Companion figure** — a tall portrait image (a phone screenshot) that
+  accompanies the text rather than illustrating the full measure. Marked
+  `<figure class="post-aside">` in the post body; below `60rem` it stays in the
+  flow, capped to phone width; from `60rem` the header and body widen by exactly
+  one aside column (`19rem` + `--space-5`) and the figure **floats** into it. It
+  floats rather than taking a grid column on purpose: a grid row ties the
+  figure's height to whichever block shares its row, opening a screen of dead
+  space under that block. Source order is never changed for it, so the stacked
+  reading order — and what a screen reader hears — stays the author's.
 
 ## Do's and Don'ts
 
