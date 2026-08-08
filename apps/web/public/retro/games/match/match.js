@@ -2560,7 +2560,14 @@ rtl.module("crt",["System","JS"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
+  this.Black = 0;
+  this.Blue = 1;
   this.Green = 2;
+  this.Cyan = 3;
+  this.LightGray = 7;
+  this.DarkGray = 8;
+  this.Yellow = 14;
+  this.White = 15;
   this.KeyPressed = function () {
     var Result = false;
     $impl.Install();
@@ -2596,9 +2603,14 @@ rtl.module("crt",["System","JS"],function () {
     });
     return Result;
   };
-  this.AskString = function (prompt) {
+  this.FrameDelay = function (ms) {
     var Result = null;
-    Result = $impl.AskPrompt(prompt,false);
+    $impl.Install();
+    Result = new Promise(function (resolve, reject) {
+      window.setTimeout(function () {
+        resolve(0);
+      },ms);
+    });
     return Result;
   };
   this.ReadKeyA = function () {
@@ -2644,8 +2656,8 @@ rtl.module("crt",["System","JS"],function () {
   };
   this.Randomize = function () {
   };
-  this.DelayScale = 0.008;
-  this.MinDelayMs = 40;
+  this.DelayScale = 0.016;
+  this.MinDelayMs = 80;
   $mod.$init = function () {
     if ($mod.KeyPressed()) $mod.ReadKey();
     pas.System.SetWriteCallBack(function (S, NewLine) {
@@ -2703,67 +2715,6 @@ rtl.module("crt",["System","JS"],function () {
     if ($impl.Installed) return;
     $impl.Installed = true;
     document.addEventListener("keydown",$impl.OnKeyDown);
-  };
-  $impl.AskPrompt = function (prompt, numeric) {
-    var Result = null;
-    $impl.Install();
-    Result = new Promise(function (resolve, reject) {
-      const box = document.createElement('div');
-      box.style.cssText = 'position:fixed;inset:auto 0 40% 0;display:flex;justify-content:center;z-index:99;';
-      const line = document.createElement('div');
-      line.style.cssText = 'background:#000;color:#fff;font:16px/24px ui-monospace,Menlo,monospace;padding:8px 16px;border:1px solid #545454;white-space:pre;';
-      box.appendChild(line);
-      let buf = '';
-      let done = false;
-      const paint = () => { line.textContent = prompt + ' ' + buf + '▎'; };
-      // feed() is shared by live keydowns and the type-ahead drain below.
-      const feed = (key) => {
-        if (key === 'Enter') {
-          if (numeric) {
-            const n = parseFloat(buf);
-            if (!isFinite(n)) { buf = ''; paint(); return false; }
-            done = true;
-            $impl.PromptActive = false;
-            document.removeEventListener('keydown', onKey, true);
-            box.remove();
-            resolve(n);
-            return true;
-          }
-          done = true;
-          $impl.PromptActive = false;
-          document.removeEventListener('keydown', onKey, true);
-          box.remove();
-          resolve(buf);
-          return true;
-        }
-        if (key === 'Backspace') { buf = buf.slice(0, -1); paint(); return false; }
-        if (numeric ? /^[0-9.\-]$/.test(key) : key.length === 1) { buf += key; paint(); }
-        return false;
-      };
-      const onKey = (e) => {
-        // Esc must stay quittable mid-prompt: let it propagate to the
-        // bundle's page-level listener (retro:quit to the NC parent).
-        if (e.key === 'Escape') return;
-        feed(e.key);
-        e.stopPropagation();
-      };
-      paint();
-      document.body.appendChild(box);
-      // DOS type-ahead: keys typed before this prompt appeared are waiting in
-      // the crt queue — drain them first (a fast typist never loses input).
-      while (!done && pas.crt.KeyPressed()) {
-        const c = pas.crt.ReadKey();
-        const code = c.charCodeAt(0);
-        if (code === 0) { if (pas.crt.KeyPressed()) pas.crt.ReadKey(); continue; } // ext scancode pair
-        if (code === 27) continue; // a queued Esc quits (page listener), never joins a name
-        feed(code === 13 ? 'Enter' : (code === 8 ? 'Backspace' : c));
-      }
-      if (!done) {
-        $impl.PromptActive = true; // the queue must NOT also record prompt keys (see var)
-        document.addEventListener('keydown', onKey, true); // capture: the prompt owns the keyboard
-      };
-    });
-    return Result;
   };
   $impl.Cols = 80;
   $impl.Rows = 25;
@@ -4501,10 +4452,6 @@ rtl.module("tpfiles",["System"],function () {
   this.Close = function (f) {
     f.mode = 0;
   };
-  this.Halt = function () {
-    try { parent.postMessage({ type: 'retro:quit' }, '*'); } catch (e) {}
-    throw new Error('halt');
-  };
 },["crt"],function () {
   "use strict";
   var $mod = this;
@@ -4560,6 +4507,9 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],functi
   this.s = 8;
   this.c = 4;
   this.TeamsName = ["Dynamo","Milan","Arsenal","Niva","MU","Shahtar","Shpors","CSKA"];
+  this.BoxL = 11;
+  this.BoxW = 60;
+  this.RowOf = 8;
   this.Teams = rtl.arraySetLength(null,pas.EMatch.FootBallTeam,8);
   this.Players = rtl.arraySetLength(null,pas.EMatch.FootBaller,121);
   this.Stadiums = rtl.arraySetLength(null,pas.EMatch.StadiumType,8);
@@ -4571,18 +4521,143 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],functi
   this.Team2 = pas.EMatch.FootBallTeam.$new();
   this.f = pas.tpfiles.Text.$new();
   this.m = 0;
-  this.t1 = false;
-  this.t2 = false;
   this.NowMatch = pas.EMatch.MatchType.$new();
-  this.p1 = "";
-  this.p2 = "";
   this.dy = 0;
   this.dm = 0;
   this.dd = 0;
   this.dw = 0;
+  this.Pick = 0;
+  this.home = 0;
+  this.Fit = function (src, n) {
+    var Result = "";
+    var r = "";
+    r = src;
+    while (r.length < n) r = r + " ";
+    if (r.length > n) r = pas.System.Copy(r,1,n);
+    Result = r;
+    return Result;
+  };
+  this.Rule = function (row, l, mid, r) {
+    var k = 0;
+    pas.crt.GotoXY(11,row);
+    pas.System.Write(l);
+    for (k = 1; k <= 58; k++) pas.System.Write(mid);
+    pas.System.Write(r);
+  };
+  this.Centre = function (row, s1) {
+    pas.crt.GotoXY(11 + 1 + Math.floor((60 - 2 - s1.length) / 2),row);
+    pas.System.Write(s1);
+  };
+  this.Header = function () {
+    pas.crt.TextBackground(0);
+    pas.crt.TextColor(7);
+    pas.crt.ClrScr();
+    pas.crt.TextColor(3);
+    $mod.Rule(2,"┌","─","┐");
+    pas.crt.GotoXY(11,3);
+    pas.System.Write("│");
+    pas.crt.GotoXY((11 + 60) - 1,3);
+    pas.System.Write("│");
+    pas.crt.GotoXY(11,4);
+    pas.System.Write("│");
+    pas.crt.GotoXY((11 + 60) - 1,4);
+    pas.System.Write("│");
+    $mod.Rule(5,"└","─","┘");
+    pas.crt.TextColor(14);
+    $mod.Centre(3,"F O O T B A L L");
+    pas.crt.TextColor(8);
+    $mod.Centre(4,pas.nls.Loc("match simulator  ·  8 teams  ·  121 players","симулятор матчу  ·  8 команд  ·  121 гравець"));
+    pas.crt.TextColor(7);
+  };
+  this.Progress = function (row, caption, done, total) {
+    var k = 0;
+    var fill = 0;
+    var a = "";
+    var b = "";
+    pas.crt.TextBackground(0);
+    pas.crt.TextColor(7);
+    pas.crt.GotoXY(11 + 1,row);
+    pas.System.Write($mod.Fit(caption,16));
+    fill = 0;
+    if (total > 0) fill = Math.floor((done * 24) / total);
+    for (k = 1; k <= 24; k++) {
+      if (k <= fill) {
+        pas.crt.TextBackground(2)}
+       else pas.crt.TextBackground(8);
+      pas.System.Write(" ");
+    };
+    pas.crt.TextBackground(0);
+    pas.crt.TextColor(15);
+    a = "" + done;
+    b = "" + total;
+    pas.System.Write(" " + $mod.Fit(a + "\/" + b,9));
+    pas.crt.TextColor(7);
+  };
+  this.TeamRow = function (k, current, taken) {
+    var a = "";
+    a = "" + k;
+    if (current) {
+      pas.crt.TextBackground(1);
+      pas.crt.TextColor(14);
+    } else {
+      pas.crt.TextBackground(0);
+      if (taken) {
+        pas.crt.TextColor(8)}
+       else pas.crt.TextColor(7);
+    };
+    pas.crt.GotoXY(11 + 1,8 + k);
+    pas.System.Write($mod.Fit(" " + a + "  " + $mod.Fit($mod.TeamsName[k - 1],10) + $mod.Fit($mod.Teams[k - 1].name,20) + $mod.Teams[k - 1].state.name,60 - 2));
+    pas.crt.TextBackground(0);
+    pas.crt.TextColor(7);
+  };
+  this.ChooseTeam = async function (heading, exclude) {
+    var cur = 0;
+    var k = 0;
+    var code = 0;
+    cur = 1;
+    if (cur === exclude) cur = 2;
+    pas.crt.TextBackground(0);
+    pas.crt.TextColor(15);
+    pas.crt.GotoXY(11 + 1,7);
+    pas.System.Write($mod.Fit(heading,60 - 2));
+    pas.crt.TextColor(8);
+    pas.crt.GotoXY(11 + 1,8 + 8 + 2);
+    pas.System.Write($mod.Fit(pas.nls.Loc("up\/down + Enter, or press 1-8","вгору\/вниз + Enter, або цифра 1-8"),60 - 2));
+    pas.crt.TextColor(7);
+    code = 0;
+    do {
+      for (k = 1; k <= 8; k++) $mod.TeamRow(k,k === cur,k === exclude);
+      code = pas.System.Trunc(await pas.crt.ReadKeyA());
+      if (code === 0) {
+        code = pas.System.Trunc(await pas.crt.ReadKeyA());
+        if (code === 72) do {
+          if (cur === 1) {
+            cur = 8}
+           else cur -= 1;
+        } while (!(cur !== exclude));
+        if (code === 80) do {
+          if (cur === 8) {
+            cur = 1}
+           else cur += 1;
+        } while (!(cur !== exclude));
+        code = 0;
+      } else if ((code >= 49) && (code <= (48 + 8))) {
+        if ((code - 48) !== exclude) {
+          cur = code - 48;
+          code = 13;
+        } else code = 0;
+      };
+    } while (!(code === 13));
+    for (k = 1; k <= 8; k++) $mod.TeamRow(k,false,(k === exclude) || (k === cur));
+    $mod.Pick = cur;
+  };
   this.Main = async function () {
     pas.crt.Randomize();
-    pas.System.Writeln(pas.nls.Loc("Loading countries","Завантаження країн"));
+    $mod.Header();
+    $mod.Progress(7,pas.nls.Loc("Countries","Країни"),0,4);
+    $mod.Progress(9,pas.nls.Loc("Stadiums","Стадіони"),0,8);
+    $mod.Progress(11,pas.nls.Loc("Players","Гравці"),0,120 + 1);
+    $mod.Progress(13,pas.nls.Loc("Teams","Команди"),0,8);
     for ($mod.i = 1; $mod.i <= 4; $mod.i++) {
       $mod.st = "" + $mod.i;
       pas.tpfiles.Assign($mod.f,"STT\\" + $mod.st + ".stt");
@@ -4593,9 +4668,9 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],functi
           this.p.name = v;
         }});
       pas.tpfiles.Close($mod.f);
-      pas.System.Writeln($mod.i,pas.nls.Loc(" loaded"," завантажено"));
+      $mod.Progress(7,pas.nls.Loc("Countries","Країни"),$mod.i,4);
     };
-    pas.System.Writeln(pas.nls.Loc("Loading stadiums","Завантаження стадіонів"));
+    await pas.crt.FrameDelay(120);
     for ($mod.i = 1; $mod.i <= 8; $mod.i++) {
       $mod.st = "" + $mod.i;
       pas.tpfiles.Assign($mod.f,"STD\\" + $mod.st + ".std");
@@ -4609,9 +4684,9 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],functi
       $mod.m = pas.tpfiles.ReadLnNum($mod.f);
       $mod.Stadiums[$mod.i - 1].state.$assign($mod.Countries[$mod.m - 1]);
       pas.tpfiles.Close($mod.f);
-      pas.System.Writeln($mod.i,pas.nls.Loc(" loaded"," завантажено"));
+      $mod.Progress(9,pas.nls.Loc("Stadiums","Стадіони"),$mod.i,8);
     };
-    pas.System.Writeln(pas.nls.Loc("Loading players","Завантаження гравців"));
+    await pas.crt.FrameDelay(120);
     for ($mod.i = 0; $mod.i <= 120; $mod.i++) {
       $mod.st = "" + $mod.i;
       pas.tpfiles.Assign($mod.f,"FBP\\" + $mod.st + ".fbp");
@@ -4654,9 +4729,9 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],functi
         $mod.Players[$mod.i].fall = pas.EMatch.FallType.RedCard;
       };
       pas.tpfiles.Close($mod.f);
-      pas.System.Writeln($mod.i,pas.nls.Loc(" loaded"," завантажено"));
+      $mod.Progress(11,pas.nls.Loc("Players","Гравці"),$mod.i + 1,120 + 1);
     };
-    pas.System.Writeln(pas.nls.Loc("Loading teams","Завантаження команд"));
+    await pas.crt.FrameDelay(120);
     for ($mod.i = 1; $mod.i <= 8; $mod.i++) {
       $mod.st = "" + $mod.i;
       pas.tpfiles.Assign($mod.f,"FBT\\" + $mod.st + ".fbt");
@@ -4686,33 +4761,15 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],functi
       $mod.Teams[$mod.i - 1].Mark = Math.floor($mod.Teams[$mod.i - 1].Mark / 11);
       $mod.Teams[$mod.i - 1].tiredness = Math.floor($mod.Teams[$mod.i - 1].tiredness / 11);
       $mod.Teams[$mod.i - 1].mood = Math.floor($mod.Teams[$mod.i - 1].mood / 11);
-      pas.System.Writeln($mod.i,pas.nls.Loc(" loaded"," завантажено"));
+      $mod.Progress(13,pas.nls.Loc("Teams","Команди"),$mod.i,8);
     };
-    pas.System.Writeln(pas.nls.Loc("Preparing for kickoff","Підготовка до початку матчу"));
-    $mod.t1 = false;
-    $mod.t2 = false;
-    $mod.p1 = await pas.crt.AskString(pas.nls.Loc("Team 1 (e.g. Dynamo)","Команда 1 (напр. Dynamo)"));
-    $mod.p2 = await pas.crt.AskString(pas.nls.Loc("Team 2 (e.g. Milan)","Команда 2 (напр. Milan)"));
-    for ($mod.i = 1; $mod.i <= 8; $mod.i++) {
-      if ($mod.p1 === $mod.TeamsName[$mod.i - 1]) {
-        $mod.Team1.$assign($mod.Teams[$mod.i - 1]);
-        $mod.t1 = true;
-      };
-      if ($mod.p2 === $mod.TeamsName[$mod.i - 1]) {
-        $mod.Team2.$assign($mod.Teams[$mod.i - 1]);
-        $mod.t2 = true;
-      };
-    };
-    if (($mod.t1 === false) || ($mod.t2 === false)) {
-      pas.System.Writeln(pas.nls.Loc("Wrong teams","Неправильні команди"));
-      pas.System.Writeln(pas.nls.Loc("Call format:","Формат виклику:"));
-      pas.System.Writeln("match {team1} {team2}");
-      pas.System.Writeln(pas.nls.Loc("Available teams:","Доступні команди:"));
-      for ($mod.j = 1; $mod.j <= 8; $mod.j++) pas.System.Writeln($mod.TeamsName[$mod.j - 1]," - ",$mod.Teams[$mod.j - 1].name);
-      do {
-      } while (!(pas.System.Trunc(await pas.crt.ReadKeyA()) === 13));
-      pas.tpfiles.Halt();
-    };
+    await pas.crt.FrameDelay(260);
+    $mod.Header();
+    await $mod.ChooseTeam(pas.nls.Loc("Home team","Господарі поля"),0);
+    $mod.home = $mod.Pick;
+    $mod.Team1.$assign($mod.Teams[$mod.home - 1]);
+    await $mod.ChooseTeam(pas.nls.Loc("Away team","Гості"),$mod.home);
+    $mod.Team2.$assign($mod.Teams[$mod.Pick - 1]);
     var $with = $mod.NowMatch;
     $with.Stadium.$assign($mod.Team1.stadiumteam);
     $with.Ft[0].$assign($mod.Team1);
@@ -4742,7 +4799,17 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],functi
     $with.Date.month = $mod.dm;
     $with.Date.date = $mod.dd;
     $with.FileCom = "Match.txt";
-    pas.System.Writeln(pas.nls.Loc("Match start","Початок матчу"));
+    $mod.Header();
+    pas.crt.TextColor(15);
+    $mod.Centre(8,$mod.Team1.name + "   —   " + $mod.Team2.name);
+    pas.crt.TextColor(7);
+    $mod.Centre(10,$mod.NowMatch.Stadium.name + "  ·  " + $mod.NowMatch.Stadium.state.name);
+    $mod.st = "" + $mod.NowMatch.OnLooker;
+    $mod.Centre(11,$mod.st + pas.nls.Loc(" spectators"," глядачів"));
+    pas.crt.TextColor(2);
+    $mod.Centre(13,pas.nls.Loc("Kick-off","Початок матчу"));
+    pas.crt.TextColor(7);
+    await pas.crt.FrameDelay(1400);
     await pas.EMatch.EmulMatch($mod.NowMatch);
   };
   $mod.$main = function () {

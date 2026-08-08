@@ -183,11 +183,59 @@ detail), one did not reproduce:
   SNITCH. Now passes `files[fileIdx]`. `NortonCommander.tsx`.
 - **FOOTBALL — duplicate stadium greeting (was: Low).** "Welcome to the stadium…"
   sat inside the per-half loop (`HalfEnd=2`) so it printed twice; moved it before
-  the loop. The `N loaded` progress is authentic 1:1 and kept. `EMATCH.pas`.
+  the loop. `EMATCH.pas`. (This entry used to end "The `N loaded` progress is
+  authentic 1:1 and kept" — that decision was reversed on 2026-08-05, see below.)
 - **SNITCH — "Team 1 black-on-black" (Medium): did NOT reproduce.** All three
   render paths (periodic status, goal, end-of-match) show Team 1's name + seeker
   line in normal lightgray; the text shim uses a uniform `fg=7`. Left unchanged
   rather than risk regressing a correct render — flagged back to Yarik.
+
+## FOOTBALL's intro: where "authentic 1:1" was the wrong call (2026-08-05)
+
+Yarik: *"intro screen for football is completely not user friendly can we re-do
+it so it is more intuitive?"* — with a screenshot of `120 loaded` / `Preparing
+for kickoff` and a bare `Team 1 (e.g. Dynamo)` box.
+
+What he was looking at was **faithful**, and that is exactly why it was bad:
+
+- **141 lines of `N loaded`.** 4 countries + 8 stadiums + **121 players** + 8
+  teams, one `writeln` each, scrolling a 80×25 console for the whole load. The
+  QA pass had explicitly kept this as authentic.
+- **Two blind prompts.** The DOS original read the teams from `paramstr(1)` /
+  `paramstr(2)`; the browser has no argv, so the port replaced them with
+  `AskString`. That inherited the command line's one real flaw — you had to know
+  the answer before you were asked — with **no list shown anywhere**, matching on
+  the Latin code (`Dynamo`) rather than the name the game itself displays
+  (`Динамо Київ`), case-sensitively.
+- **A typo ended the run.** Any mismatch printed the DOS usage banner
+  (`match {team1} {team2}`), listed the teams *then*, and `halt`ed — so the only
+  way to see the valid answers was to get it wrong and relaunch the bundle.
+
+Replaced in `games/FOOTBALL/MATCH.pas` with: a titled frame, **four progress
+bars** in place of the 141 lines, and a **team menu** — 8 rows of
+`code · display name · country`, arrows + Enter or a digit 1-8, with the home
+team greyed out and skipped when picking the away side. Invalid input no longer
+exists, so the `halt` branch went with it; a kickoff card (teams, stadium,
+attendance) holds for a real 1.4 s before `EmulMatch` takes the screen.
+
+Two mechanics worth reusing:
+
+- **Bars are spaces with a background colour, not `█`.** `HandleWrite` paints a
+  cell's background unconditionally and skips `fillText` for `' '`, so a bar
+  drawn this way cannot depend on whether the IBM VGA font has a given block
+  glyph. Box-drawing is the opposite case — `HighGlyph` maps only
+  `179/191/192/196/217/218`, but a **literal** `┌ ─ ┐ │ └ ┘` in the UTF-8 source
+  passes straight through (`chr(code)`), which is also why Cyrillic works.
+- **The pause before kickoff is `FrameDelay`, not `Delay`.** A `Delay` there
+  would be multiplied by `DelayScale` and lengthen every time Yarik asks for
+  "slower" — the intro is chrome, not gameplay, and should not answer to the
+  speed knobs at all.
+
+This is the one place a port deliberately diverges from the original by more
+than async/await. Note it is a **playability** decision, not a rewrite of the
+exhibit: the F3 viewer is generated from the untouched originals in
+`RETRO_GAMES_DIR`, so `~/games/FOOTBALL/MATCH.PAS` still shows the 2005 source
+byte-for-byte.
 
 ## DelayScale is one linear knob — it breaks when a game's Delays span decades
 
@@ -219,8 +267,8 @@ neither. So there are exactly three knobs, and a speed request has to be aimed:
 
 | knob | where | now | governs |
 |---|---|---|---|
-| `MinDelayMs` | `shims/crt.pas` | 40 ms | every wait that rounds *below* the floor — i.e. the frame tick of PINGPONG, CARS1, CARS2, FOOTBALL |
-| `DelayScale` | `shims/crt.pas` | 0.008 | every wait *above* the floor — the long pauses, and QUIDDITC's per-iteration `Delay(60000)` |
+| `MinDelayMs` | `shims/crt.pas` | 80 ms | every wait that rounds *below* the floor — i.e. the frame tick of PINGPONG, CARS1, CARS2, FOOTBALL |
+| `DelayScale` | `shims/crt.pas` | 0.016 | every wait *above* the floor — the long pauses, and QUIDDITC's per-iteration `Delay(60000)` |
 | `frameMs` | `games/WARWORK/WW3.pas` | 45 ms | WARWORK's speed, and nothing else |
 
 **Reaching for the floor alone is the trap.** 2026-08-02, "всіх інших ще в два
@@ -234,6 +282,23 @@ that `max`. Measured, per call site: PINGPONG frame 20 → 40, CARS1 20 → 40,
 CARS2 20 → 40, FOOTBALL commentary 20 → 40, QUIDDITC per iteration 293 → 587 ms
 — all ×2.00. **BAKKARA has no `Delay` call site at all**, so no global knob can
 slow it; it is turn-based on `readln` and there is nothing to pace.
+
+**2026-08-05 — the identical request a second time** ("can we make all games
+(except for warwork) 2x slower?"), answered with the identical two-number edit:
+40 → **80** ms and 0.008 → **0.016**. WARWORK untouched (`frameMs` stays 45, and
+its own pin keeps it out of both globals), BAKKARA again unreachable. Two things
+worth carrying forward:
+
+- **This request repeats; expect it to.** Yarik has now asked for a 2× slowdown
+  twice in four days, so the next report may be a third. Don't re-derive the
+  aiming each time — turn both numbers together and say up front that BAKKARA
+  will not change, because it never does.
+- **80 ms is where "slower" starts costing smoothness.** 12.5 fps is below the
+  ~15 fps at which motion reads as continuous, so if the next feedback is
+  *jerky* rather than *fast*, the fix is to lower `MinDelayMs` alone and leave
+  `DelayScale` where it is — that slows the pauses and QUIDDITC without stepping
+  the frame-paced games. Verified in the browser after the change: PINGPONG's
+  menu, WARWORK's intro and a FOOTBALL match all still run.
 
 **WARWORK pins both globals back to 0.004/20 in its own program body** (they are
 typed constants, i.e. assignable `var`s, and `Delay` reads them per call — not

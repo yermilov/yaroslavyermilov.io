@@ -100,12 +100,13 @@ var
     Honouring the literal argument gives a technically faithful port that is
     unplayable, so the wall-clock delay is scaled here. 1.0 = obey the source.
 
-    0.004 -> 0.008 on 2026-08-02: Yarik, having played the 50-fps build, asked
-    for "всіх інших ще в два рази повільніше" (everything except WARWORK twice
-    as slow again). MinDelayMs below is doubled in the same breath, and the two
-    together are what make that exact: every effective wait is max(ms * scale,
-    floor), so doubling BOTH doubles every wait — the floored frame ticks and
-    the unfloored long pauses alike.
+    0.004 -> 0.008 (2026-08-02) -> 0.016 (2026-08-05): Yarik has now asked for
+    the same doubling twice — "всіх інших ще в два рази повільніше", then "can
+    we make all games (except for warwork) 2x slower?". MinDelayMs below is
+    doubled in the same breath each time, and the two together are what make it
+    exact: every effective wait is max(ms * scale, floor), so doubling BOTH
+    doubles every wait — the floored frame ticks and the unfloored long pauses
+    alike. Both requests were answered with the identical two-number edit.
 
     The floor alone would NOT have done it, which is why this number moves too.
     Measured across the ports: PINGPONG/CARS1/CARS2/FOOTBALL pace on delays that
@@ -118,7 +119,7 @@ var
     WARWORK opts OUT of both numbers — see the pin at the top of WW3.pas. Its
     speed is FrameDelay (real ms), so a global slowdown could only touch its
     scene pauses, and it is the one game asked to get FASTER. }
-  DelayScale: double = 0.008;
+  DelayScale: double = 0.016;
   { ...but a linear scale alone CANNOT serve both ends of a game's range, and
     that is what made most ports run at warp speed (Yarik, 2026-08-01: "most
     games run too fast").
@@ -136,18 +137,24 @@ var
     and are governed by DelayScale alone, so the floor only ever affects the
     delays that were being rounded away.
 
-    20 -> 40 ms on 2026-08-02 (≈50 fps -> ≈25 fps): Yarik played the 50-fps build
-    and asked for everything except WARWORK to be twice as slow again. This is
-    the half of that change that reaches the frame-paced games — PINGPONG
-    (Delay(15) and Delay(Duration*2), Duration=15 in data/OPTIONS.COD), CARS1
-    (Delay(3000)), CARS2 (Delay(5000), which sat EXACTLY on the old floor) and
-    FOOTBALL's match commentary (Delay(1000..2000)). All four round below the
-    floor, so for them the floor IS the frame period and doubling it is exactly
-    2× slower.
+    20 -> 40 ms (2026-08-02) -> 80 ms (2026-08-05), i.e. ≈50 -> ≈25 -> ≈12.5 fps.
+    Yarik played each build and asked for the same halving again. This is the
+    half of the change that reaches the frame-paced games — PINGPONG (Delay(15)
+    and Delay(Duration*2), Duration=15 in data/OPTIONS.COD), CARS1 (Delay(3000)),
+    CARS2 (Delay(5000), which sat EXACTLY on the 20 ms floor) and FOOTBALL's
+    match commentary (Delay(1000..2000)). All four round below the floor, so for
+    them the floor IS the frame period and doubling it is exactly 2× slower.
+
+    80 ms is where a frame tick stops being a frame tick and starts being visible
+    stepping — 12.5 fps is below the ~15 fps at which motion reads as continuous.
+    If the next report is "now it's jerky rather than slow", this is the number
+    that caused it, and the fix is to lower THIS one while leaving DelayScale at
+    0.016 (which would slow the long pauses and QUIDDITC without stepping the
+    frame-paced games).
 
     Frame FEEL is a judgement call, not a fact: this is the one number to turn if
     a game is still too quick or now too sluggish. }
-  MinDelayMs: integer = 40;
+  MinDelayMs: integer = 80;
 
 implementation
 

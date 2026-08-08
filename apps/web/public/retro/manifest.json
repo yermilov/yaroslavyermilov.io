@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-08-03",
+ "generatedAt": "2026-08-08",
  "folders": [
   {
    "dir": "PINGPONG",
@@ -626,8 +626,8 @@
     "en": "Match sim: 121 players, 8 teams. Goals, cards, commentary."
    },
    "controls": {
-    "ua": "введи дві команди (напр. Dynamo і Milan) + Enter · Esc — вийти",
-    "en": "enter two teams (e.g. Dynamo and Milan) + Enter · Esc to exit"
+    "ua": "обери дві команди: ↑↓ + Enter або цифра 1-8",
+    "en": "pick two teams: up/down + Enter, or press 1-8"
    },
    "run": "match",
    "runs": {

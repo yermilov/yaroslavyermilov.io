@@ -4,21 +4,36 @@
   (FBP/FBT/STD/STT), який ПОВНІСТЮ зберігся й вантажиться тут байт-у-байт.
   Original: /Users/yarik/games/FOOTBALL/MATCH.PAS.
 
-  Двигун симуляції (unit EMatch) автор покинув посеред рефакторингу — див.
-  реконструкцію і її дві ремонтні правки в EMATCH.pas поруч. Сам матч подій
-  не має (не дописані) — чесний фінал завжди 0:0; справжнє видовище тут —
-  завантаження бази і склади.
+  Двигун симуляції — unit EMatch. Оригінальний EMATCH.PAS у папці FOOTBALL
+  автор покинув посеред рефакторингу (нуль `inc(Score)`, нуль `inc(MinNow)` —
+  матч закінчувався 0:0 миттєво); справжній робочий двигун знайшовся за
+  вмістом, а не за іменем, у ~/games/_інше/UNITS/EM.PAS — саме він і портований
+  (голи, картки, коментар). Ця преамбула раніше стверджувала «чесний фінал
+  завжди 0:0» — це вже неправда з 28.07.2026.
 
   The diff against the original, in full:
   - uses + JS, tpfiles (файлові операції через шим: readln(f,s)→ReadlnT,
     readln(f,n)→ReadLnNum, read(f,n)→ReadNum, close→Close);
   - програма стала async (Main + await);
-  - paramstr(1)/paramstr(2) (команди з командного рядка DOS) →
-    AskString-промпти — у браузера немає argv;
+  - ЗАСТАВКА ПЕРЕПИСАНА (05.08.2026, на прохання Yarik: "intro screen for
+    football is completely not user friendly can we re-do it so it is more
+    intuitive?"). Що було: 141 рядок `N завантажено`, який прокручував увесь
+    80×25 екран, потім два сліпі текстові промпти без жодного списку — ввід мав
+    ТОЧНО збігтися з латинським кодом команди ('Dynamo'), а не з тим іменем, що
+    гра показує ('Динамо Київ'); будь-яка помилка друкувала DOS-івську довідку
+    `match {team1} {team2}` і робила halt, тобто гру треба було перезапускати.
+    Що стало: рамка з назвою, чотири прогрес-смуги замість 141 рядка, і меню
+    вибору команди — 8 рядків «код · назва · країна», стрілки/Enter або цифра
+    1-8, друга команда не може збігтися з першою (рядок гасне). Невалідного
+    вводу більше не існує, тож і halt-гілка зникла разом із ним.
+    Це єдине місце, де порт свідомо відходить від оригіналу далі, ніж
+    async/await: у DOS команди приходили з paramstr(1)/paramstr(2), у браузера
+    argv немає, і промпти-заміна успадкували від командного рядка найгірше —
+    треба було знати відповідь наперед.
   - `readln;` на екрані підказки → очікування Enter через ReadKeyA;
   - GetDate у поля-піддіапазони DateType — через проміжні word-змінні
     (pas2js суворіший за TP щодо var-параметрів);
-  - все інше — 1:1, включно з форматом виклику і текстами завантаження. }
+  - все інше — 1:1. }
 program Match;
 uses JS, EMatch, Dos, Crt, tpfiles, nls;
 
@@ -27,6 +42,11 @@ const t=8;
       s=8;
       c=4;
       TeamsName : array [1..t] of string = ('Dynamo', 'Milan', 'Arsenal', 'Niva', 'MU', 'Shahtar', 'Shpors', 'CSKA');
+      { Рамка заставки: колонки BoxL..BoxL+BoxW-1 у 80-колонковому екрані. }
+      BoxL=11;
+      BoxW=60;
+      { Рядок меню для команди i. }
+      RowOf=8;
 var Teams : array [1..t] of footballteam;
     Players : array [0..p] of footballer;
     Stadiums : array [1..s] of stadiumtype;
@@ -36,14 +56,163 @@ var Teams : array [1..t] of footballteam;
     Team1,Team2:footballteam;
     f:Text;
     m:word;
-    t1,t2:boolean;
     NowMatch:MatchType;
-    p1,p2:string;
     dy,dm,dd,dw:word;
+    Pick,home:byte;
+
+{ ── заставка ─────────────────────────────────────────────────────────────
+  Малюється звичайним crt-шимом: GotoXY/TextColor/TextBackground у текстовому
+  режимі 80×25. Смуга прогресу — це ПРОБІЛИ з різним тлом, а не символи
+  псевдографіки: HandleWrite фарбує клітинку тлом завжди, а гліф ' ' не
+  малюється взагалі, тож смуга не залежить від того, чи є в шрифті █. }
+
+function Fit(const src:string; n:byte):string;
+var r:string;
+begin
+     r:=src;
+     while Length(r)<n do r:=r+' ';
+     if Length(r)>n then r:=Copy(r,1,n);
+     Fit:=r;
+end;
+
+procedure Rule(row:byte; const l,mid,r:string);
+var k:byte;
+begin
+     GotoXY(BoxL,row);
+     Write(l);
+     for k:=1 to BoxW-2 do Write(mid);
+     Write(r);
+end;
+
+procedure Centre(row:byte; const s1:string);
+begin
+     GotoXY(BoxL+1+(BoxW-2-Length(s1)) div 2,row);
+     Write(s1);
+end;
+
+procedure Header;
+begin
+     TextBackground(Black);
+     TextColor(LightGray);
+     ClrScr;
+     TextColor(Cyan);
+     Rule(2,'┌','─','┐');
+     GotoXY(BoxL,3); Write('│'); GotoXY(BoxL+BoxW-1,3); Write('│');
+     GotoXY(BoxL,4); Write('│'); GotoXY(BoxL+BoxW-1,4); Write('│');
+     Rule(5,'└','─','┘');
+     TextColor(Yellow);
+     Centre(3,'F O O T B A L L');
+     TextColor(DarkGray);
+     Centre(4,Loc('match simulator  ·  8 teams  ·  121 players',
+                  'симулятор матчу  ·  8 команд  ·  121 гравець'));
+     TextColor(LightGray);
+end;
+
+{ Одна смуга: підпис (16), 24 клітинки прогресу, лічильник. }
+procedure Progress(row:byte; const caption:string; done,total:integer);
+var k,fill:integer;
+    a,b:string;
+begin
+     TextBackground(Black);
+     TextColor(LightGray);
+     GotoXY(BoxL+1,row);
+     Write(Fit(caption,16));
+     fill:=0;
+     if total>0 then fill:=(done*24) div total;
+     for k:=1 to 24 do
+         begin
+              if k<=fill then TextBackground(Green) else TextBackground(DarkGray);
+              Write(' ');
+         end;
+     TextBackground(Black);
+     TextColor(White);
+     str(done,a);
+     str(total,b);
+     Write(' '+Fit(a+'/'+b,9));
+     TextColor(LightGray);
+end;
+
+{ Рядок меню команд: код (як його очікував DOS-виклик), показова назва, країна.
+  taken — команда вже зайнята першим вибором: гасне і пропускається. }
+procedure TeamRow(k:byte; current,taken:boolean);
+var a:string;
+begin
+     str(k,a);
+     if current then
+        begin
+             TextBackground(Blue);
+             TextColor(Yellow);
+        end
+     else
+        begin
+             TextBackground(Black);
+             if taken then TextColor(DarkGray) else TextColor(LightGray);
+        end;
+     GotoXY(BoxL+1,RowOf+k);
+     Write(Fit(' '+a+'  '+Fit(TeamsName[k],10)+Fit(Teams[k].Name,20)+Teams[k].State.Name,BoxW-2));
+     TextBackground(Black);
+     TextColor(LightGray);
+end;
+
+{ Вибір однієї команди. Результат — у Pick. exclude=0 для першої команди.
+  Стрілки #0/#72/#80 приходять двома викликами ReadKey — це DOS-протокол
+  розширених клавіш, який шим відтворює навмисно (див. crt.pas). }
+procedure ChooseTeam(const heading:string; exclude:byte); async;
+var cur,k:byte;
+    code:integer;
+begin
+     cur:=1;
+     if cur=exclude then cur:=2;
+     TextBackground(Black);
+     TextColor(White);
+     GotoXY(BoxL+1,7);
+     Write(Fit(heading,BoxW-2));
+     TextColor(DarkGray);
+     GotoXY(BoxL+1,RowOf+t+2);
+     Write(Fit(Loc('up/down + Enter, or press 1-8',
+                   'вгору/вниз + Enter, або цифра 1-8'),BoxW-2));
+     TextColor(LightGray);
+     code:=0;
+     repeat
+        for k:=1 to t do TeamRow(k,k=cur,k=exclude);
+        code:=trunc(await(double, ReadKeyA));
+        if code=0 then
+           begin
+                code:=trunc(await(double, ReadKeyA));
+                if code=72 then
+                   repeat
+                      if cur=1 then cur:=t else dec(cur);
+                   until cur<>exclude;
+                if code=80 then
+                   repeat
+                      if cur=t then cur:=1 else inc(cur);
+                   until cur<>exclude;
+                code:=0;
+           end
+        else if (code>=49) and (code<=48+t) then
+           begin
+                { Цифра — це і переміщення, і підтвердження: класичне DOS-меню.
+                  Зайняту команду вона не бере, лише блимає рядком. }
+                if (code-48)<>exclude then
+                   begin
+                        cur:=code-48;
+                        code:=13;
+                   end
+                else code:=0;
+           end;
+     until code=13;
+     for k:=1 to t do TeamRow(k,false,(k=exclude) or (k=cur));
+     Pick:=cur;
+end;
+
 procedure Main; async;
 begin
      randomize;
-     Writeln(Loc('Loading countries','Завантаження країн'));
+     Header;
+     Progress(7,Loc('Countries','Країни'),0,c);
+     Progress(9,Loc('Stadiums','Стадіони'),0,s);
+     Progress(11,Loc('Players','Гравці'),0,p+1);
+     Progress(13,Loc('Teams','Команди'),0,t);
      for i:=1 to c do
          begin
               str(i,st);
@@ -51,9 +220,9 @@ begin
               Reset(f);
               ReadlnT(f,Countries[i].Name);
               Close(f);
-              writeln(i,Loc(' loaded',' завантажено'));
+              Progress(7,Loc('Countries','Країни'),i,c);
          end;
-     Writeln(Loc('Loading stadiums','Завантаження стадіонів'));
+     await(FrameDelay(120));
      for i:=1 to s do
          begin
               str(i,st);
@@ -64,9 +233,9 @@ begin
               m:=ReadLnNum(f);
               Stadiums[i].State:=Countries[m];
               Close(f);
-              writeln(i,Loc(' loaded',' завантажено'));
+              Progress(9,Loc('Stadiums','Стадіони'),i,s);
          end;
-     Writeln(Loc('Loading players','Завантаження гравців'));
+     await(FrameDelay(120));
      for i:=0 to p do
          begin
               str(i,st);
@@ -95,9 +264,9 @@ begin
               else Players[i].Fall:=RedCard;
               end;
               Close(f);
-              writeln(i,Loc(' loaded',' завантажено'));
+              Progress(11,Loc('Players','Гравці'),i+1,p+1);
          end;
-     Writeln(Loc('Loading teams','Завантаження команд'));
+     await(FrameDelay(120));
      for i:=1 to t do
          begin
               str(i,st);
@@ -126,37 +295,19 @@ begin
               Teams[i].Mark:=Teams[i].Mark div 11;
               Teams[i].Tiredness:=Teams[i].Tiredness div 11;
               Teams[i].mood:=Teams[i].Mood div 11;
-              writeln(i,Loc(' loaded',' завантажено'));
+              Progress(13,Loc('Teams','Команди'),i,t);
          end;
-     Writeln(Loc('Preparing for kickoff','Підготовка до початку матчу'));
-     t1:=false;
-     t2:=false;
-     p1:=await(string, AskString(Loc('Team 1 (e.g. Dynamo)','Команда 1 (напр. Dynamo)')));
-     p2:=await(string, AskString(Loc('Team 2 (e.g. Milan)','Команда 2 (напр. Milan)')));
-     for i:=1 to t do
-         begin
-              if p1=teamsname[i] then
-                 begin
-                      Team1:=Teams[i];
-                      t1:=true;
-                 end;
-              if p2=teamsname[i] then
-                 begin
-                      Team2:=Teams[i];
-                      t2:=true;
-                 end;
-         end;
-     if (t1=false) or (t2=false) then
-        begin
-             Writeln(Loc('Wrong teams','Неправильні команди'));
-             Writeln(Loc('Call format:','Формат виклику:'));
-             Writeln('match {team1} {team2}');
-             Writeln(Loc('Available teams:','Доступні команди:'));
-             for j:=1 to t do
-                 writeln(TeamsName[j],' - ',Teams[j].Name);
-             repeat until trunc(await(double, ReadKeyA))=13; { readln; }
-             halt;
-        end;
+     await(FrameDelay(260));
+
+     { Вибір команд. Той самий Header перемальовує екран, тож смуги прогресу
+       зникають і меню займає їхнє місце. }
+     Header;
+     await(ChooseTeam(Loc('Home team','Господарі поля'),0));
+     home:=Pick;
+     Team1:=Teams[home];
+     await(ChooseTeam(Loc('Away team','Гості'),home));
+     Team2:=Teams[Pick];
+
      with NowMatch do
           begin
                Stadium:=Team1.StadiumTeam;
@@ -172,7 +323,21 @@ begin
                Date.Date:=dd;
                FileCom:='Match.txt';
           end;
-     Writeln(Loc('Match start','Початок матчу'));
+     { Картка матчу замість голого `Writeln('Match start')` у випадковій позиції
+       курсора: гравець бачить, ЩО саме він щойно обрав, перш ніж EMatch забере
+       екран собі (перший же Comment робить ClrScr). Пауза — FrameDelay, тобто
+       реальні мілісекунди: інакше DelayScale розтягнув би її разом з усім. }
+     Header;
+     TextColor(White);
+     Centre(8,Team1.Name+'   —   '+Team2.Name);
+     TextColor(LightGray);
+     Centre(10,NowMatch.Stadium.Name+'  ·  '+NowMatch.Stadium.State.Name);
+     str(NowMatch.OnLooker,st);
+     Centre(11,st+Loc(' spectators',' глядачів'));
+     TextColor(Green);
+     Centre(13,Loc('Kick-off','Початок матчу'));
+     TextColor(LightGray);
+     await(FrameDelay(1400));
      await(EmulMatch(NowMatch));
 end;
 

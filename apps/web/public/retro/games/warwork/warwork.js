@@ -1709,8 +1709,8 @@ rtl.module("crt",["System","JS"],function () {
   };
   this.Readln = function () {
   };
-  this.DelayScale = 0.008;
-  this.MinDelayMs = 40;
+  this.DelayScale = 0.016;
+  this.MinDelayMs = 80;
   $mod.$init = function () {
     if ($mod.KeyPressed()) $mod.ReadKey();
     pas.System.SetWriteCallBack(function (S, NewLine) {
