@@ -1640,8 +1640,8 @@ rtl.module("crt",["System","JS"],function () {
     $impl.CurX = 1;
     $impl.CurY = 1;
   };
-  this.DelayScale = 0.016;
-  this.MinDelayMs = 80;
+  this.DelayScale = 0.032;
+  this.MinDelayMs = 160;
   $mod.$init = function () {
     if ($mod.KeyPressed()) $mod.ReadKey();
     pas.System.SetWriteCallBack(function (S, NewLine) {

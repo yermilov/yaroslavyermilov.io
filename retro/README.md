@@ -237,6 +237,37 @@ exhibit: the F3 viewer is generated from the untouched originals in
 `RETRO_GAMES_DIR`, so `~/games/FOOTBALL/MATCH.PAS` still shows the 2005 source
 byte-for-byte.
 
+## CSKA removed from the FOOTBALL roster (2026-08-08)
+
+Yarik: *"remove cska russia from roster completely"*. The playable roster is now
+**7 teams / 105 players / 7 stadiums / 3 countries**.
+
+It removed cleanly because CSKA sat entirely at the **tail of every numbering**,
+so nothing had to be renumbered — team **8**, stadium **8**, country **4**
+(«Росія», used by no other club — the rest sit in countries 1-3), squad **106..120**
+(referenced by no other `.fbt`, verified before deleting). The edit is therefore
+four constants in `games/FOOTBALL/MATCH.pas` (`t/p/s/c`) plus 36 deleted data
+files, 18 per language — `8.fbt`, `8.std`, `4.stt` and `106..120.fbp` in both
+`data/` and `data.en/`.
+
+- **Check the tail assumption before trusting it next time.** Dropping any team
+  that is *not* last would require renumbering the `.fbp` files AND rewriting the
+  player-index lists inside every surviving `.fbt` — a different job entirely.
+- **The intro menu needs no layout work**, because its geometry is already
+  `t`-driven: rows `RowOf+1..RowOf+t`, the hint at `RowOf+t+2`, the digit guard
+  `code<=48+t`, and both arrow walks skip the excluded team. Only the two
+  human-readable strings are hardcoded — the `1-8`→`1-7` hint and the header's
+  team/player counts — plus the same two in `build.ts`'s `GameDef` (`note`,
+  `controls`), which feed the NC's F1 panel.
+- **The counts in that header were off by one before this change** and are now
+  literal: it said "121 players" for `p+1`, which counts `0.fbp`, the empty
+  placeholder the `.fbt` slots use for "no player". Real players were 120 (8×15);
+  they are now 105 (7×15).
+- **The F3 exhibit still contains CSKA, deliberately.** It is generated from the
+  untouched originals in `RETRO_GAMES_DIR`, per Yarik's standing rule that the
+  original sources stay byte-for-byte as the museum piece — the removal is from
+  the *playable* roster.
+
 ## DelayScale is one linear knob — it breaks when a game's Delays span decades
 
 WARWORK (2026-07-26, "any button I click my plane immediately crashes"): the
@@ -267,8 +298,8 @@ neither. So there are exactly three knobs, and a speed request has to be aimed:
 
 | knob | where | now | governs |
 |---|---|---|---|
-| `MinDelayMs` | `shims/crt.pas` | 80 ms | every wait that rounds *below* the floor — i.e. the frame tick of PINGPONG, CARS1, CARS2, FOOTBALL |
-| `DelayScale` | `shims/crt.pas` | 0.016 | every wait *above* the floor — the long pauses, and QUIDDITC's per-iteration `Delay(60000)` |
+| `MinDelayMs` | `shims/crt.pas` | 160 ms | every wait that rounds *below* the floor — i.e. the frame tick of PINGPONG, CARS1, CARS2, FOOTBALL |
+| `DelayScale` | `shims/crt.pas` | 0.032 | every wait *above* the floor — the long pauses, and QUIDDITC's per-iteration `Delay(60000)` |
 | `frameMs` | `games/WARWORK/WW3.pas` | 45 ms | WARWORK's speed, and nothing else |
 
 **Reaching for the floor alone is the trap.** 2026-08-02, "всіх інших ще в два
@@ -299,6 +330,28 @@ worth carrying forward:
   `DelayScale` where it is — that slows the pauses and QUIDDITC without stepping
   the frame-paced games. Verified in the browser after the change: PINGPONG's
   menu, WARWORK's intro and a FOOTBALL match all still run.
+
+**2026-08-08 — the third one, and it did arrive** ("make all games (except for
+warwork) 2x more slower"), same two-number edit: 80 → **160** ms and 0.016 →
+**0.032**. Measured live in the page rather than inferred — `max(ms*scale,floor)`
+over the known call sites gave PINGPONG/CARS1/CARS2/FOOTBALL 160 ms and
+QUIDDITC 1920 ms, i.e. exactly 2× the previous 80/960. WARWORK read back
+0.004/20 at runtime (its own pin), BAKKARA still has zero `Delay` call sites.
+The prediction above held, so treat a fourth request as likely.
+
+The smoothness warning is now spent: **6.3 fps is not a frame rate**, and the
+frame-paced games visibly step. That is the request honoured, not a defect — but
+it means the NEXT complaint is more likely to be "jerky" than "fast", and the
+answer to that one is `MinDelayMs` alone (see the note in `crt.pas`).
+
+⚠️ **Measuring "did the animation stop?" — do NOT poll `getImageData`.** Two
+traps cost a full investigation here. A sum-based pixel hash is blind to a
+sprite *moving*, because translating the same pixels preserves the sum; and
+polling `getImageData` over the whole 640×400 canvas in a tight loop starves the
+render loop badly enough that the canvas really does freeze and the CDP eval
+times out — you then "measure" a stall you caused. CARS2 was briefly, wrongly
+suspected of hanging on both counts. **Two screenshots seconds apart** settled it
+in one step: the sprites had moved. Use screenshots for liveness.
 
 **WARWORK pins both globals back to 0.004/20 in its own program body** (they are
 typed constants, i.e. assignable `var`s, and `Delay` reads them per call — not

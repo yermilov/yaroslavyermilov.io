@@ -104,8 +104,8 @@ const GAMES: GameDef[] = [
     dir: 'FOOTBALL',
     title: 'Football',
     year: '2005–2009',
-    note: { ua: 'Симулятор матчу: 121 гравець, 8 команд. Голи, картки, коментар.', en: 'Match sim: 121 players, 8 teams. Goals, cards, commentary.' },
-    controls: { ua: 'обери дві команди: ↑↓ + Enter або цифра 1-8', en: 'pick two teams: up/down + Enter, or press 1-8' },
+    note: { ua: 'Симулятор матчу: 105 гравців, 7 команд. Голи, картки, коментар.', en: 'Match sim: 105 players, 7 teams. Goals, cards, commentary.' },
+    controls: { ua: 'обери дві команди: ↑↓ + Enter або цифра 1-7', en: 'pick two teams: up/down + Enter, or press 1-7' },
     ports: [{ slug: 'match', main: 'MATCH.pas', file: 'MATCH.EXE' }],
   },
   {

@@ -2656,8 +2656,8 @@ rtl.module("crt",["System","JS"],function () {
   };
   this.Randomize = function () {
   };
-  this.DelayScale = 0.016;
-  this.MinDelayMs = 80;
+  this.DelayScale = 0.032;
+  this.MinDelayMs = 160;
   $mod.$init = function () {
     if ($mod.KeyPressed()) $mod.ReadKey();
     pas.System.SetWriteCallBack(function (S, NewLine) {
@@ -4502,18 +4502,18 @@ rtl.module("tpfiles",["System"],function () {
 rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],function () {
   "use strict";
   var $mod = this;
-  this.t = 8;
-  this.p = 120;
-  this.s = 8;
-  this.c = 4;
-  this.TeamsName = ["Dynamo","Milan","Arsenal","Niva","MU","Shahtar","Shpors","CSKA"];
+  this.t = 7;
+  this.p = 105;
+  this.s = 7;
+  this.c = 3;
+  this.TeamsName = ["Dynamo","Milan","Arsenal","Niva","MU","Shahtar","Shpors"];
   this.BoxL = 11;
   this.BoxW = 60;
   this.RowOf = 8;
-  this.Teams = rtl.arraySetLength(null,pas.EMatch.FootBallTeam,8);
-  this.Players = rtl.arraySetLength(null,pas.EMatch.FootBaller,121);
-  this.Stadiums = rtl.arraySetLength(null,pas.EMatch.StadiumType,8);
-  this.Countries = rtl.arraySetLength(null,pas.EMatch.StateType,4);
+  this.Teams = rtl.arraySetLength(null,pas.EMatch.FootBallTeam,7);
+  this.Players = rtl.arraySetLength(null,pas.EMatch.FootBaller,106);
+  this.Stadiums = rtl.arraySetLength(null,pas.EMatch.StadiumType,7);
+  this.Countries = rtl.arraySetLength(null,pas.EMatch.StateType,3);
   this.i = 0;
   this.j = 0;
   this.st = "";
@@ -4566,7 +4566,7 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],functi
     pas.crt.TextColor(14);
     $mod.Centre(3,"F O O T B A L L");
     pas.crt.TextColor(8);
-    $mod.Centre(4,pas.nls.Loc("match simulator  ·  8 teams  ·  121 players","симулятор матчу  ·  8 команд  ·  121 гравець"));
+    $mod.Centre(4,pas.nls.Loc("match simulator  ·  7 teams  ·  105 players","симулятор матчу  ·  7 команд  ·  105 гравців"));
     pas.crt.TextColor(7);
   };
   this.Progress = function (row, caption, done, total) {
@@ -4621,44 +4621,44 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],functi
     pas.crt.GotoXY(11 + 1,7);
     pas.System.Write($mod.Fit(heading,60 - 2));
     pas.crt.TextColor(8);
-    pas.crt.GotoXY(11 + 1,8 + 8 + 2);
-    pas.System.Write($mod.Fit(pas.nls.Loc("up\/down + Enter, or press 1-8","вгору\/вниз + Enter, або цифра 1-8"),60 - 2));
+    pas.crt.GotoXY(11 + 1,8 + 7 + 2);
+    pas.System.Write($mod.Fit(pas.nls.Loc("up\/down + Enter, or press 1-7","вгору\/вниз + Enter, або цифра 1-7"),60 - 2));
     pas.crt.TextColor(7);
     code = 0;
     do {
-      for (k = 1; k <= 8; k++) $mod.TeamRow(k,k === cur,k === exclude);
+      for (k = 1; k <= 7; k++) $mod.TeamRow(k,k === cur,k === exclude);
       code = pas.System.Trunc(await pas.crt.ReadKeyA());
       if (code === 0) {
         code = pas.System.Trunc(await pas.crt.ReadKeyA());
         if (code === 72) do {
           if (cur === 1) {
-            cur = 8}
+            cur = 7}
            else cur -= 1;
         } while (!(cur !== exclude));
         if (code === 80) do {
-          if (cur === 8) {
+          if (cur === 7) {
             cur = 1}
            else cur += 1;
         } while (!(cur !== exclude));
         code = 0;
-      } else if ((code >= 49) && (code <= (48 + 8))) {
+      } else if ((code >= 49) && (code <= (48 + 7))) {
         if ((code - 48) !== exclude) {
           cur = code - 48;
           code = 13;
         } else code = 0;
       };
     } while (!(code === 13));
-    for (k = 1; k <= 8; k++) $mod.TeamRow(k,false,(k === exclude) || (k === cur));
+    for (k = 1; k <= 7; k++) $mod.TeamRow(k,false,(k === exclude) || (k === cur));
     $mod.Pick = cur;
   };
   this.Main = async function () {
     pas.crt.Randomize();
     $mod.Header();
-    $mod.Progress(7,pas.nls.Loc("Countries","Країни"),0,4);
-    $mod.Progress(9,pas.nls.Loc("Stadiums","Стадіони"),0,8);
-    $mod.Progress(11,pas.nls.Loc("Players","Гравці"),0,120 + 1);
-    $mod.Progress(13,pas.nls.Loc("Teams","Команди"),0,8);
-    for ($mod.i = 1; $mod.i <= 4; $mod.i++) {
+    $mod.Progress(7,pas.nls.Loc("Countries","Країни"),0,3);
+    $mod.Progress(9,pas.nls.Loc("Stadiums","Стадіони"),0,7);
+    $mod.Progress(11,pas.nls.Loc("Players","Гравці"),0,105 + 1);
+    $mod.Progress(13,pas.nls.Loc("Teams","Команди"),0,7);
+    for ($mod.i = 1; $mod.i <= 3; $mod.i++) {
       $mod.st = "" + $mod.i;
       pas.tpfiles.Assign($mod.f,"STT\\" + $mod.st + ".stt");
       pas.tpfiles.Reset($mod.f);
@@ -4668,10 +4668,10 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],functi
           this.p.name = v;
         }});
       pas.tpfiles.Close($mod.f);
-      $mod.Progress(7,pas.nls.Loc("Countries","Країни"),$mod.i,4);
+      $mod.Progress(7,pas.nls.Loc("Countries","Країни"),$mod.i,3);
     };
     await pas.crt.FrameDelay(120);
-    for ($mod.i = 1; $mod.i <= 8; $mod.i++) {
+    for ($mod.i = 1; $mod.i <= 7; $mod.i++) {
       $mod.st = "" + $mod.i;
       pas.tpfiles.Assign($mod.f,"STD\\" + $mod.st + ".std");
       pas.tpfiles.Reset($mod.f);
@@ -4684,10 +4684,10 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],functi
       $mod.m = pas.tpfiles.ReadLnNum($mod.f);
       $mod.Stadiums[$mod.i - 1].state.$assign($mod.Countries[$mod.m - 1]);
       pas.tpfiles.Close($mod.f);
-      $mod.Progress(9,pas.nls.Loc("Stadiums","Стадіони"),$mod.i,8);
+      $mod.Progress(9,pas.nls.Loc("Stadiums","Стадіони"),$mod.i,7);
     };
     await pas.crt.FrameDelay(120);
-    for ($mod.i = 0; $mod.i <= 120; $mod.i++) {
+    for ($mod.i = 0; $mod.i <= 105; $mod.i++) {
       $mod.st = "" + $mod.i;
       pas.tpfiles.Assign($mod.f,"FBP\\" + $mod.st + ".fbp");
       pas.tpfiles.Reset($mod.f);
@@ -4729,10 +4729,10 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],functi
         $mod.Players[$mod.i].fall = pas.EMatch.FallType.RedCard;
       };
       pas.tpfiles.Close($mod.f);
-      $mod.Progress(11,pas.nls.Loc("Players","Гравці"),$mod.i + 1,120 + 1);
+      $mod.Progress(11,pas.nls.Loc("Players","Гравці"),$mod.i + 1,105 + 1);
     };
     await pas.crt.FrameDelay(120);
-    for ($mod.i = 1; $mod.i <= 8; $mod.i++) {
+    for ($mod.i = 1; $mod.i <= 7; $mod.i++) {
       $mod.st = "" + $mod.i;
       pas.tpfiles.Assign($mod.f,"FBT\\" + $mod.st + ".fbt");
       pas.tpfiles.Reset($mod.f);
@@ -4761,7 +4761,7 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],functi
       $mod.Teams[$mod.i - 1].Mark = Math.floor($mod.Teams[$mod.i - 1].Mark / 11);
       $mod.Teams[$mod.i - 1].tiredness = Math.floor($mod.Teams[$mod.i - 1].tiredness / 11);
       $mod.Teams[$mod.i - 1].mood = Math.floor($mod.Teams[$mod.i - 1].mood / 11);
-      $mod.Progress(13,pas.nls.Loc("Teams","Команди"),$mod.i,8);
+      $mod.Progress(13,pas.nls.Loc("Teams","Команди"),$mod.i,7);
     };
     await pas.crt.FrameDelay(260);
     $mod.Header();
