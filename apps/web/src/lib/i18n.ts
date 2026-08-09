@@ -129,6 +129,19 @@ export interface Strings {
     feedback: string;
     backToTalks: string;
   };
+  announcement: {
+    howToAttend: string;
+    takeaways: string;
+    poster: string;
+    announcementPost: string;
+    /** Act label for the artifacts that only exist after the talk is delivered. */
+    pending: string;
+    /** "Lands here after {date}" — the page saying out loud that it isn't full yet. */
+    pendingAfter: (date: string) => string;
+    /** Once the talk is delivered and `talkSlug` points at the archive entry, the
+        pending tile turns into a way through to the real write-up. */
+    delivered: string;
+  };
   kit: {
     eyebrow: string;
     title: string;
@@ -276,6 +289,15 @@ const STRINGS: Record<Locale, Strings> = {
       feedback: 'Feedback',
       backToTalks: '← Back to talks',
     },
+    announcement: {
+      howToAttend: 'How to attend',
+      takeaways: 'What you leave with',
+      poster: 'Poster',
+      announcementPost: 'Announcement',
+      pending: 'Recording · Slides · Photos',
+      pendingAfter: (date) => `Lands here after ${date}`,
+      delivered: 'It happened — read the write-up',
+    },
     kit: {
       eyebrow: 'about me kit',
       title: 'Yaroslav Yermilov',
@@ -420,6 +442,15 @@ const STRINGS: Record<Locale, Strings> = {
       repo: 'Репо',
       feedback: 'Відгуки',
       backToTalks: '← До доповідей',
+    },
+    announcement: {
+      howToAttend: 'Як потрапити',
+      takeaways: 'Що ви заберете',
+      poster: 'Постер',
+      announcementPost: 'Анонс',
+      pending: 'Запис · Слайди · Фото',
+      pendingAfter: (date) => `Зʼявиться тут після ${date}`,
+      delivered: 'Доповідь відбулася — дивитись сторінку',
     },
     kit: {
       eyebrow: 'про мене · kit',

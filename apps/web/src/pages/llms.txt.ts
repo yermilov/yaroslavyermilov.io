@@ -1,6 +1,7 @@
 export const prerender = true;
 import type { APIRoute } from 'astro';
 import {
+  getAnnouncements,
   getPostsByLocale,
   getTalks,
   getLabsByLocale,
@@ -19,11 +20,14 @@ export const GET: APIRoute = async ({ site }) => {
   const origin = (site ?? new URL('https://yaroslavyermilov.io')).origin;
   const abs = (path: string) => `${origin}${path}`;
 
-  const [posts, talks, labs, books] = await Promise.all([
+  const [posts, talks, labs, books, announcements] = await Promise.all([
     getPostsByLocale('en'),
     getTalks(),
     getLabsByLocale('en'),
     getStampedBooks('en'),
+    /* Only the ones still ahead: this section answers "where can I see him next",
+       so an event that already happened belongs under Talks, not here. */
+    getAnnouncements(),
   ]);
 
   const lines: string[] = [
@@ -39,6 +43,16 @@ export const GET: APIRoute = async ({ site }) => {
     '## Writing',
     ...posts.map((p) => `- [${p.data.title}](${abs(`/en/blog/${postSlug(p)}/`)}) — ${p.data.summary}`),
     '',
+    ...(announcements.length > 0
+      ? [
+          '## Upcoming',
+          ...announcements.map(
+            (a) =>
+              `- [${a.data.title}](${abs(`/en/announcements/${a.slug}/`)}) — ${a.data.event}${a.data.location ? `, ${a.data.location}` : ''}`,
+          ),
+          '',
+        ]
+      : []),
     '## Talks',
     ...talks.map((tk) => `- [${tk.data.title}](${abs(`/en/talks/${tk.slug}/`)})`),
     '',

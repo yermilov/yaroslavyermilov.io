@@ -1,0 +1,299 @@
+---
+export const prerender = true;
+/**
+ * An appearance that HASN'T HAPPENED YET, rendered as closely as possible to the page
+ * it will one day become (pages/[locale]/talks/[slug].astro). The chrome is literally
+ * the same stylesheet — see @styles/playbill.css — so the two can't drift apart.
+ *
+ * The difference is what the acts contain. A delivered talk offers artifacts you can
+ * consume: recording, slides, repo, feedback, photos. An announcement can only offer
+ * one thing worth acting on — a way into the room — so that is act 01. The artifacts
+ * it doesn't have yet are named rather than hidden: the page says out loud that it
+ * isn't full, which is the whole point of having it up this early.
+ */
+import type { CollectionEntry } from 'astro:content';
+import { LOCALES, t, localePath, languageBadge, bcp47Locale, localized, type Locale } from '@lib/i18n';
+import { getAllAnnouncements } from '@lib/content';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import '@styles/playbill.css';
+
+export async function getStaticPaths() {
+  /* getAllAnnouncements, NOT getAnnouncements(): the latter hides an announcement the
+     day after the event, which would delete this URL on 28 November. Slugs are forever. */
+  const announcements = await getAllAnnouncements();
+  return announcements.flatMap((announcement) =>
+    LOCALES.map((locale) => ({
+      params: { locale, slug: announcement.slug },
+      props: { announcement },
+    })),
+  );
+}
+
+const { announcement } = Astro.props as { announcement: CollectionEntry<'announcements'> };
+const data = announcement.data;
+const locale = Astro.params.locale as Locale;
+const strings = t(locale);
+const bcp47 = bcp47Locale(locale);
+
+// English fields are the default; the *Uk overrides render on /ua/.
+const title = localized(locale, data.title, data.titleUk);
+const event = localized(locale, data.event, data.eventUk);
+const location = localized(locale, data.location, data.locationUk);
+const summary = localized(locale, data.summary, data.summaryUk);
+const abstract = localized(locale, data.abstract, data.abstractUk);
+const coverAlt = localized(locale, data.coverAlt, data.coverAltUk);
+const takeaways = (locale === 'ua' && data.takeawaysUk.length > 0 ? data.takeawaysUk : data.takeaways);
+
+const dateFmt = new Intl.DateTimeFormat(bcp47, { year: 'numeric', month: 'long', day: 'numeric' });
+/* A two-day conference is one event, so it gets one date phrase ("26–27 November 2026")
+   rather than two dates the reader has to reconcile. */
+const dateLabel = data.endDate
+  ? dateFmt.formatRange(data.date, data.endDate)
+  : dateFmt.format(data.date);
+/* uk-UA appends " р." (рік). It reads fine inline in the credit, but the pending line
+   is uppercased mono chrome, where a stray "Р." is just noise — same trim the OG cards
+   already do. */
+const lastDayLabel = dateFmt.format(data.endDate ?? data.date).replace(/\s*р\.$/, '');
+
+const paragraphs = (abstract ?? summary ?? '').split(/\n\n+/).filter((p) => p.trim().length > 0);
+
+const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const eventLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: title,
+  startDate: data.date.toISOString().slice(0, 10),
+  ...(data.endDate ? { endDate: data.endDate.toISOString().slice(0, 10) } : {}),
+  eventStatus: 'https://schema.org/EventScheduled',
+  ...(paragraphs[0] ? { description: paragraphs[0] } : {}),
+  ...(location
+    ? {
+        location: {
+          '@type': 'Place',
+          name: location,
+          ...(data.venueAddress ? { address: data.venueAddress } : {}),
+        },
+      }
+    : {}),
+  superEvent: { '@type': 'Event', name: data.event, ...(data.eventUrl ? { url: data.eventUrl } : {}) },
+  performer: {
+    '@type': 'Person',
+    name: 'Yaroslav Yermilov',
+    url: new URL('/en/', Astro.site).toString(),
+  },
+  url: pageUrl,
+  ...(data.cover ? { image: new URL(data.cover, Astro.site).toString() } : {}),
+};
+
+/**
+ * Acts present on this page, in reading order. Same mechanism as the talk page: the
+ * array defines the numbering, so an announcement with no poster gets its post as 03
+ * rather than leaving a hole at 03. `pending` is always last and always present —
+ * it is the one act that exists BECAUSE the others don't.
+ */
+type Act = 'attend' | 'takeaways' | 'poster' | 'post' | 'pending';
+const acts: Act[] = [];
+if (data.ticketsUrl || data.eventUrl) acts.push('attend');
+if (takeaways.length > 0) acts.push('takeaways');
+if (data.cover) acts.push('poster');
+if (data.announcementUrl) acts.push('post');
+acts.push('pending');
+
+const ord = (kind: Act): string => String(acts.indexOf(kind) + 1).padStart(2, '0');
+const actLabel: Record<Act, string> = {
+  attend: strings.announcement.howToAttend,
+  takeaways: strings.announcement.takeaways,
+  poster: strings.announcement.poster,
+  post: strings.announcement.announcementPost,
+  pending: strings.announcement.pending,
+};
+
+/** The tickets page if the organiser has one, else the conference site. */
+const attendUrl = data.ticketsUrl ?? data.eventUrl;
+/**
+ * host + path, matching how the talk page labels an outbound card. A bare "/" path is
+ * dropped as noise — unless a hash follows it, where "wawtech.io#tickets" would be a
+ * URL that doesn't exist.
+ */
+const hostLabel = (url: string): string => {
+  const u = new URL(url);
+  const path = u.pathname === '/' && !u.hash ? '' : u.pathname;
+  return `${u.hostname.replace(/^www\./, '')}${path}${u.hash}`;
+};
+
+/* Jump nav skips `pending`: there is nothing there to jump to. */
+const jumpable = acts.filter((a) => a !== 'pending');
+---
+
+<BaseLayout
+  locale={locale}
+  title={title}
+  description={summary ?? paragraphs[0]}
+  alternatePath={`announcements/${announcement.slug}`}
+  ogImage={`/og/announcement-${announcement.slug}.png`}
+  jsonLd={eventLd}
+>
+  <article class="page-frame playbill announcement-detail">
+    <p class="workbench breadcrumb">
+      / <a href={localePath(locale, 'writing-talking/talking')}>{strings.subnav.talking.toUpperCase()}</a> /
+    </p>
+
+    <header class="hero">
+      <p class="kicker">
+        <span aria-hidden="true">▸ </span>
+        {data.eventUrl ? (
+          <a class="event-link" href={data.eventUrl} rel="noopener">{event}</a>
+        ) : (
+          <span>{event}</span>
+        )}
+      </p>
+
+      <h1 class="title">{title}</h1>
+
+      <p class="credit">
+        <time datetime={data.date.toISOString()}>{dateLabel}</time>
+        {location && <span>{location}</span>}
+        {data.language && <span>{languageBadge(data.language)}</span>}
+        <span>{strings.timeline.upcoming}</span>
+      </p>
+
+      {jumpable.length >= 2 && (
+        <nav class="jump" aria-label="jump-nav">
+          {jumpable.map((a) => (
+            <a href={`#${a}`}>{actLabel[a].toLowerCase()}</a>
+          ))}
+        </nav>
+      )}
+    </header>
+
+    <hr class="hero-rule" />
+
+    {paragraphs.length > 0 && (
+      <section class="lede prose-narrow">
+        {paragraphs.map((p, i) => (
+          <p class={i === 0 ? 'lead' : 'body'}>{p}</p>
+        ))}
+      </section>
+    )}
+
+    {attendUrl && (
+      <section class="act" id="attend">
+        <p class="act-label workbench"><span class="ord">▸ {ord('attend')}</span> · {strings.announcement.howToAttend}</p>
+        <a class="external-card" href={attendUrl} rel="noopener" target="_blank">
+          <span class="external-label">{strings.announcement.howToAttend}</span>
+          <span class="external-host">
+            {hostLabel(attendUrl)}
+            {data.venueAddress && <span class="venue">{data.venueAddress}</span>}
+          </span>
+          <span class="external-arrow" aria-hidden="true">↗</span>
+        </a>
+      </section>
+    )}
+
+    {takeaways.length > 0 && (
+      <section class="act" id="takeaways">
+        <p class="act-label workbench"><span class="ord">▸ {ord('takeaways')}</span> · {strings.announcement.takeaways} <span class="count">— {takeaways.length}</span></p>
+        <ol class="takeaways prose-narrow">
+          {takeaways.map((item) => (
+            <li>{item}</li>
+          ))}
+        </ol>
+      </section>
+    )}
+
+    {data.cover && (
+      <section class="act" id="poster">
+        <p class="act-label workbench"><span class="ord">▸ {ord('poster')}</span> · {strings.announcement.poster}</p>
+        <div class="media-frame poster-frame">
+          <img src={data.cover} alt={coverAlt ?? ''} width="1200" height="630" loading="lazy" />
+        </div>
+      </section>
+    )}
+
+    {data.announcementUrl && (
+      <section class="act" id="post">
+        <p class="act-label workbench"><span class="ord">▸ {ord('post')}</span> · {strings.announcement.announcementPost}</p>
+        <a class="external-card" href={data.announcementUrl} rel="noopener" target="_blank">
+          <span class="external-label">{strings.announcement.announcementPost}</span>
+          <span class="external-host">{hostLabel(data.announcementUrl)}</span>
+          <span class="external-arrow" aria-hidden="true">↗</span>
+        </a>
+      </section>
+    )}
+
+    <section class="act">
+      <p class="act-label workbench"><span class="ord">▸ {ord('pending')}</span> · {strings.announcement.pending}</p>
+      {data.talkSlug ? (
+        /* The talk has been delivered and written up. Keep this page alive — its URL is
+           forever and may be linked from anywhere — but stop promising a recording that
+           now exists somewhere else, and hand the reader over to it. */
+        <a class="external-card" href={localePath(locale, `talks/${data.talkSlug}`)}>
+          <span class="external-label">{strings.announcement.pending}</span>
+          <span class="external-host">{strings.announcement.delivered}</span>
+          <span class="external-arrow" aria-hidden="true">→</span>
+        </a>
+      ) : (
+        <p class="pending-card workbench">{strings.announcement.pendingAfter(lastDayLabel)}</p>
+      )}
+    </section>
+
+    <footer class="closing">
+      <hr class="closing-rule" />
+      <p class="back-link workbench">
+        <a href={localePath(locale, 'writing-talking/talking')}>{strings.talks.backToTalks}</a>
+      </p>
+    </footer>
+  </article>
+</BaseLayout>
+
+<style>
+  /* The page chrome lives in @styles/playbill.css, shared with the talk page.
+     What follows is only what an ANNOUNCEMENT has. */
+
+  /* Second line inside the outbound card: the street door, under the link. */
+  .venue {
+    display: block;
+    margin-top: 0.35rem;
+    word-break: normal;
+  }
+
+  /* The poster is key art, not an embed — it keeps the media frame's border and
+     letterpress shadow but sizes to its own aspect ratio. */
+  .poster-frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* Tailwind's preflight zeroes list-style on every ol/ul, so the numbers have to be
+     asked for back — and they earn their place here: this page numbers its acts, and a
+     numbered list of takeaways reads as part of the same counting. */
+  .takeaways {
+    margin: 0;
+    padding-left: 1.9rem;
+    list-style: decimal;
+    display: grid;
+    gap: var(--space-2);
+  }
+  .takeaways li {
+    font-size: 1.075rem;
+    line-height: var(--leading-body);
+    color: var(--ink);
+    padding-left: 0.3rem;
+  }
+  .takeaways li::marker {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--ink-muted);
+  }
+
+  /* Deliberately NOT an .external-card: there is nowhere to go yet. A dashed rule
+     reads as "not ready", where the solid one would read as a broken link. */
+  .pending-card {
+    margin: 0;
+    padding: var(--space-2) var(--space-3);
+    border: 1px dashed var(--rule);
+    color: var(--ink-muted);
+    font-size: 0.92rem;
+  }
+</style>

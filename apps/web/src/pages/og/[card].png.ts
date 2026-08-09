@@ -6,7 +6,7 @@ export const prerender = true;
  */
 import type { APIRoute, GetStaticPaths } from 'astro';
 import { LOCALES, bcp47Locale, t, type Locale } from '@lib/i18n';
-import { getBooks, getPosts, getTalks, postSlug } from '@lib/content';
+import { getAllAnnouncements, getBooks, getPosts, getTalks, postSlug } from '@lib/content';
 import { renderOgCard, type OgCard } from '@lib/og-card';
 
 function fmtDate(date: Date, locale: Locale): string {
@@ -72,6 +72,20 @@ async function buildCards(): Promise<OgCard[]> {
       // language-neutral chrome, so this reads INTERVIEW / PANEL, not their UA labels.
       eyebrow: `${talk.data.format.toUpperCase()} · ${talk.data.event.toUpperCase()} · ${fmtDate(talk.data.date, language)}`,
       title: talk.data.title,
+    });
+  }
+
+  /* Announcements get a card in the site's own identity rather than reusing the
+     organiser's poster: that artwork is shared across the whole speaker line-up, so it
+     says nothing about this talk. Built from every announcement, past ones included —
+     the detail page outlives the event, so its card has to as well. */
+  for (const announcement of await getAllAnnouncements()) {
+    const language = announcement.data.language ?? 'en';
+    cards.push({
+      id: `announcement-${announcement.slug}`,
+      language,
+      eyebrow: `UPCOMING · ${announcement.data.event.toUpperCase()} · ${fmtDate(announcement.data.date, language)}`,
+      title: announcement.data.title,
     });
   }
 

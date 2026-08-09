@@ -260,10 +260,23 @@ const announcements = defineCollection({
     endDate: z.coerce.date().optional(),
     /** "Warsaw Expo XXI" — shown as-is, not geocoded. */
     location: z.string().optional(),
+    /** Street address of the venue, as the organiser publishes it. Shown on the
+        "how to attend" card next to the ticket link — a reader deciding whether to
+        come needs the door, not just the building's marketing name. */
+    venueAddress: z.string().optional(),
     /** Short pitch for the card. Optional on purpose: a conference often announces a
         speaker before the programme, and an announcement with no abstract yet is
         still worth showing — that is the whole reason this collection exists. */
     summary: z.string().optional(),
+    /** The full pitch, as submitted to the organiser. Optional for the same reason
+        `summary` is — but once the CFP is written there is no excuse for the site to
+        paraphrase it, so the detail page renders this verbatim. Paragraphs split on
+        blank lines, exactly like `talks.abstract`. */
+    abstract: z.string().optional(),
+    /** What an attendee walks away with — the CFP's key takeaways, rendered as the
+        detail page's numbered act. Empty by default: most announcements won't have
+        them until the talk is accepted. */
+    takeaways: z.array(z.string()).default([]),
     /** Language the talk will be delivered in. */
     language: localeEnum.optional(),
     /** Ukrainian overrides shown on /ua/; fall back to the English defaults. */
@@ -271,8 +284,14 @@ const announcements = defineCollection({
     eventUk: z.string().optional(),
     locationUk: z.string().optional(),
     summaryUk: z.string().optional(),
+    abstractUk: z.string().optional(),
+    takeawaysUk: z.array(z.string()).default([]),
     /** The conference site. */
     eventUrl: z.string().url().optional(),
+    /** How a reader actually gets into the room: the tickets/registration page.
+        Prefer the stable section anchor over a per-tier checkout URL — ticket tiers
+        sell out and their deep links rot, the anchor doesn't. */
+    ticketsUrl: z.string().url().optional(),
     /** Where the appearance was announced (a LinkedIn post, the programme page). */
     announcementUrl: z.string().url().optional(),
     /** Key art / poster, path under public/, e.g. "/announcements/<slug>.png". */
@@ -280,6 +299,7 @@ const announcements = defineCollection({
     /** Alt text for `cover`. Required whenever a cover is set — the poster carries
         the date and venue, so a screen reader that skips it loses real information. */
     coverAlt: z.string().optional(),
+    coverAltUk: z.string().optional(),
     /** Slug of the `talks` entry this becomes once delivered. Set it when the archive
         entry lands so the home page can tell the two records apart as ONE appearance —
         matching on the event name does not work, because the archive usually spells it

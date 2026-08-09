@@ -40,8 +40,10 @@ const upcomingTalks = allTalks
  *    the archive — see content/config.ts for why they are separate collections.
  *
  * Normalised here into one shape so the block below stays a single template rather
- * than two near-identical ones. Announcements link OUT (conference site or the post
- * that announced it) because there is no detail page to link IN to yet.
+ * than two near-identical ones. BOTH link IN, to their own detail page: an announcement
+ * now has one (/announcements/<slug>/), which is where the conference link, the ticket
+ * link and the abstract live. Sending the title straight out to the conference site —
+ * what this used to do — spent the click before the reader had read anything.
  *
  * De-duplicated on event+day: once a talk graduates into the archive, its
  * announcement may still be sitting there, and the same appearance must not print
@@ -86,8 +88,8 @@ const announcementItems: ProgrammeItem[] = (await getAnnouncements()).map((a) =>
   until: a.data.endDate ?? a.data.date,
   event: (locale === 'ua' ? a.data.eventUk : undefined) ?? a.data.event,
   title: (locale === 'ua' ? a.data.titleUk : undefined) ?? a.data.title,
-  href: a.data.eventUrl ?? a.data.announcementUrl ?? '',
-  external: true,
+  href: localePath(locale, `announcements/${a.slug}`),
+  external: false,
   ...(a.data.language ? { language: a.data.language } : {}),
 }));
 

@@ -97,6 +97,21 @@ export async function getAnnouncements(now = new Date()): Promise<AnnouncementEn
 }
 
 /**
+ * Every announcement, INCLUDING ones whose date has passed.
+ *
+ * `getAnnouncements()` above hides an announcement the day after it ends — right for
+ * the home page, fatal for a detail route: building paths from it would delete
+ * /announcements/wawtech-2026/ on 28 November and 404 every link that ever pointed at
+ * it. Slugs are forever (see CLAUDE.md), so the page has to outlive the event.
+ */
+export async function getAllAnnouncements(): Promise<AnnouncementEntry[]> {
+  const all = await getCollection('announcements');
+  return all
+    .filter((a) => !a.data.draft)
+    .sort((a, b) => a.data.date.getTime() - b.data.date.getTime());
+}
+
+/**
  * URL slug for a lab. Labs live under content/labs/{en,ua}/<slug>.mdx, so Astro
  * derives entry.slug as e.g. "en/weather"; the URL uses just the trailing segment.
  */

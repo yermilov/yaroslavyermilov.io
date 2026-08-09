@@ -1,0 +1,305 @@
+/**
+ * PLAYBILL — the shared page vocabulary for a single appearance.
+ *
+ * Two pages render one appearance at two points in its life:
+ *   pages/[locale]/talks/[slug].astro          — it happened; here is what it was
+ *   pages/[locale]/announcements/[slug].astro  — it hasn't yet; here is how to be there
+ *
+ * They must look like the same page, so the chrome lives here rather than being
+ * copied into both — a copy drifts on the first edit, and "as similar as possible"
+ * was the requirement, not a nice-to-have.
+ *
+ * SCOPED BY AN ANCESTOR, deliberately. These class names are generic and already
+ * taken elsewhere with their own scoped styles: `.kicker` in workshop/index.astro,
+ * `.breadcrumb` in books/[slug].astro. A plain global stylesheet would reach into
+ * both. Everything below is therefore nested under `.playbill`, which only these two
+ * pages put on their <article>.
+ *
+ * What stays behind in each page's own scoped <style> is whatever only that page has:
+ * the talk keeps .video-frame / .slides-frame / .contact-sheet / .feedback-wall, the
+ * announcement keeps its takeaways list and its pending tile.
+ */
+
+/* ── Page chrome ─────────────────────────────────────────────────── */
+.playbill {
+  padding: var(--space-3) var(--space-3) var(--space-6);
+}
+.playbill .breadcrumb {
+  margin: 0 0 var(--space-3);
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+}
+.playbill .breadcrumb a {
+  border-bottom: none;
+  color: var(--ink-muted);
+}
+.playbill .breadcrumb a:hover {
+  background: transparent;
+  color: var(--orange-accent);
+}
+
+/* ── Hero — playbill treatment ───────────────────────────────────── */
+.playbill .hero {
+  /* Page-load reveal: kicker → title → credit → jump, each delayed. */
+  --reveal-distance: 8px;
+}
+.playbill .hero > * {
+  opacity: 0;
+  transform: translateY(var(--reveal-distance));
+  animation: playbill-rise 480ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+.playbill .kicker          { animation-delay:  60ms; }
+.playbill .title           { animation-delay: 140ms; }
+.playbill .credit          { animation-delay: 260ms; }
+.playbill .jump            { animation-delay: 360ms; }
+/* Prefixed to match the repo's convention for page-level keyframes
+   (`ws-rise` in workshop, `home-rise` on the home page): this file is global,
+   so an unprefixed `rise` would be a name anyone could collide with. */
+@keyframes playbill-rise {
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .playbill .hero > * {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+}
+
+.playbill .kicker {
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--green-primary);
+  margin: 0 0 var(--space-2);
+  line-height: 1.3;
+}
+.playbill .kicker .event-link {
+  border-bottom: none;
+  color: var(--green-primary);
+}
+.playbill .kicker .event-link:hover {
+  background: transparent;
+  color: var(--orange-accent);
+}
+
+.playbill .title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  /* Poster-sized but with a hard ceiling so very long titles don't
+     crash through layout on 4K screens. */
+  font-size: clamp(2.1rem, 5.4vw + 0.4rem, 4.4rem);
+  line-height: 1.04;
+  letter-spacing: -0.022em;
+  margin: 0 0 var(--space-3);
+  text-wrap: balance;
+  color: var(--ink);
+  max-width: 22ch;
+}
+
+/* Credit: date · language · "9 years ago" (or, on an announcement, the venue and
+   "upcoming") with `·` rendered between items via ::before so a missing chip
+   can't leave a dangling separator. */
+.playbill .credit {
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+  margin: 0 0 var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.6rem;
+  line-height: 1.6;
+}
+.playbill .credit > *:not(:first-child)::before {
+  content: '·';
+  color: var(--rule);
+  margin-right: 0.6rem;
+}
+.playbill .credit time {
+  color: var(--ink);
+}
+
+.playbill .jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  text-transform: lowercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+  color: var(--ink-muted);
+}
+.playbill .jump > a {
+  border-bottom: none;
+  color: var(--ink-muted);
+  padding: 0.1rem 0;
+  transition: color 120ms ease, transform 120ms ease;
+}
+.playbill .jump > a:hover {
+  background: transparent;
+  color: var(--orange-accent);
+  transform: translateX(2px);
+}
+.playbill .jump > a + a::before {
+  content: '·';
+  color: var(--rule);
+  margin-right: 0.6rem;
+}
+
+.playbill .hero-rule {
+  border: none;
+  border-top: 3px solid var(--green-deep);
+  margin: var(--space-3) 0 var(--space-4);
+}
+
+/* ── Lede / abstract ─────────────────────────────────────────────── */
+.playbill .prose-narrow {
+  max-width: 68ch;
+}
+.playbill .lede {
+  margin: 0 0 var(--space-5);
+}
+.playbill .lede .lead {
+  font-size: 1.18rem;
+  line-height: 1.55;
+  color: var(--ink);
+  margin: 0 0 var(--space-3);
+  text-wrap: pretty;
+}
+.playbill .lede .body {
+  font-size: 1.075rem;
+  line-height: var(--leading-body);
+  color: var(--ink);
+  margin: 0 0 var(--space-3);
+}
+.playbill .lede p:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Acts ────────────────────────────────────────────────────────────
+   On a talk: recording / slides / repo / feedback / photos.
+   On an announcement: how to attend / takeaways / poster / the post. */
+.playbill .act {
+  margin: 0 0 var(--space-5);
+  scroll-margin-top: var(--space-4);
+}
+.playbill .act-label {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--green-primary);
+  margin: 0 0 var(--space-2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.5em;
+}
+.playbill .act-label .ord {
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+.playbill .act-label .count {
+  color: var(--ink-muted);
+  text-transform: lowercase;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+}
+
+/* ── Media frame: shared envelope for video, slides and the poster ─ */
+.playbill .media-frame {
+  width: 100%;
+  border: 1px solid var(--rule);
+  border-top: 3px solid var(--green-deep);
+  background: var(--bg-elevated);
+  /* Letterpress shadow vocabulary borrowed from book covers & index cards. */
+  box-shadow: 5px 6px 0 0 var(--rule);
+}
+.playbill .media-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* ── External card: a link out, sized like a thing rather than a line ─ */
+.playbill .external-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 0.6rem 1rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--rule);
+  border-top: 3px solid var(--green-deep);
+  background: var(--bg-elevated);
+  box-shadow: 5px 6px 0 0 var(--rule);
+  font-family: var(--font-mono);
+  color: var(--ink);
+  transition: transform 160ms ease, box-shadow 160ms ease, color 160ms ease;
+}
+.playbill .external-card:hover {
+  background: var(--bg-elevated);
+  transform: translate(-1px, -1px);
+  box-shadow: 7px 8px 0 0 var(--rule);
+  color: var(--ink);
+}
+.playbill .external-label {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--green-primary);
+}
+.playbill .external-host {
+  font-size: 0.92rem;
+  color: var(--ink-muted);
+  word-break: break-all;
+}
+.playbill .external-arrow {
+  font-size: 1.2rem;
+  color: var(--orange-accent);
+  transition: transform 160ms ease;
+}
+.playbill .external-card:hover .external-arrow {
+  transform: translate(3px, -3px);
+}
+
+/* ── Closing tombstone ───────────────────────────────────────────── */
+.playbill .closing {
+  margin-top: var(--space-5);
+}
+.playbill .closing-rule {
+  border: none;
+  border-top: 1px solid var(--rule);
+  margin: 0 0 var(--space-3);
+}
+.playbill .back-link {
+  margin: 0;
+  font-size: 0.85rem;
+}
+.playbill .back-link a {
+  border-bottom: none;
+  color: var(--ink-muted);
+  transition: color 120ms ease, transform 120ms ease;
+  display: inline-block;
+}
+.playbill .back-link a:hover {
+  background: transparent;
+  color: var(--orange-accent);
+  transform: translateX(-3px);
+}
+
+/* ── Narrow viewports ────────────────────────────────────────────── */
+@media (max-width: 540px) {
+  .playbill .title {
+    max-width: none;
+  }
+  .playbill .media-frame,
+  .playbill .external-card {
+    box-shadow: 3px 4px 0 0 var(--rule);
+  }
+}
