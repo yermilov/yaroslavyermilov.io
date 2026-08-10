@@ -237,6 +237,43 @@ exhibit: the F3 viewer is generated from the untouched originals in
 `RETRO_GAMES_DIR`, so `~/games/FOOTBALL/MATCH.PAS` still shows the 2005 source
 byte-for-byte.
 
+## Deep links: a URL that IS a game (2026-08-09)
+
+Yarik: *"давай ще зробимо стабільні посилання типу щоб
+…/retro-games/FOOTBALL/MATCH.EXE зразу запускало футбол"*.
+
+`/{locale}/lab/retro-games/{DIR}/{FILE}/` opens the lab with that port already
+running — 12 prerendered pages (6 runnable rows × 2 locales), from
+`apps/web/src/pages/[locale]/lab/retro-games/[dir]/[...file].astro`. The island
+takes an `autorun` pair and launches it once the manifest is in.
+
+- **The segments are the REAL manifest names**, the same DOS folder and file you
+  would select in the panels, so there is no second slug vocabulary to keep in
+  sync and the URL reads like the thing it runs.
+- **`[...file]` is a rest param on purpose:** ANIMGAME's runnable row is
+  `CARS/CARS2.EXE`, i.e. one of the six names contains a slash.
+- **The route and the panel share `runSlugFor`** (`@lib/retro-manifest`), so a
+  link exists for exactly the rows the panel calls runnable. It was briefly
+  duplicated in both files — don't reintroduce that; port a game, rebuild, and
+  its link appears on its own.
+- **The address bar is synced both ways** — launching a game by hand rewrites the
+  URL to its deep link, quitting rewrites it back. That is what makes the links
+  discoverable (you copy what you're looking at). Always `replaceState`, never
+  `push`, so Back leaves the lab instead of replaying every game you opened.
+- **Unlisted like the lab itself:** these pages pass `draft`, so they are
+  `noindex` and out of the sitemap. Shareable by link, not discoverable.
+- **`trailingSlash: 'always'`,** so the bare `…/MATCH.EXE` Yarik wrote is a 301
+  to `…/MATCH.EXE/`. His link works; the address bar just gains one character.
+
+⚠️ **Two traps if you touch this route**, both of which broke the build first:
+
+1. **`getStaticPaths` is hoisted into its own module.** Helpers declared in the
+   frontmatter are NOT in scope inside it — the build dies with a bare
+   `X is not defined`. Everything it needs must be an import or inline.
+2. **Do not resolve files via `import.meta.url` there.** The hoisted module runs
+   from `dist/`, so a source-relative URL points at `dist/public/...` and throws
+   ENOENT. Anchor on `process.cwd()` (the Astro project root under `pnpm build`).
+
 ## CSKA removed from the FOOTBALL roster (2026-08-08)
 
 Yarik: *"remove cska russia from roster completely"*. The playable roster is now
@@ -298,8 +335,8 @@ neither. So there are exactly three knobs, and a speed request has to be aimed:
 
 | knob | where | now | governs |
 |---|---|---|---|
-| `MinDelayMs` | `shims/crt.pas` | 160 ms | every wait that rounds *below* the floor — i.e. the frame tick of PINGPONG, CARS1, CARS2, FOOTBALL |
-| `DelayScale` | `shims/crt.pas` | 0.032 | every wait *above* the floor — the long pauses, and QUIDDITC's per-iteration `Delay(60000)` |
+| `MinDelayMs` | `shims/crt.pas` | 320 ms | every wait that rounds *below* the floor — i.e. the frame tick of PINGPONG, CARS1, CARS2, FOOTBALL |
+| `DelayScale` | `shims/crt.pas` | 0.064 | every wait *above* the floor — the long pauses, and QUIDDITC's per-iteration `Delay(60000)` |
 | `frameMs` | `games/WARWORK/WW3.pas` | 45 ms | WARWORK's speed, and nothing else |
 
 **Reaching for the floor alone is the trap.** 2026-08-02, "всіх інших ще в два
@@ -343,6 +380,24 @@ The smoothness warning is now spent: **6.3 fps is not a frame rate**, and the
 frame-paced games visibly step. That is the request honoured, not a defect — but
 it means the NEXT complaint is more likely to be "jerky" than "fast", and the
 answer to that one is `MinDelayMs` alone (see the note in `crt.pas`).
+
+**2026-08-09 — the fourth** ("Зроби ще в два рази повільніше"), 160 → **320** ms
+and 0.032 → **0.064**; measured 320 ms per frame tick and 3840 ms per QUIDDITC
+iteration, again exactly 2×. Two things about this one:
+
+- **It did NOT repeat "except for warwork".** Read as excluding WARWORK anyway —
+  every earlier instruction puts it on the opposite side (it is the one game
+  asked to get *faster*) and nothing said to reverse that. Flagged in the report
+  rather than silently decided.
+- **Doubling has now run out of road, and it is worth knowing why before doing
+  it a fifth time.** For the frame-paced games one number is *both* "how slow"
+  and "how often it draws" — they advance one step per frame — so this knob can
+  only ever buy slowness by removing frames. At 320 ms PINGPONG's ball crosses a
+  third of the playfield between draws, which is not slow motion, it is a
+  slideshow, and it makes the game unplayable rather than easy. If "still too
+  fast" comes back for those games specifically, the real fix is a smaller step
+  per frame (fractional movement) in the game itself — a per-game gameplay edit,
+  not a shim constant.
 
 ⚠️ **Measuring "did the animation stop?" — do NOT poll `getImageData`.** Two
 traps cost a full investigation here. A sum-based pixel hash is blind to a

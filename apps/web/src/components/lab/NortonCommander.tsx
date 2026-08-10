@@ -10,41 +10,35 @@
  *
  * Keyboard-first like the original: ↑↓ move, Tab switches panels, Enter
  * opens/runs, F3 views, F1 help, F10 quit (with the classic dialog).
+ *
+ * DEEP LINKS (2026-08-09). A URL can name a game:
+ * /{locale}/lab/retro-games/FOOTBALL/MATCH.EXE/ opens the NC with Football
+ * already running. `autorun` carries that (folder, file) pair in; the address
+ * bar is then kept in sync BOTH ways, so launching a game by hand rewrites the
+ * URL to its own deep link and quitting rewrites it back. That is what makes
+ * the links discoverable — you copy the address of the thing you are looking at
+ * rather than having to know the scheme. It is replaceState, never pushState:
+ * Back should leave the lab, not walk the games you opened.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-/** A UI string in both site locales. */
-interface LocStr {
-  en: string;
-  ua: string;
-}
-interface ManifestFile {
-  name: string;
-  size: number;
-  mtime: string;
-  view: boolean;
-}
-interface ManifestFolder {
-  dir: string;
-  title: string;
-  year: string;
-  note: LocStr;
-  controls?: LocStr;
-  run?: string; // folder default (F6 / any .EXE)
-  runs?: Record<string, string>; // specific file → its own port slug
-  files: ManifestFile[];
-}
-interface Manifest {
-  generatedAt: string;
-  folders: ManifestFolder[];
-}
+// Manifest shape + runSlugFor live in @lib/retro-manifest so the deep-link
+// route resolves runnable rows through exactly the same rule this panel does.
+import {
+  runSlugFor,
+  type Manifest,
+  type ManifestFile,
+  type ManifestFolder,
+} from '@lib/retro-manifest';
 
 type Overlay =
   | { kind: 'help' }
   | { kind: 'quit' }
   | { kind: 'msg'; title: string; lines: string[] }
   | { kind: 'view'; dir: string; file: string; text: string }
-  | { kind: 'run'; slug: string; title: string; controls?: string };
+  // dir/file are carried alongside the port slug purely so the address bar can
+  // show this game's deep link while it runs (see the URL-sync effect).
+  | { kind: 'run'; slug: string; title: string; controls?: string; dir: string; file: string };
 
 // Classic NC 16-colour roles.
 const C = {
@@ -91,11 +85,6 @@ function sortFoldersByYear(manifest: Manifest): Manifest {
   return { ...manifest, folders };
 }
 
-// The run slug this specific file would launch (mirrors tryRun's resolution):
-// a `runs` mapping wins, else a folder default applies only to .EXE files.
-function runSlugFor(folder: ManifestFolder, file: ManifestFile): string | undefined {
-  return folder.runs?.[file.name] ?? (/\.exe$/i.test(file.name) ? folder.run : undefined);
-}
 // A file "opens" if it launches a port OR its source is viewable (F3). Inert
 // binary assets (.CHR/.BGI, exes in un-ported folders) do neither — the panel
 // dims them and the cursor skips over them.
@@ -107,7 +96,14 @@ function isOpenable(folder: ManifestFolder, file: ManifestFile): boolean {
   return Boolean(runSlugFor(folder, file)) || file.view;
 }
 
-export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua' }) {
+export default function NortonCommander({
+  locale = 'ua',
+  autorun,
+}: {
+  locale?: 'en' | 'ua';
+  /** Manifest (folder, file) pair to launch on load — set by the deep-link route. */
+  autorun?: { dir: string; file: string };
+}) {
   // The site locale drives every NC string; games get it via ?lang= on the iframe.
   const t = (ua: string, en: string) => (locale === 'ua' ? ua : en);
   const [manifest, setManifest] = useState<Manifest | null>(null);
@@ -192,7 +188,18 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
     (f: ManifestFolder, file?: ManifestFile) => {
       const slug = (file && f.runs?.[file.name]) || f.run;
       if (slug) {
-        setOverlay({ kind: 'run', slug, title: f.title, controls: f.controls?.[locale] });
+        // Name the row this launch corresponds to, so the deep link in the address
+        // bar matches what is on screen. Without an explicit file (the "6 Run" on
+        // an empty panel) fall back to the folder's own runnable row.
+        const named = file?.name ?? f.files.find((x) => runSlugFor(f, x) === slug)?.name;
+        setOverlay({
+          kind: 'run',
+          slug,
+          title: f.title,
+          controls: f.controls?.[locale],
+          dir: f.dir,
+          file: named ?? '',
+        });
         return;
       }
       setOverlay({
@@ -313,6 +320,45 @@ export default function NortonCommander({ locale = 'ua' }: { locale?: 'en' | 'ua
   useEffect(() => {
     if (overlay?.kind === 'run') frameRef.current?.focus();
   }, [overlay]);
+
+  // ── Deep links ──────────────────────────────────────────────────────────
+  // Launch the pair the URL named, once, as soon as the manifest is in. Setting
+  // the folder also moves the cursor to its runnable row (the folderIdx effect
+  // lands on firstOpenable, and runnable rows sort first), so quitting the game
+  // leaves you where the link pointed rather than at the top of the first folder.
+  //
+  // `settled` gates the URL sync below: until the autorun has had its turn, the
+  // overlay is still null and syncing would strip the very deep link we are
+  // about to honour — a visible flicker, and a silent loss of the URL if the
+  // launch were slower than the first paint.
+  const [autorunSettled, setAutorunSettled] = useState(!autorun);
+  const autorunDone = useRef(false);
+  useEffect(() => {
+    if (!manifest || !autorun || autorunDone.current) return;
+    autorunDone.current = true;
+    const fi = manifest.folders.findIndex((f) => f.dir.toLowerCase() === autorun.dir.toLowerCase());
+    const f = manifest.folders[fi];
+    const file = f?.files.find((x) => x.name.toLowerCase() === autorun.file.toLowerCase());
+    // An unresolvable pair is not an error worth a dialog — the lab still works,
+    // so fall through to the plain file manager and let the sync drop the URL.
+    if (f && file && runSlugFor(f, file)) {
+      setFolderIdx(fi);
+      setPanel(1);
+      tryRun(f, file);
+    }
+    setAutorunSettled(true);
+  }, [manifest, autorun, tryRun]);
+
+  // Keep the address bar showing whatever is on screen: a game's own deep link
+  // while it runs, the plain lab URL otherwise. replaceState (never push) so the
+  // Back button still leaves the lab in one press rather than replaying games.
+  useEffect(() => {
+    if (!manifest || !autorunSettled) return;
+    const base = `/${locale}/lab/retro-games/`;
+    const want =
+      overlay?.kind === 'run' && overlay.file ? `${base}${overlay.dir}/${overlay.file}/` : base;
+    if (window.location.pathname !== want) window.history.replaceState(null, '', want);
+  }, [overlay, locale, manifest, autorunSettled]);
 
   // On folder change, land the cursor on the first file that actually opens.
   useEffect(() => {

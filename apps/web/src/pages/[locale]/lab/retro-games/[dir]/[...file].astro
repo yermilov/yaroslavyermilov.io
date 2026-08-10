@@ -1,0 +1,99 @@
+---
+/**
+ * Stable deep links into the retro-games lab, so a URL can BE a game:
+ *
+ *   /ua/lab/retro-games/FOOTBALL/MATCH.EXE/   → opens the NC and runs Football
+ *
+ * (Yarik, 2026-08-09: "давай ще зробимо стабільні посилання типу щоб
+ * …/retro-games/FOOTBALL/MATCH.EXE зразу запускало футбол".)
+ *
+ * These are real prerendered pages, not a client-side router trick: each one
+ * renders the same lab shell as /lab/retro-games/ and hands the island an
+ * `autorun` pair, which it launches once the manifest has loaded. So the link
+ * survives a cold load, a share, and a crawler, and it degrades to the plain
+ * file manager if the pair ever stops resolving.
+ *
+ * The path segments are the REAL manifest names — the same DOS folder and file
+ * you would select in the panels — so the URL reads like the thing it runs and
+ * needs no separate slug vocabulary to keep in sync. `[...file]` is a rest
+ * param because one of them is nested: ANIMGAME's entry is `CARS/CARS2.EXE`.
+ *
+ * ⚠️ trailingSlash is 'always', so the canonical form ends in a slash and the
+ * bare `…/MATCH.EXE` Yarik wrote is a 301 to `…/MATCH.EXE/`. That redirect is
+ * Astro's, not ours — it just means the link he pastes works, with the address
+ * bar gaining one character.
+ */
+export const prerender = true;
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { getCollection } from 'astro:content';
+import { LOCALES, type Locale } from '@lib/i18n';
+import { runSlugFor, type ManifestFolder } from '@lib/retro-manifest';
+import LabLayout from '@layouts/LabLayout.astro';
+import NortonCommander from '@components/lab/NortonCommander.tsx';
+
+export async function getStaticPaths() {
+  // ⚠️ Everything getStaticPaths needs must be an IMPORT or live inside this
+  // function. Astro hoists getStaticPaths into its own module at build time, so
+  // helpers declared in this frontmatter are NOT in scope there — the build
+  // fails with a bare "X is not defined" (it did, second try). That is also why
+  // runSlugFor is imported rather than written twice.
+  //
+  // Resolve the manifest from the working directory, NOT from import.meta.url:
+  // the hoisted module lives in dist/, so a source-relative URL resolves to
+  // dist/public/... and dies with ENOENT (first try). cwd is the Astro project
+  // root under `pnpm build`; the second candidate covers a repo-root invocation.
+  const candidates = [
+    join(process.cwd(), 'public/retro/manifest.json'),
+    join(process.cwd(), 'apps/web/public/retro/manifest.json'),
+  ];
+  const manifestPath = candidates.find((p) => existsSync(p));
+  if (!manifestPath) {
+    // Loud on purpose: returning [] would drop every deep link and still ship a
+    // green build, which is exactly the failure nobody notices.
+    throw new Error(`retro deep links: manifest.json not found (looked in ${candidates.join(', ')})`);
+  }
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { folders: ManifestFolder[] };
+
+  const labs = (await getCollection('labs')).filter((l) => l.data.canonicalSlug === 'retro-games');
+  const byLocale = new Map<Locale, (typeof labs)[number]>();
+  for (const l of labs) byLocale.set(l.data.language, l);
+
+  const paths = [];
+  for (const folder of manifest.folders) {
+    for (const file of folder.files) {
+      if (!runSlugFor(folder, file)) continue;
+      for (const locale of LOCALES) {
+        const entry = byLocale.get(locale) ?? labs[0];
+        if (!entry) continue;
+        paths.push({
+          params: { locale, dir: folder.dir, file: file.name },
+          props: { entry, dir: folder.dir, file: file.name },
+        });
+      }
+    }
+  }
+  return paths;
+}
+
+const { entry, dir, file } = Astro.props;
+const locale = Astro.params.locale as Locale;
+
+// The other locale's copy of this same deep link, so the language switcher
+// keeps you on the game instead of dropping you back at the file manager.
+const alternatePath = `lab/retro-games/${dir}/${file}`;
+---
+
+<LabLayout
+  locale={locale}
+  title={entry.data.title}
+  description={entry.data.summary}
+  publishedAt={entry.data.publishedAt}
+  alternatePath={alternatePath}
+  layout="full"
+  hideTitle={true}
+  hideLede={true}
+  draft={true}
+>
+  <NortonCommander client:only="react" locale={locale} autorun={{ dir, file }} />
+</LabLayout>

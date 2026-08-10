@@ -100,15 +100,21 @@ var
     Honouring the literal argument gives a technically faithful port that is
     unplayable, so the wall-clock delay is scaled here. 1.0 = obey the source.
 
-    0.004 -> 0.008 (2026-08-02) -> 0.016 (2026-08-05) -> 0.032 (2026-08-08):
-    Yarik has now asked for the same doubling THREE times — "всіх інших ще в два
-    рази повільніше", then "can we make all games (except for warwork) 2x
-    slower?", then "make all games (except for warwork) 2x more slower".
-    MinDelayMs below is doubled in the same breath each time, and the two
-    together are what make it exact: every effective wait is
-    max(ms * scale, floor), so doubling BOTH doubles every wait — the floored
-    frame ticks and the unfloored long pauses alike. All three requests were
-    answered with the identical two-number edit; expect a fourth.
+    0.004 -> 0.008 (2026-08-02) -> 0.016 (2026-08-05) -> 0.032 (2026-08-08) ->
+    0.064 (2026-08-09): Yarik has now asked for the same doubling FOUR times —
+    "всіх інших ще в два рази повільніше", "can we make all games (except for
+    warwork) 2x slower?", "make all games (except for warwork) 2x more slower",
+    "Зроби ще в два рази повільніше". MinDelayMs below is doubled in the same
+    breath each time, and the two together are what make it exact: every
+    effective wait is max(ms * scale, floor), so doubling BOTH doubles every
+    wait — the floored frame ticks and the unfloored long pauses alike. The
+    prediction of a fourth held; assume a fifth.
+
+    ⚠️ The fourth request did NOT repeat "except for warwork" — it just said
+    "make it 2x slower again". Read as excluding WARWORK anyway, because every
+    prior instruction in this thread puts WARWORK on the opposite side (it is the
+    one game asked to get FASTER, 100 -> 83 -> 50 -> 45 ms) and nothing said it
+    should reverse. If that reading was wrong, the fix is frameMs, not these two.
 
     The floor alone would NOT have done it, which is why this number moves too.
     Measured across the ports: PINGPONG/CARS1/CARS2/FOOTBALL pace on delays that
@@ -121,7 +127,7 @@ var
     WARWORK opts OUT of both numbers — see the pin at the top of WW3.pas. Its
     speed is FrameDelay (real ms), so a global slowdown could only touch its
     scene pauses, and it is the one game asked to get FASTER. }
-  DelayScale: double = 0.032;
+  DelayScale: double = 0.064;
   { ...but a linear scale alone CANNOT serve both ends of a game's range, and
     that is what made most ports run at warp speed (Yarik, 2026-08-01: "most
     games run too fast").
@@ -139,27 +145,35 @@ var
     and are governed by DelayScale alone, so the floor only ever affects the
     delays that were being rounded away.
 
-    20 -> 40 ms (2026-08-02) -> 80 ms (2026-08-05) -> 160 ms (2026-08-08), i.e.
-    ≈50 -> ≈25 -> ≈12.5 -> ≈6.3 fps. Yarik played each build and asked for the
-    same halving again. This is the half of the change that reaches the
-    frame-paced games — PINGPONG (Delay(15) and Delay(Duration*2), Duration=15 in
-    data/OPTIONS.COD), CARS1 (Delay(3000)), CARS2 (Delay(5000), which sat EXACTLY
-    on the 20 ms floor) and FOOTBALL's match commentary (Delay(1000..2000)). All
-    four round below the floor, so for them the floor IS the frame period and
-    doubling it is exactly 2× slower.
+    20 -> 40 (2026-08-02) -> 80 (2026-08-05) -> 160 (2026-08-08) -> 320 ms
+    (2026-08-09), i.e. ≈50 -> ≈25 -> ≈12.5 -> ≈6.3 -> ≈3.1 fps. Yarik played each
+    build and asked for the same halving again. This is the half of the change
+    that reaches the frame-paced games — PINGPONG (Delay(15) and Delay(Duration*2),
+    Duration=15 in data/OPTIONS.COD), CARS1 (Delay(3000)), CARS2 (Delay(5000),
+    which sat EXACTLY on the 20 ms floor) and FOOTBALL's match commentary
+    (Delay(1000..2000)). All four round below the floor, so for them the floor IS
+    the frame period and doubling it is exactly 2× slower.
 
-    ⚠️ 160 ms is no longer a frame rate in any useful sense — 6.3 fps is well
-    under the ~15 fps at which motion reads as continuous, so PINGPONG's ball and
-    the CARS animations now visibly STEP from position to position rather than
-    move. That is the literal consequence of the request, not a bug, and it was
-    flagged at 80 ms already. If the next report is "now it's jerky/stepping
-    rather than slow", THIS is the number that caused it: lower it alone and
-    leave DelayScale at 0.032, which keeps the long pauses and QUIDDITC slow
-    without stepping the frame-paced games.
+    ⚠️ READ THIS BEFORE DOUBLING IT A FIFTH TIME. 320 ms is 3.1 fps: roughly one
+    frame every third of a second. For the frame-paced games this is no longer
+    "slow motion", it is a slideshow — PINGPONG's ball teleports about a third of
+    the playfield between frames, which also makes it unplayable rather than
+    merely easy, because you cannot track or intercept what you never see move.
+    The warning was given at 80 ms and again at 160; this is it arriving.
 
-    Frame FEEL is a judgement call, not a fact: this is the one number to turn if
-    a game is still too quick or now too sluggish. }
-  MinDelayMs: integer = 160;
+    The reason it keeps costing smoothness is structural, and it is worth naming
+    because a fifth doubling cannot fix it: for these games ONE number is both
+    "how slow the game is" and "how often it draws". They advance exactly one
+    step per frame, so the only way the shim can slow them is to draw less often.
+    Turning this knob can never make them slow AND smooth.
+
+    So if the next feedback is "still too fast" for the FRAME-PACED games
+    specifically, the honest answer is not this knob — it is to make each step
+    SMALLER in the game itself (sub-pixel/fractional movement per frame), which
+    is a per-game gameplay edit, not a shim constant. If the feedback is instead
+    "too jerky", lower THIS number alone and leave DelayScale, which keeps the
+    long pauses and QUIDDITC slow without stepping the frame-paced games. }
+  MinDelayMs: integer = 320;
 
 implementation
 
