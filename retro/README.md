@@ -338,6 +338,15 @@ neither. So there are exactly three knobs, and a speed request has to be aimed:
 | `MinDelayMs` | `shims/crt.pas` | 320 ms | every wait that rounds *below* the floor — i.e. the frame tick of PINGPONG, CARS1, CARS2, FOOTBALL |
 | `DelayScale` | `shims/crt.pas` | 0.064 | every wait *above* the floor — the long pauses, and QUIDDITC's per-iteration `Delay(60000)` |
 | `frameMs` | `games/WARWORK/WW3.pas` | 45 ms | WARWORK's speed, and nothing else |
+| per-game **pin** | that game's program body | WARWORK 0.004/20, FOOTBALL 0.096/480 | overrides both globals for one bundle (see below) |
+
+**A per-game pin is the fourth knob, and it is how a single game moves now.**
+`DelayScale`/`MinDelayMs` are *typed constants* in `crt`, i.e. assignable `var`s
+that `Delay` re-reads on every call — so assigning them in a program's own body
+overrides the globals for that bundle alone, without touching the other seven.
+WARWORK has done this since 2026-08-02 (pinning itself *out* of the global
+slowdown); FOOTBALL joined on 2026-08-10 (pinning itself *further down* than the
+global). Reach for this whenever a request names one game.
 
 **Reaching for the floor alone is the trap.** 2026-08-02, "всіх інших ще в два
 рази повільніше": doubling `MinDelayMs` 20 → 40 makes PINGPONG/CARS1/CARS2/
@@ -398,6 +407,27 @@ iteration, again exactly 2×. Two things about this one:
   fast" comes back for those games specifically, the real fix is a smaller step
   per frame (fractional movement) in the game itself — a per-game gameplay edit,
   not a shim constant.
+
+**2026-08-10 — the fifth request, and the first aimed at ONE game** («треба
+зробити футбол ще на 50% повільнішим»). Not a fifth doubling, and deliberately
+not the global knob: `MATCH.pas`'s program body now pins `MinDelayMs := 480` and
+`DelayScale := 0.096` for its own bundle, 1.5× the globals, which stay 320/0.064
+for everyone else.
+
+- **FOOTBALL's tempo is `MinDelayMs` and nothing else.** Every `Delay` it takes
+  is small — the commentary is `EMatch.Comment`'s `dur` of 0.75/0.85/0.95/1 s,
+  the line-ups 1.5 s, two odd pauses of 1 s and 2 s — so at 0.064 they land on
+  48…128 ms and *all* of them floor. The floor therefore IS the tempo, and +50%
+  is exactly 320 → 480. `DelayScale` is scaled by the same 1.5 for completeness
+  but is inert at these call sites (2000 × 0.096 = 192 < 480); it only matters if
+  a longer pause is ever added.
+- **The intro does not slow down, by design** — it runs on `FrameDelay` (real
+  milliseconds, past both knobs), so the kick-off card still holds 1.4 s.
+- **Why a pin and not the global:** 320 ms is already 3.1 fps, and for the
+  frame-paced games (PINGPONG, both CARS) that number is *also* their draw rate,
+  so moving it further makes them a slideshow. FOOTBALL is a text commentary the
+  player only watches — it has no such ceiling, which is precisely why a
+  game-specific request could be honoured when a global one could not.
 
 ⚠️ **Measuring "did the animation stop?" — do NOT poll `getImageData`.** Two
 traps cost a full investigation here. A sum-based pixel hash is blind to a

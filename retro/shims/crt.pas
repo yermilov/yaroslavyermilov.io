@@ -172,7 +172,16 @@ var
     SMALLER in the game itself (sub-pixel/fractional movement per frame), which
     is a per-game gameplay edit, not a shim constant. If the feedback is instead
     "too jerky", lower THIS number alone and leave DelayScale, which keeps the
-    long pauses and QUIDDITC slow without stepping the frame-paced games. }
+    long pauses and QUIDDITC slow without stepping the frame-paced games.
+
+    ⚠️ AND IF THE REQUEST NAMES ONE GAME, DO NOT TOUCH THIS NUMBER AT ALL — pin
+    it in that game's own program body instead. 2026-08-10, "треба зробити футбол
+    ще на 50% повільнішим": FOOTBALL now sets DelayScale := 0.096 / MinDelayMs :=
+    480 in MATCH.pas before Main, exactly the way WARWORK pins itself to
+    0.004/20. This works because both numbers here are typed constants (i.e.
+    assignable vars) that Delay re-reads per call, so the last assignment wins
+    per bundle. The globals below serve seven other games; a one-game request is
+    never a reason to move them. }
   MinDelayMs: integer = 320;
 
 implementation

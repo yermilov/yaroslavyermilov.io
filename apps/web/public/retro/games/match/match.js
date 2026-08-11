@@ -4813,6 +4813,8 @@ rtl.module("program",["System","JS","EMatch","dos","crt","tpfiles","nls"],functi
     await pas.EMatch.EmulMatch($mod.NowMatch);
   };
   $mod.$main = function () {
+    pas.crt.DelayScale = 0.096;
+    pas.crt.MinDelayMs = 480;
     $mod.Main();
   };
 });
