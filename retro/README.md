@@ -338,7 +338,7 @@ neither. So there are exactly three knobs, and a speed request has to be aimed:
 | `MinDelayMs` | `shims/crt.pas` | 320 ms | every wait that rounds *below* the floor — i.e. the frame tick of PINGPONG, CARS1, CARS2, FOOTBALL |
 | `DelayScale` | `shims/crt.pas` | 0.064 | every wait *above* the floor — the long pauses, and QUIDDITC's per-iteration `Delay(60000)` |
 | `frameMs` | `games/WARWORK/WW3.pas` | 45 ms | WARWORK's speed, and nothing else |
-| per-game **pin** | that game's program body | WARWORK 0.004/20, FOOTBALL 0.096/480 | overrides both globals for one bundle (see below) |
+| per-game **pin** | that game's program body | WARWORK 0.004/20, FOOTBALL 0.144/720 | overrides both globals for one bundle (see below) |
 
 **A per-game pin is the fourth knob, and it is how a single game moves now.**
 `DelayScale`/`MinDelayMs` are *typed constants* in `crt`, i.e. assignable `var`s
@@ -428,6 +428,27 @@ for everyone else.
   so moving it further makes them a slideshow. FOOTBALL is a text commentary the
   player only watches — it has no such ceiling, which is precisely why a
   game-specific request could be honoured when a global one could not.
+
+**2026-08-11 — the same aim again** («все одно занадто швидко, зроби ще на 50%
+повільніше»), so the pin goes 480 → **720** ms and 0.096 → **0.144**. Globals
+untouched at 320/0.064 for the other seven bundles; `match.js` was the only
+bundle whose emitted JS changed, which is the cheapest proof the aim held.
+
+- **The request named no game, and was still read as FOOTBALL.** «Все одно»
+  points at the thing last changed, and the three turns before it — Yarik's
+  «зробити футбол ще на 50% повільнішим», the report, the match screenshot —
+  are all football. Worth stating explicitly in the report rather than
+  silently, because the same words would have meant the globals a week earlier.
+- **A third turn of this knob is still free here, and that is a fact about
+  FOOTBALL, not about the knob.** 720 ms is "how long a commentary line hangs",
+  not a draw rate — nothing animates between lines. The frame-paced games have
+  no such headroom and are why the globals must not follow.
+- **Measured, not assumed:** a live match (Dynamo–Shakhtar) counted **16 waits,
+  all 720 ms**, via the counted-timeout recipe below; PINGPONG on the same build
+  still reported 320/0.064 as the control. Read the pin out of the **running**
+  bundle (`pas.crt.MinDelayMs`), not just the source — `build.ts` silently keeps
+  the committed bundles when `PAS2JS_RTL` is unset, and that is the failure mode
+  this check exists to catch.
 
 ⚠️ **Measuring "did the animation stop?" — do NOT poll `getImageData`.** Two
 traps cost a full investigation here. A sum-based pixel hash is blind to a

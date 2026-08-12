@@ -176,8 +176,9 @@ var
 
     ⚠️ AND IF THE REQUEST NAMES ONE GAME, DO NOT TOUCH THIS NUMBER AT ALL — pin
     it in that game's own program body instead. 2026-08-10, "треба зробити футбол
-    ще на 50% повільнішим": FOOTBALL now sets DelayScale := 0.096 / MinDelayMs :=
-    480 in MATCH.pas before Main, exactly the way WARWORK pins itself to
+    ще на 50% повільнішим", then 2026-08-11, "все одно занадто швидко, зроби ще
+    на 50% повільніше": FOOTBALL now sets DelayScale := 0.144 / MinDelayMs :=
+    720 in MATCH.pas before Main, exactly the way WARWORK pins itself to
     0.004/20. This works because both numbers here are typed constants (i.e.
     assignable vars) that Delay re-reads per call, so the last assignment wins
     per bundle. The globals below serve seven other games; a one-game request is
