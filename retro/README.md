@@ -443,12 +443,25 @@ bundle whose emitted JS changed, which is the cheapest proof the aim held.
   FOOTBALL, not about the knob.** 720 ms is "how long a commentary line hangs",
   not a draw rate — nothing animates between lines. The frame-paced games have
   no such headroom and are why the globals must not follow.
-- **Measured, not assumed:** a live match (Dynamo–Shakhtar) counted **16 waits,
-  all 720 ms**, via the counted-timeout recipe below; PINGPONG on the same build
-  still reported 320/0.064 as the control. Read the pin out of the **running**
-  bundle (`pas.crt.MinDelayMs`), not just the source — `build.ts` silently keeps
-  the committed bundles when `PAS2JS_RTL` is unset, and that is the failure mode
-  this check exists to catch.
+- **Measured, not assumed:** a live Dynamo–Shakhtar match counted **16 waits
+  locally and 35 on prod, every one 720 ms**, via the counted-timeout recipe
+  below; PINGPONG reported 320/0.064 as the control on both. Read the pin out of
+  the **running** bundle (`pas.crt.MinDelayMs`), not just the source — `build.ts`
+  silently keeps the committed bundles when `PAS2JS_RTL` is unset, and that is
+  the failure mode this check exists to catch.
+
+⚠️ **A count of ZERO means your INPUT never landed — check the screen before you
+believe it.** Measuring on prod, `computer`-driven keypresses did not reach the
+game while the Chrome window was backgrounded (`visibilityState: 'hidden'`, even
+though `document.hasFocus()` was `true`), so the team-select screen was still up
+and there was nothing to count. The instrument was fine; the match had never
+started. A screenshot said so in one step. The fix is to dispatch the keys in the
+page instead — `document.dispatchEvent(new KeyboardEvent('keydown', {key, code,
+keyCode, which, bubbles: true}))`, all three of keydown/keypress/keyup, which the
+bundle's own `document` listener takes. Note this is the *opposite* failure to
+the wall-clock trap below: hidden-tab clamping corrupts a *timing* reading but
+leaves the counted value exact, so the recipe stays valid in a hidden tab — it is
+only the keyboard that needs the workaround.
 
 ⚠️ **Measuring "did the animation stop?" — do NOT poll `getImageData`.** Two
 traps cost a full investigation here. A sum-based pixel hash is blind to a
