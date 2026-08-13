@@ -7,4 +7,12 @@ abstract: "Co-presented with Dmitry Tiagulskyi at the Grammarly Ukraine office o
 slidesUrl: "https://www.slideshare.net/slideshow/dmitry-tiagulskyi-yaroslav-yermilov-it-scales-until-it-doesnt/116282023"
 photos:
   - "/talks/it-scales-grammarly-2018/01.jpg"
+  - "/talks/it-scales-grammarly-2018/02.jpg"
+  - "/talks/it-scales-grammarly-2018/03.jpg"
+  - "/talks/it-scales-grammarly-2018/04.jpg"
+  - "/talks/it-scales-grammarly-2018/05.jpg"
+  - "/talks/it-scales-grammarly-2018/06.jpg"
+  - "/talks/it-scales-grammarly-2018/07.jpg"
+photoBursts:
+  - ["/talks/it-scales-grammarly-2018/03.jpg", "/talks/it-scales-grammarly-2018/04.jpg", "/talks/it-scales-grammarly-2018/05.jpg", "/talks/it-scales-grammarly-2018/06.jpg"]
 ---
