@@ -126,8 +126,18 @@ var
 
     WARWORK opts OUT of both numbers — see the pin at the top of WW3.pas. Its
     speed is FrameDelay (real ms), so a global slowdown could only touch its
-    scene pauses, and it is the one game asked to get FASTER. }
-  DelayScale: double = 0.064;
+    scene pauses, and it is the one game asked to get FASTER.
+
+    ⚠️ 2026-08-13, AND THIS ONE REVERSES THE DIRECTION: "тепер cars, pingpong,
+    quiditch на 50% швидше" — so 0.064 / 1.5 = 0.042667. First time these two
+    numbers have gone DOWN since the ports shipped. The named set (CARS ×2,
+    QUIDDITCH ×2) is *exactly* the population still answering to these globals,
+    because FOOTBALL, PINGPONG and WARWORK all pin themselves and BAKKARA has no
+    Delay call site at all. So turning the shared knob here touches precisely the
+    games that were named and nothing else — which is the "aim the request" rule
+    satisfied, not bypassed. Pinning all four to identical values instead would
+    have left these globals serving nobody. }
+  DelayScale: double = 0.042667;
   { ...but a linear scale alone CANNOT serve both ends of a game's range, and
     that is what made most ports run at warp speed (Yarik, 2026-08-01: "most
     games run too fast").
@@ -191,8 +201,25 @@ var
     the "3.1 fps is already a slideshow" warning above is about SLOWING the
     frame-paced games; speeding one up with the same knob gives back frames and
     is safe. FIVE bundles are left on the globals below (ANIMGAME's two CARS,
-    QUIDDITC's two, BAKKARA — which has no Delay at all and never moves). }
-  MinDelayMs: integer = 320;
+    QUIDDITC's two, BAKKARA — which has no Delay at all and never moves).
+
+    ⚠️ 2026-08-13 (later the same day) — "тепер cars, pingpong, quiditch на 50%
+    швидше", so 320 / 1.5 = 213 here and the scale divides by the same 1.5 above.
+    Dividing BOTH is what makes it exactly 1.5× for everyone, because the two
+    named families sit on OPPOSITE branches of the max: CARS floors (CARS1 is
+    delay(3000) → 128 at the new scale, CARS2 is delay(5000) → 213), while
+    QUIDDITCH rides the scale (delay(60000) → 3840 becomes 2560, and SNITCH's
+    delay(random(6)*5000) straddles both). Halving one number alone would have
+    moved one family and left the other almost untouched — the same trap the
+    2026-08-02 note above describes, run in reverse.
+
+    ⚠️ AND THE SPEED-UP DIRECTION IS THE SAFE ONE. Everything above about "320 ms
+    is a slideshow" is about SLOWING the frame-paced games, where one number is
+    both tempo and draw rate. Going the other way gives frames back: 320 → 213 ms
+    is 3.1 → 4.7 fps for CARS, i.e. smoother AND faster at once. There is no
+    ceiling on this side until a game's per-frame STEP becomes too coarse to
+    subdivide, which is a per-game gameplay limit, not a limit of this knob. }
+  MinDelayMs: integer = 213;
 
 implementation
 

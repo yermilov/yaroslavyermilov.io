@@ -335,16 +335,22 @@ neither. So there are exactly three knobs, and a speed request has to be aimed:
 
 | knob | where | now | governs |
 |---|---|---|---|
-| `MinDelayMs` | `shims/crt.pas` | 320 ms | every wait that rounds *below* the floor — i.e. the frame tick of CARS1, CARS2 (PINGPONG and FOOTBALL now pin their own) |
-| `DelayScale` | `shims/crt.pas` | 0.064 | every wait *above* the floor — the long pauses, and QUIDDITC's per-iteration `Delay(60000)` |
+| `MinDelayMs` | `shims/crt.pas` | 213 ms | every wait that rounds *below* the floor — i.e. the frame tick of CARS1, CARS2 (PINGPONG and FOOTBALL pin their own) |
+| `DelayScale` | `shims/crt.pas` | 0.042667 | every wait *above* the floor — the long pauses, and QUIDDITC's per-iteration `Delay(60000)` |
 | `frameMs` | `games/WARWORK/WW3.pas` | 45 ms | WARWORK's speed, and nothing else |
-| per-game **pin** | that game's program body | WARWORK 0.004/20, FOOTBALL 0.216/1080, PINGPONG 0.042667/213 | overrides both globals for one bundle (see below) |
+| per-game **pin** | that game's program body | WARWORK 0.004/20, FOOTBALL 0.216/1080, PINGPONG 0.028444/142 | overrides both globals for one bundle (see below) |
 
-⚠️ **Three of the eight bundles are now pinned, so "the globals" means the other
+⚠️ **Three of the eight bundles are pinned, so "the globals" means the other
 five** — `cars1`, `cars2`, `snitch`, `randommatch`, and `bakkara` (which has no
 `Delay` call site at all and answers to nothing). Check with
 `grep -o 'DelayScale = [0-9.]*' apps/web/public/retro/games/<g>/<g>.js`: a pinned
 bundle prints the shim default *and then* its own pin, in that order.
+
+⚠️ **PINGPONG's pin must move whenever the globals move.** It is deliberately one
+1.5× step ahead of them, so if the globals are turned and the pin is left behind
+the two silently converge and PINGPONG stops being faster than the rest. This
+nearly happened on 2026-08-13, when one request moved the globals *and* named
+PINGPONG in the same sentence. Invariant: **pin = globals ÷ 1.5.**
 
 **A per-game pin is the fourth knob, and it is how a single game moves now.**
 `DelayScale`/`MinDelayMs` are *typed constants* in `crt`, i.e. assignable `var`s
@@ -487,6 +493,55 @@ were the only two bundles whose emitted JS changed.
   **`snitch` or `cars1`** instead — both still on the globals, verified in the
   emitted JS. Using PINGPONG now would produce a plausible wrong number, which
   is exactly the failure this section keeps warning about.
+  *(Superseded hours later — see the next entry. `snitch`/`cars1` moved too.)*
+
+**2026-08-13, later the same day — the globals go DOWN for the first time**
+(«чудово! тепер cars, pingpong, quiditch на 50% швидше»; the «чудово» is his
+verdict on the 213 ms PINGPONG above). Globals 320/0.064 → **213/0.042667**, and
+PINGPONG's pin 213/0.042667 → **142/0.028444**.
+
+- **Here the shared knob WAS the right tool, and it is worth being precise about
+  why that does not contradict the aim-the-request rule.** The named set — both
+  CARS, both QUIDDITCH — is *exactly* the population still answering to the
+  globals, because FOOTBALL, PINGPONG and WARWORK pin themselves and BAKKARA has
+  no `Delay` call site. So turning the globals touched precisely the games that
+  were named and nothing else. Pinning all four to identical values would have
+  been the same edit written four times, leaving the globals serving nobody.
+- **Dividing BOTH numbers is what makes it uniform, because the two named
+  families sit on opposite branches of the `max`.** CARS floors (CARS1 is
+  `delay(3000)` → 128 at the new scale, CARS2 is `delay(5000)` → 213, so both
+  land on 213), while QUIDDITCH rides the scale (`delay(60000)`: 3840 → **2560**,
+  and SNITCH's `delay(random(6)*5000)` straddles both). Halving the floor alone
+  would have moved CARS and left QUIDDITCH at 3840 — the 2026-08-02 trap in
+  reverse.
+- ⚠️ **PINGPONG had to move in the same commit or the request would have been
+  half-honoured, silently.** Its pin was 213 — the globals' *new* value. Left
+  alone it would have converged with them and PINGPONG would not have sped up at
+  all, while CARS and QUIDDITCH did. Two of three games would have changed and
+  nothing would have looked wrong. Hence the invariant now stated at the top:
+  **pin = globals ÷ 1.5.**
+- **Measured locally:** CARS1 40 waits and CARS2 28 waits, **all 213 ms**;
+  PINGPONG 37 waits **all 142 ms**; SNITCH 8 waits over two matches reading
+  {213, 427, 640, 1067, 2560×4} — every value in the predicted set, with the
+  per-iteration `Delay(60000)` at **2560 ms** (was 3840). Each is exactly 1.5×
+  faster than the previous entry. Controls `warwork` (20/0.004) and `match`
+  (1080/0.216) read unchanged.
+- ⚠️ **Seven of eight bundles changed bytes, but only five changed BEHAVIOUR** —
+  `match.js` and `warwork.js` differ solely in the shim default they embed, which
+  their own pins immediately override. So "which bundles changed" stopped being
+  the cheap proof it was in earlier entries; the runtime read (`pas.crt.*` on the
+  live page) is what actually distinguishes them. Both were re-read to confirm
+  their effective values did not move.
+- **Two counted ZEROS this round, both genuine missing input, both diagnosed by
+  one screenshot** — and one of them is a permanent property worth knowing:
+  **CARS1's `delay(duration*3)` sits INSIDE `if (ch=75) or (ch=77)`**, i.e. it
+  only fires while an arrow key is arriving, so an idle CARS1 counts nothing no
+  matter how long you wait. SNITCH's zero was the `readln` prompt chain (two team
+  names, then catcher-reaction numbers) blocking before any `Delay` ran.
+- **QUIDDITCH matches can end in seconds**, as soon as a catcher takes the snitch
+  — two runs here ended 150:0 and 0:150 almost immediately. A small sample there
+  is the game being short, not the instrument failing; check the final line on
+  screen before assuming a stall.
 
 ### The counted-timeout recipe (how to measure tempo at all)
 
@@ -507,8 +562,17 @@ window.setTimeout = function (f, d, ...r) { if (inD) window.__c.push(d); return 
 
 Then read the pin out of the **running** bundle (`pas.crt.MinDelayMs`,
 `pas.crt.DelayScale`) rather than the source, and **always take a control** — a
-bundle you did *not* touch, measured in the same session. Since 2026-08-13 that
-means `snitch` or `cars1`; PINGPONG is pinned now and no longer reads 320.
+bundle you did *not* touch this round, measured in the same session, whose value
+differs from the one you are claiming.
+
+⚠️ **The control has to be re-picked every time, and it moved twice in one day.**
+It was PINGPONG (320) for weeks; the first 2026-08-13 change pinned PINGPONG, so
+it became `snitch`/`cars1`; the second change moved `snitch` and `cars1` too.
+**There is no longer any bundle sitting at 320 at all.** The current stable
+controls are the two nobody has asked to change: **`warwork` (20 ms)** and
+**`match` (1080 ms)** — far apart, so a stuck reading is obvious. Before quoting
+a control, confirm it is genuinely untouched by *this* round rather than
+inherited from the last note.
 
 ⚠️ **A count of ZERO means your INPUT never landed — check the screen before you
 believe it.** Measuring on prod, `computer`-driven keypresses did not reach the

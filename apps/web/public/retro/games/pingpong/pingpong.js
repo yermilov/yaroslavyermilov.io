@@ -2905,8 +2905,8 @@ rtl.module("crt",["System","JS"],function () {
   };
   this.Readln = function () {
   };
-  this.DelayScale = 0.064;
-  this.MinDelayMs = 320;
+  this.DelayScale = 0.042667;
+  this.MinDelayMs = 213;
   $mod.$init = function () {
     if ($mod.KeyPressed()) $mod.ReadKey();
     pas.System.SetWriteCallBack(function (S, NewLine) {
@@ -5748,8 +5748,8 @@ rtl.module("program",["System","JS","crt","graph","mouse","dos","tpfiles","shifr
     await $mod.InitPingPong();
   };
   $mod.$main = function () {
-    pas.crt.DelayScale = 0.042667;
-    pas.crt.MinDelayMs = 213;
+    pas.crt.DelayScale = 0.028444;
+    pas.crt.MinDelayMs = 142;
     $mod.Main();
   };
 });
