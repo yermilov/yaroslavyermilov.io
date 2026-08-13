@@ -520,12 +520,19 @@ PINGPONG's pin 213/0.042667 → **142/0.028444**.
   all, while CARS and QUIDDITCH did. Two of three games would have changed and
   nothing would have looked wrong. Hence the invariant now stated at the top:
   **pin = globals ÷ 1.5.**
-- **Measured locally:** CARS1 40 waits and CARS2 28 waits, **all 213 ms**;
-  PINGPONG 37 waits **all 142 ms**; SNITCH 8 waits over two matches reading
-  {213, 427, 640, 1067, 2560×4} — every value in the predicted set, with the
+- **Measured, local then prod.** CARS1 40 waits (local) and CARS2 28 local / 25
+  prod, **all 213 ms**. PINGPONG 37 local / 20 prod, **all 142 ms**. SNITCH 8
+  local / 15 prod; the prod run read {213×3, 427×2, 853×1, 1067×2, **2560×7**} —
+  every value in the predicted set `{213, 427, 640, 853, 1067, 2560}`, with the
   per-iteration `Delay(60000)` at **2560 ms** (was 3840). Each is exactly 1.5×
   faster than the previous entry. Controls `warwork` (20/0.004) and `match`
-  (1080/0.216) read unchanged.
+  (1080/0.216) read unchanged on both.
+- **QUIDDITCH is the one game where the predicted SET, not a single value, is the
+  check.** Its waits are `max(round(random(6)*5000 × scale), floor)`, so a
+  correct build shows several distinct values and every one must fall in that
+  set; a wrong scale shows values outside it. That is a stronger test than the
+  single-valued games, and it is why the prod sample is quoted with its
+  histogram rather than as "all N ms".
 - ⚠️ **Seven of eight bundles changed bytes, but only five changed BEHAVIOUR** —
   `match.js` and `warwork.js` differ solely in the shim default they embed, which
   their own pins immediately override. So "which bundles changed" stopped being
