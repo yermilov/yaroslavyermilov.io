@@ -11,13 +11,14 @@
   Everything else — the match logic, the timing via GetTime, Sound/NoSound —
   compiles as written in 2008. }
 program randommatch;
-uses crt,dos,nls;
+uses crt,dos,nls,hpteams;
 const p=5000;
       q=5000;
       g=1000;
 var n,q1,q2,h,m,s,d,t,t0,s1,s2,r1,r2,g1,g2,h1,h2:word;
     t1,t2,p1,p2:string;
     ch:char;
+    home:byte;
 procedure Main; async;
 begin
      NoSound;
@@ -25,14 +26,42 @@ begin
      s1:=0;
      s2:=0;
      randomize;
-     t1:=await(string, AskString(Loc('Team 1 name','Назва команди 1')));
-     p1:=await(string, AskString(Loc('Team 1 seeker','Ловець команди 1')));
-     r1:=trunc(await(double, AskReal(Loc('Seeker 1 reaction (number, e.g. 300)','Реакція ловця 1 (число, напр. 300)'))));
-     h1:=trunc(await(double, AskReal(Loc('Team 1 accuracy (number, e.g. 500)','Влучність команди 1 (число, напр. 500)'))));
-     t2:=await(string, AskString(Loc('Team 2 name','Назва команди 2')));
-     p2:=await(string, AskString(Loc('Team 2 seeker','Ловець команди 2')));
-     r2:=trunc(await(double, AskReal(Loc('Seeker 2 reaction (number, e.g. 300)','Реакція ловця 2 (число, напр. 300)'))));
-     h2:=trunc(await(double, AskReal(Loc('Team 2 accuracy (number, e.g. 500)','Влучність команди 2 (число, напр. 500)'))));
+     { Той самий пресет Гоґвортсу, що і в SNITCH — див. hpteams.pas. Тут на
+       команду припадало ЧОТИРИ питання (ще й влучність), тобто вісім підряд
+       перед автоматичним матчем, який гравець лише дивиться. }
+     HpHeader(Loc('match simulator  ·  fully automatic',
+                  'симулятор матчу  ·  повністю автоматичний'));
+     await(ChooseHpTeam(Loc('Home team','Господарі поля'),0));
+     home:=HpPick;
+     if home=HpCustom then
+        begin
+             t1:=await(string, AskString(Loc('Team 1 name','Назва команди 1')));
+             p1:=await(string, AskString(Loc('Team 1 seeker','Ловець команди 1')));
+             r1:=trunc(await(double, AskReal(Loc('Seeker 1 reaction (number, e.g. 300)','Реакція ловця 1 (число, напр. 300)'))));
+             h1:=trunc(await(double, AskReal(Loc('Team 1 accuracy (number, e.g. 500)','Влучність команди 1 (число, напр. 500)'))));
+        end
+     else
+        begin
+             t1:=HpName(home);
+             p1:=HpSeeker(home);
+             r1:=HpReaction(home);
+             h1:=HpAccuracy(home);
+        end;
+     await(ChooseHpTeam(Loc('Away team','Гості'),home));
+     if HpPick=HpCustom then
+        begin
+             t2:=await(string, AskString(Loc('Team 2 name','Назва команди 2')));
+             p2:=await(string, AskString(Loc('Team 2 seeker','Ловець команди 2')));
+             r2:=trunc(await(double, AskReal(Loc('Seeker 2 reaction (number, e.g. 300)','Реакція ловця 2 (число, напр. 300)'))));
+             h2:=trunc(await(double, AskReal(Loc('Team 2 accuracy (number, e.g. 500)','Влучність команди 2 (число, напр. 500)'))));
+        end
+     else
+        begin
+             t2:=HpName(HpPick);
+             p2:=HpSeeker(HpPick);
+             r2:=HpReaction(HpPick);
+             h2:=HpAccuracy(HpPick);
+        end;
      clrscr;
      n:=random(6*p);
      GetTime(h,m,s,d);

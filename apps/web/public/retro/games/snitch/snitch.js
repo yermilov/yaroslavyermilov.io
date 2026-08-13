@@ -2558,6 +2558,13 @@ rtl.module("crt",["System","JS"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
+  this.Black = 0;
+  this.Blue = 1;
+  this.Cyan = 3;
+  this.LightGray = 7;
+  this.DarkGray = 8;
+  this.Yellow = 14;
+  this.White = 15;
   this.KeyPressed = function () {
     var Result = false;
     $impl.Install();
@@ -2615,6 +2622,18 @@ rtl.module("crt",["System","JS"],function () {
     });
     return Result;
   };
+  this.ReadKeyA = function () {
+    var Result = null;
+    $impl.Install();
+    Result = new Promise(function (resolve, reject) {
+      const poll = () => {
+        if (pas.crt.KeyPressed()) { resolve(pas.crt.ReadKey().charCodeAt(0)); }
+        else setTimeout(poll, 50);
+      };
+      poll();
+    });
+    return Result;
+  };
   this.Sound = function (hz) {
     try {
       if (!window.__retroAudio) {
@@ -2640,6 +2659,14 @@ rtl.module("crt",["System","JS"],function () {
       const a = window.__retroAudio;
       if (a && a.osc) { a.osc.stop(); a.osc = null; }
     } catch (e) {};
+  };
+  this.TextBackground = function (c) {
+    $impl.TextEnsure();
+    $impl.CurBg = c & 15;
+  };
+  this.TextColor = function (c) {
+    $impl.TextEnsure();
+    $impl.CurFg = c & 15;
   };
   this.GotoXY = function (x, y) {
     $impl.TextEnsure();
@@ -2982,7 +3009,188 @@ rtl.module("nls",["System"],function () {
     return Result;
   };
 });
-rtl.module("program",["System","crt","dos","nls"],function () {
+rtl.module("hpteams",["System","crt","nls"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  this.HpCount = 4;
+  this.HpCustom = 0;
+  this.HpPick = 0;
+  this.HpName = function (k) {
+    var Result = "";
+    var $tmp = k;
+    if ($tmp === 1) {
+      Result = pas.nls.Loc("Gryffindor","Ґрифіндор")}
+     else if ($tmp === 2) {
+      Result = pas.nls.Loc("Slytherin","Слизерин")}
+     else if ($tmp === 3) {
+      Result = pas.nls.Loc("Ravenclaw","Рейвенклов")}
+     else if ($tmp === 4) {
+      Result = pas.nls.Loc("Hufflepuff","Гафелпаф")}
+     else {
+      Result = "";
+    };
+    return Result;
+  };
+  this.HpSeeker = function (k) {
+    var Result = "";
+    var $tmp = k;
+    if ($tmp === 1) {
+      Result = pas.nls.Loc("Harry Potter","Гаррі Поттер")}
+     else if ($tmp === 2) {
+      Result = pas.nls.Loc("Draco Malfoy","Драко Мелфой")}
+     else if ($tmp === 3) {
+      Result = pas.nls.Loc("Cho Chang","Чо Чанґ")}
+     else if ($tmp === 4) {
+      Result = pas.nls.Loc("Cedric Diggory","Седрик Діґорі")}
+     else {
+      Result = "";
+    };
+    return Result;
+  };
+  this.HpReaction = function (k) {
+    var Result = 0;
+    var $tmp = k;
+    if ($tmp === 1) {
+      Result = 420}
+     else if ($tmp === 2) {
+      Result = 260}
+     else if ($tmp === 3) {
+      Result = 320}
+     else if ($tmp === 4) {
+      Result = 360}
+     else {
+      Result = 300;
+    };
+    return Result;
+  };
+  this.HpHeader = function (subtitle) {
+    pas.crt.TextBackground(0);
+    pas.crt.TextColor(7);
+    pas.crt.ClrScr();
+    pas.crt.TextColor(3);
+    $impl.Rule(2,"┌","─","┐");
+    pas.crt.GotoXY(11,3);
+    pas.System.Write("│");
+    pas.crt.GotoXY((11 + 60) - 1,3);
+    pas.System.Write("│");
+    pas.crt.GotoXY(11,4);
+    pas.System.Write("│");
+    pas.crt.GotoXY((11 + 60) - 1,4);
+    pas.System.Write("│");
+    $impl.Rule(5,"└","─","┘");
+    pas.crt.TextColor(14);
+    $impl.Centre(3,"Q U I D D I T C H");
+    pas.crt.TextColor(8);
+    $impl.Centre(4,subtitle);
+    pas.crt.TextColor(7);
+  };
+  this.ChooseHpTeam = async function (heading, exclude) {
+    var cur = 0;
+    var k = 0;
+    var last = 0;
+    var code = 0;
+    last = 4 + 1;
+    cur = 1;
+    if (cur === exclude) cur = 2;
+    pas.crt.TextBackground(0);
+    pas.crt.TextColor(15);
+    pas.crt.GotoXY(11 + 1,7);
+    pas.System.Write($impl.Fit(heading,60 - 2));
+    pas.crt.TextColor(8);
+    pas.crt.GotoXY(11 + 1,8 + last + 2);
+    pas.System.Write($impl.Fit(pas.nls.Loc("up\/down + Enter, or press 1-5","вгору\/вниз + Enter, або цифра 1-5"),60 - 2));
+    pas.crt.TextColor(7);
+    code = 0;
+    do {
+      for (var $l = 1, $end = last; $l <= $end; $l++) {
+        k = $l;
+        $impl.TeamRow(k,k === cur,k === exclude);
+      };
+      code = pas.System.Trunc(await pas.crt.ReadKeyA());
+      if (code === 0) {
+        code = pas.System.Trunc(await pas.crt.ReadKeyA());
+        if (code === 72) do {
+          if (cur === 1) {
+            cur = last}
+           else cur -= 1;
+        } while (!(cur !== exclude));
+        if (code === 80) do {
+          if (cur === last) {
+            cur = 1}
+           else cur += 1;
+        } while (!(cur !== exclude));
+        code = 0;
+      } else if ((code >= 49) && (code <= (48 + last))) {
+        if ((code - 48) !== exclude) {
+          cur = code - 48;
+          code = 13;
+        } else code = 0;
+      };
+    } while (!(code === 13));
+    for (var $l1 = 1, $end1 = last; $l1 <= $end1; $l1++) {
+      k = $l1;
+      $impl.TeamRow(k,false,(k === exclude) || (k === cur));
+    };
+    if (cur > 4) {
+      $mod.HpPick = 0}
+     else $mod.HpPick = cur;
+  };
+},null,function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  $impl.BoxL = 11;
+  $impl.BoxW = 60;
+  $impl.RowOf = 8;
+  $impl.Fit = function (src, n) {
+    var Result = "";
+    var r = "";
+    r = src;
+    while (r.length < n) r = r + " ";
+    if (r.length > n) r = pas.System.Copy(r,1,n);
+    Result = r;
+    return Result;
+  };
+  $impl.Rule = function (row, l, mid, r) {
+    var k = 0;
+    pas.crt.GotoXY(11,row);
+    pas.System.Write(l);
+    for (k = 1; k <= 58; k++) pas.System.Write(mid);
+    pas.System.Write(r);
+  };
+  $impl.Centre = function (row, s1) {
+    var s2 = "";
+    s2 = s1;
+    if (s2.length > (60 - 2)) s2 = pas.System.Copy(s2,1,60 - 2);
+    pas.crt.GotoXY(11 + 1 + Math.floor((60 - 2 - s2.length) / 2),row);
+    pas.System.Write(s2);
+  };
+  $impl.TeamRow = function (k, current, taken) {
+    var a = "";
+    var body = "";
+    var rs = "";
+    a = "" + k;
+    rs = "" + $mod.HpReaction(k);
+    if (current) {
+      pas.crt.TextBackground(1);
+      pas.crt.TextColor(14);
+    } else {
+      pas.crt.TextBackground(0);
+      if (taken) {
+        pas.crt.TextColor(8)}
+       else pas.crt.TextColor(7);
+    };
+    pas.crt.GotoXY(11 + 1,8 + k);
+    if (k > 4) {
+      body = pas.nls.Loc("own names (type them yourself)","свої назви (ввести самому)")}
+     else body = $impl.Fit($mod.HpName(k),14) + $impl.Fit($mod.HpSeeker(k),18) + pas.nls.Loc("reaction ","реакція ") + rs;
+    pas.System.Write($impl.Fit(" " + a + "  " + body,60 - 2));
+    pas.crt.TextBackground(0);
+    pas.crt.TextColor(7);
+  };
+});
+rtl.module("program",["System","crt","dos","nls","hpteams"],function () {
   "use strict";
   var $mod = this;
   this.p = 5000;
@@ -3005,18 +3213,35 @@ rtl.module("program",["System","crt","dos","nls"],function () {
   this.p1 = "";
   this.p2 = "";
   this.ch = "";
+  this.home = 0;
   this.Main = async function () {
     pas.crt.NoSound();
     pas.crt.ClrScr();
     $mod.s1 = 0;
     $mod.s2 = 0;
     pas.crt.Randomize();
-    $mod.t1 = await pas.crt.AskString(pas.nls.Loc("Team 1 name","Назва команди 1"));
-    $mod.p1 = await pas.crt.AskString(pas.nls.Loc("Team 1 seeker","Ловець команди 1"));
-    $mod.r1 = pas.System.Trunc(await pas.crt.AskReal(pas.nls.Loc("Seeker 1 reaction (number, e.g. 300)","Реакція ловця 1 (число, напр. 300)")));
-    $mod.t2 = await pas.crt.AskString(pas.nls.Loc("Team 2 name","Назва команди 2"));
-    $mod.p2 = await pas.crt.AskString(pas.nls.Loc("Team 2 seeker","Ловець команди 2"));
-    $mod.r2 = pas.System.Trunc(await pas.crt.AskReal(pas.nls.Loc("Seeker 2 reaction (number, e.g. 300)","Реакція ловця 2 (число, напр. 300)")));
+    pas.hpteams.HpHeader(pas.nls.Loc("match simulator  ·  a and s score goals","симулятор матчу  ·  a та s — голи"));
+    await pas.hpteams.ChooseHpTeam(pas.nls.Loc("Home team","Господарі поля"),0);
+    $mod.home = pas.hpteams.HpPick;
+    if ($mod.home === 0) {
+      $mod.t1 = await pas.crt.AskString(pas.nls.Loc("Team 1 name","Назва команди 1"));
+      $mod.p1 = await pas.crt.AskString(pas.nls.Loc("Team 1 seeker","Ловець команди 1"));
+      $mod.r1 = pas.System.Trunc(await pas.crt.AskReal(pas.nls.Loc("Seeker 1 reaction (number, e.g. 300)","Реакція ловця 1 (число, напр. 300)")));
+    } else {
+      $mod.t1 = pas.hpteams.HpName($mod.home);
+      $mod.p1 = pas.hpteams.HpSeeker($mod.home);
+      $mod.r1 = pas.hpteams.HpReaction($mod.home);
+    };
+    await pas.hpteams.ChooseHpTeam(pas.nls.Loc("Away team","Гості"),$mod.home);
+    if (pas.hpteams.HpPick === 0) {
+      $mod.t2 = await pas.crt.AskString(pas.nls.Loc("Team 2 name","Назва команди 2"));
+      $mod.p2 = await pas.crt.AskString(pas.nls.Loc("Team 2 seeker","Ловець команди 2"));
+      $mod.r2 = pas.System.Trunc(await pas.crt.AskReal(pas.nls.Loc("Seeker 2 reaction (number, e.g. 300)","Реакція ловця 2 (число, напр. 300)")));
+    } else {
+      $mod.t2 = pas.hpteams.HpName(pas.hpteams.HpPick);
+      $mod.p2 = pas.hpteams.HpSeeker(pas.hpteams.HpPick);
+      $mod.r2 = pas.hpteams.HpReaction(pas.hpteams.HpPick);
+    };
     pas.crt.ClrScr();
     $mod.n = pas.System.Random(6 * 5000);
     pas.dos.GetTime({p: $mod, get: function () {

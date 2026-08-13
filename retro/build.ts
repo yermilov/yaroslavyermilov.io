@@ -82,7 +82,7 @@ const GAMES: GameDef[] = [
     title: 'Quidditch',
     year: '2008',
     note: { ua: 'Квідичний матч-симулятор: a та s — голи, ловці полюють на снитч.', en: 'Quidditch match sim: a and s score, seekers hunt the snitch.' },
-    controls: { ua: 'введи команди/ловців/числа + Enter · у SNITCH: a та s — голи · Esc — вийти', en: 'enter teams/seekers/numbers + Enter · in SNITCH a and s score · Esc to exit' },
+    controls: { ua: 'обери дві команди Гоґвортсу: вгору/вниз + Enter або цифра 1-5 · у SNITCH: a та s — голи · Esc — вийти', en: 'pick two Hogwarts teams: up/down + Enter or 1-5 · in SNITCH a and s score · Esc to exit' },
     ports: [
       { slug: 'snitch', main: 'SNITCH.pas', file: 'SNITCH.EXE' },
       // No `file`, same reasoning: RANDOM is SNITCH with the player taken out.
