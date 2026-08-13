@@ -5748,6 +5748,8 @@ rtl.module("program",["System","JS","crt","graph","mouse","dos","tpfiles","shifr
     await $mod.InitPingPong();
   };
   $mod.$main = function () {
+    pas.crt.DelayScale = 0.042667;
+    pas.crt.MinDelayMs = 213;
     $mod.Main();
   };
 });

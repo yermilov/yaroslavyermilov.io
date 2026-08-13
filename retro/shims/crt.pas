@@ -177,12 +177,21 @@ var
     ⚠️ AND IF THE REQUEST NAMES ONE GAME, DO NOT TOUCH THIS NUMBER AT ALL — pin
     it in that game's own program body instead. 2026-08-10, "треба зробити футбол
     ще на 50% повільнішим", then 2026-08-11, "все одно занадто швидко, зроби ще
-    на 50% повільніше": FOOTBALL now sets DelayScale := 0.144 / MinDelayMs :=
-    720 in MATCH.pas before Main, exactly the way WARWORK pins itself to
-    0.004/20. This works because both numbers here are typed constants (i.e.
-    assignable vars) that Delay re-reads per call, so the last assignment wins
-    per bundle. The globals below serve seven other games; a one-game request is
-    never a reason to move them. }
+    на 50% повільніше", then 2026-08-13: FOOTBALL now sets DelayScale := 0.216 /
+    MinDelayMs := 1080 in MATCH.pas before Main, exactly the way WARWORK pins
+    itself to 0.004/20. This works because both numbers here are typed constants
+    (i.e. assignable vars) that Delay re-reads per call, so the last assignment
+    wins per bundle. The globals below serve the other games; a one-game request
+    is never a reason to move them.
+
+    ⚠️ THAT SAME 2026-08-13 SENTENCE PULLED TWO GAMES IN OPPOSITE DIRECTIONS —
+    "футбол ще на 50% повільніше, а пінпонг - на 50% швидше" — which is the
+    cleanest possible proof that a shared knob cannot serve a named-game request.
+    PINGPONG now pins itself to 0.042667/213 in PINGPONG.pas. Note the direction:
+    the "3.1 fps is already a slideshow" warning above is about SLOWING the
+    frame-paced games; speeding one up with the same knob gives back frames and
+    is safe. FIVE bundles are left on the globals below (ANIMGAME's two CARS,
+    QUIDDITC's two, BAKKARA — which has no Delay at all and never moves). }
   MinDelayMs: integer = 320;
 
 implementation

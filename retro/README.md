@@ -335,10 +335,16 @@ neither. So there are exactly three knobs, and a speed request has to be aimed:
 
 | knob | where | now | governs |
 |---|---|---|---|
-| `MinDelayMs` | `shims/crt.pas` | 320 ms | every wait that rounds *below* the floor — i.e. the frame tick of PINGPONG, CARS1, CARS2, FOOTBALL |
+| `MinDelayMs` | `shims/crt.pas` | 320 ms | every wait that rounds *below* the floor — i.e. the frame tick of CARS1, CARS2 (PINGPONG and FOOTBALL now pin their own) |
 | `DelayScale` | `shims/crt.pas` | 0.064 | every wait *above* the floor — the long pauses, and QUIDDITC's per-iteration `Delay(60000)` |
 | `frameMs` | `games/WARWORK/WW3.pas` | 45 ms | WARWORK's speed, and nothing else |
-| per-game **pin** | that game's program body | WARWORK 0.004/20, FOOTBALL 0.144/720 | overrides both globals for one bundle (see below) |
+| per-game **pin** | that game's program body | WARWORK 0.004/20, FOOTBALL 0.216/1080, PINGPONG 0.042667/213 | overrides both globals for one bundle (see below) |
+
+⚠️ **Three of the eight bundles are now pinned, so "the globals" means the other
+five** — `cars1`, `cars2`, `snitch`, `randommatch`, and `bakkara` (which has no
+`Delay` call site at all and answers to nothing). Check with
+`grep -o 'DelayScale = [0-9.]*' apps/web/public/retro/games/<g>/<g>.js`: a pinned
+bundle prints the shim default *and then* its own pin, in that order.
 
 **A per-game pin is the fourth knob, and it is how a single game moves now.**
 `DelayScale`/`MinDelayMs` are *typed constants* in `crt`, i.e. assignable `var`s
@@ -346,7 +352,8 @@ that `Delay` re-reads on every call — so assigning them in a program's own bod
 overrides the globals for that bundle alone, without touching the other seven.
 WARWORK has done this since 2026-08-02 (pinning itself *out* of the global
 slowdown); FOOTBALL joined on 2026-08-10 (pinning itself *further down* than the
-global). Reach for this whenever a request names one game.
+global); PINGPONG joined on 2026-08-13 (pinning itself *up*, i.e. faster). Reach
+for this whenever a request names one game.
 
 **Reaching for the floor alone is the trap.** 2026-08-02, "всіх інших ще в два
 рази повільніше": doubling `MinDelayMs` 20 → 40 makes PINGPONG/CARS1/CARS2/
@@ -449,6 +456,59 @@ bundle whose emitted JS changed, which is the cheapest proof the aim held.
   the **running** bundle (`pas.crt.MinDelayMs`), not just the source — `build.ts`
   silently keeps the committed bundles when `PAS2JS_RTL` is unset, and that is
   the failure mode this check exists to catch.
+
+**2026-08-13 — one sentence, two games, opposite directions** («тепер давай
+зробимо футбол ще на 50% повільніше, а пінпонг - на 50% швидше»). FOOTBALL
+720 → **1080** ms / 0.144 → **0.216**; PINGPONG takes its first pin, the globals
+divided by the same 1.5 → **213** ms / **0.042667**. `match.js` and `pingpong.js`
+were the only two bundles whose emitted JS changed.
+
+- **This is the cleanest argument for pins there will ever be.** A single
+  request moved two games in *opposite* directions, so no shared knob could have
+  served it under any setting. When a request names games, the pins are not a
+  stylistic preference — they are the only representable answer.
+- **PINGPONG's tempo was also purely the floor.** Its one pacing call is
+  `await(delay(duration*2))` in `BallWalking`, and `duration` = 15 (the 14th
+  value in `data/OPTIONS.COD`), i.e. `delay(30)` → `round(30 × 0.064)` = 2 ms,
+  far under the floor. So the floor *was* the frame period, and "50% faster" is
+  320 / 1.5 = 213 ms — 3.1 → **4.7 fps**. Unlike FOOTBALL, the scale is *not*
+  inert here: `delay(duration*500)` = 7500 on the Game Over screen cleared the
+  floor at 480 ms, and now reads 320, so the whole game speeds up rather than
+  just the frame.
+- **Speeding a frame-paced game up is the safe direction, and the old warning
+  does not apply to it.** Everything above about "3.1 fps is a slideshow" is
+  about *slowing* PINGPONG/CARS: one number is both tempo and draw rate, so
+  slowness can only be bought by dropping frames. Run the same knob the other
+  way and both improve together — the ball moves less between draws *and* the
+  draws come more often. The eventual floor is from below (`BallSpeed` = 30 px
+  per frame is a coarse step to subdivide), not from here.
+- ⚠️ **PINGPONG IS NO LONGER A VALID 320 ms CONTROL.** Every prior measurement
+  in this file used it as the untouched baseline; it now reads 213/0.042667. Use
+  **`snitch` or `cars1`** instead — both still on the globals, verified in the
+  emitted JS. Using PINGPONG now would produce a plausible wrong number, which
+  is exactly the failure this section keeps warning about.
+
+### The counted-timeout recipe (how to measure tempo at all)
+
+⚠️ **Do NOT time a wait with a stopwatch.** A hidden tab clamps every timer to
+~1000 ms and hands you a plausible wrong number. Measure the value the game
+*asks for* instead, by counting it at the source. Paste this on the bundle's own
+page — `/retro/games/<game>/index.html?lang=ua`, **not** the lab, which holds the
+game in a sandboxed iframe the parent cannot reach (`SecurityError`):
+
+```js
+window.__c = []; let inD = false;
+const oST = window.setTimeout, oD = pas.crt.Delay;
+pas.crt.Delay = function (ms) { inD = true; const p = oD.call(this, ms); inD = false; return p; };
+window.setTimeout = function (f, d, ...r) { if (inD) window.__c.push(d); return oST.call(window, f, d, ...r); };
+// …play for a while, then:
+// new Set(window.__c)  → should be exactly the pinned floor
+```
+
+Then read the pin out of the **running** bundle (`pas.crt.MinDelayMs`,
+`pas.crt.DelayScale`) rather than the source, and **always take a control** — a
+bundle you did *not* touch, measured in the same session. Since 2026-08-13 that
+means `snitch` or `cars1`; PINGPONG is pinned now and no longer reads 320.
 
 ⚠️ **A count of ZERO means your INPUT never landed — check the screen before you
 believe it.** Measuring on prod, `computer`-driven keypresses did not reach the
