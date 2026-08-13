@@ -3214,6 +3214,7 @@ rtl.module("program",["System","crt","dos","nls","hpteams"],function () {
   this.p2 = "";
   this.ch = "";
   this.home = 0;
+  this.shown = false;
   this.Main = async function () {
     pas.crt.NoSound();
     pas.crt.ClrScr();
@@ -3262,6 +3263,7 @@ rtl.module("program",["System","crt","dos","nls","hpteams"],function () {
         this.p.d = v;
       }});
     $mod.t0 = ($mod.h * 3600) + ($mod.m * 60) + $mod.s;
+    $mod.shown = false;
     do {
       $mod.q1 = pas.System.Random(6 * 5000);
       $mod.q2 = pas.System.Random(6 * 5000);
@@ -3283,7 +3285,8 @@ rtl.module("program",["System","crt","dos","nls","hpteams"],function () {
           this.p.d = v;
         }});
       $mod.t = ($mod.h * 3600) + ($mod.m * 60) + $mod.s;
-      if (((($mod.t - $mod.t0) % (pas.System.Random(5) + 1)) === 0) && (($mod.t - $mod.t0) !== 0)) {
+      if (!$mod.shown || (((($mod.t - $mod.t0) % (pas.System.Random(5) + 1)) === 0) && (($mod.t - $mod.t0) !== 0))) {
+        $mod.shown = true;
         pas.crt.ClrScr();
         if ((($mod.t - $mod.t0) % 60) < 10) {
           pas.System.Writeln(Math.floor(($mod.t - $mod.t0) / 60),":0",($mod.t - $mod.t0) % 60)}

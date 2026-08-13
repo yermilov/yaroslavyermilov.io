@@ -587,9 +587,14 @@ export default function NortonCommander({
       )}
       {overlay?.kind === 'run' && (
         <div style={{ position: 'absolute', inset: 0, background: C.screenBg, display: 'flex', flexDirection: 'column', zIndex: 10 }}>
-          <header style={{ background: C.barBg, color: C.barFg, padding: '0 1ch', display: 'flex', justifyContent: 'space-between' }}>
-            <span>{overlay.title}.EXE</span>
-            <span>{overlay.controls ?? ''} · {t('Esc — назад до NC', 'Esc — back to NC')}</span>
+          {/* gap is load-bearing: the two spans are flex siblings, so a long
+              controls line butted straight against the title and rendered as
+              "Quidditch.EXEобери дві команди…" (reported 13.08.2026 with a
+              screenshot). space-between alone only separates them while there
+              is slack left. */}
+          <header style={{ background: C.barBg, color: C.barFg, padding: '0 1ch', display: 'flex', justifyContent: 'space-between', gap: '2ch' }}>
+            <span style={{ flex: '0 0 auto' }}>{overlay.title}.EXE</span>
+            <span style={{ textAlign: 'right' }}>{overlay.controls ?? ''} · {t('Esc — назад до NC', 'Esc — back to NC')}</span>
           </header>
           {/* Tier-3 boundary: the game runs in its own browsing context; closing
               the overlay destroys the iframe and with it every rtl.js global. */}

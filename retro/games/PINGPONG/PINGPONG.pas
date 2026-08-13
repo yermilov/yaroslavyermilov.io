@@ -67,7 +67,7 @@ const pi180 = pi/180;
       bx=8;
 
 
-var ball,fly,ud:coordinates;
+var ball,fly,ud,prev:coordinates;
     alfa,c,HeroX:integer;
     right,left:boolean;
     n0:byte;
@@ -458,17 +458,30 @@ end;
                  MakeBall(ball.x,ball.y,5,ColorFon);
                  ball.y:=8;
             end;
-         if ball.y>=heroy+10 then {Down}
-            begin
-                 Udar:=true;
-                 nv:=-1;
-                 MakeBall(ball.x,ball.y,5,ColorFon);
-                 ball.y:=heroy+9;
-                 Dec(Lives);
-                 Clean(105,435,125,480,ColorGameMenu);
-                 LinePlus;
-            end;
- {Doska} if (abs(ball.y-heroy)<=5) and (ball.x>=herox) and (ball.x<=herox+Herob) then
+ { ⚠️ РЕМОНТ 13.08.2026 — «в пінгпонзі м'яч пролітає платформу».
+   ДВІ ЗМІНИ, І ПОРЯДОК ТУТ НЕ МЕНШ ВАЖЛИВИЙ ЗА САМУ УМОВУ.
+
+   1. Перевірка платформи стала ВІДРІЗКОМ, а не точкою. Оригінальна умова
+      abs(ball.y-heroy)<=5 — це вікно заввишки 11 пікселів, і воно працювало,
+      поки м'яч повз. Але рухається він не на піксель за кадр: у BallWalking
+      c зростає на ballspeed (30 за замовчуванням у data/OPTIONS.COD), тобто
+      КОЖЕН кадр — це стрибок на 30 пікселів уздовж променя. М'яч просто
+      перестрибував вікно: з heroy-20 одразу в heroy+10. Тепер додано умову
+      «перетнув площину платформи зверху вниз між prev і ball» (nv=1 — це рух
+      УНИЗ: Up-відбій ставить nv:=1, Down-відбій nv:=-1). По X приймаємо
+      влучання, якщо В МЕЖАХ ПЛАТФОРМИ був prev АБО ball — за кадр м'яч
+      зсувається по X так само на десятки пікселів.
+
+   2. Блок {Doska} ПЕРЕНЕСЕНО ВИЩЕ блоку {Down}. Раніше промах рахувався
+      першим, і навіть коли платформа ловила м'яч, життя вже було відібране
+      (Dec(Lives) у {Down}). Тепер платформа спрацьовує перша і ставить
+      ball.y:=Heroy-6, після чого умова {Down} (ball.y>=heroy+10) хибна вже
+      арифметично — тобто подвійного спрацювання не буде за побудовою, без
+      додаткових прапорців. }
+ {Doska} if (((abs(ball.y-heroy)<=5) or
+              ((nv=1) and (prev.y<heroy-5) and (ball.y>=heroy-5))) and
+             (((ball.x>=herox) and (ball.x<=herox+Herob)) or
+              ((prev.x>=herox) and (prev.x<=herox+Herob)))) then
             begin
                  Udar:=true;
                  MakeBall(ball.x,ball.y,5,ColorFon);
@@ -496,6 +509,17 @@ end;
                     if ng=-1 then alfa:=alfa+3
                              else alfa:=alfa-3;
                     end;
+            end;
+         { Промах. Стоїть ПІСЛЯ платформи навмисно — див. пункт 2 вище. }
+         if ball.y>=heroy+10 then {Down}
+            begin
+                 Udar:=true;
+                 nv:=-1;
+                 MakeBall(ball.x,ball.y,5,ColorFon);
+                 ball.y:=heroy+9;
+                 Dec(Lives);
+                 Clean(105,435,125,480,ColorGameMenu);
+                 LinePlus;
             end;
  if Shleyf then
    begin
@@ -1010,6 +1034,11 @@ end;
                      radian:=pi180*alfa;
                      fly.y:=trunc(c*sin(radian));
                      fly.x:=trunc(c*cos(radian));
+                     { РЕМОНТ 13.08.2026: запам'ятовуємо позицію ПЕРЕД стрибком.
+                       Udar перевіряє платформу відрізком prev->ball, бо за один
+                       кадр м'яч долає ballspeed пікселів (30 за замовчуванням),
+                       а вікно влучання — лише 11. Деталі — у самому Udar. }
+                     prev:=ball;
                      ball.x:=ud.x+fly.x*ng;
                      ball.y:=ud.y+fly.y*nv;
                      c:=c+ballspeed;
@@ -1902,7 +1931,11 @@ begin
   Якщо Ярик попросить «ще швидше» — цю саму пару можна ділити далі; якщо
   скаже «тепер занадто швидко/смикано» — піднімати ТІЛЬКИ MinDelayMs і
   лишити DelayScale, бо смикання дає підлога, а не масштаб. }
-DelayScale := 0.028444;
-MinDelayMs := 142;
+{ 13.08.2026, третє прохання про темп за день: «плюс пінпонг можна зробити на
+  20% швидше» — тобто 142 / 1.2 = 118 мс (8.5 к/с проти 7.0). Глобальні лишились
+  213/0.042667, тож інваріант «пін = глобальні / 1.5» цим свідомо порушено:
+  пінпонг тепер швидший за решту в 1.8 раза, бо його просили окремо і ще раз. }
+DelayScale := 0.023704;
+MinDelayMs := 118;
 Main;
 end.

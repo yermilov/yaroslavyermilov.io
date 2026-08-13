@@ -1567,6 +1567,7 @@ rtl.module("crt",["System","JS"],function () {
   var $mod = this;
   var $impl = $mod.$impl;
   this.Green = 2;
+  this.White = 15;
   this.KeyPressed = function () {
     var Result = false;
     $impl.Install();
@@ -1599,6 +1600,18 @@ rtl.module("crt",["System","JS"],function () {
       window.setTimeout(function () {
         resolve(0);
       },wait);
+    });
+    return Result;
+  };
+  this.WaitKey = function () {
+    var Result = null;
+    $impl.Install();
+    Result = new Promise(function (resolve, reject) {
+      const poll = () => {
+        if (pas.crt.KeyPressed()) { pas.crt.ReadKey(); resolve(0); }
+        else setTimeout(poll, 50);
+      };
+      poll();
     });
     return Result;
   };
@@ -1903,7 +1916,24 @@ rtl.module("t_graph",["System","crt"],function () {
     };
   };
 });
-rtl.module("program",["System","t_graph","crt"],function () {
+rtl.module("nls",["System"],function () {
+  "use strict";
+  var $mod = this;
+  this.GameLang = function () {
+    var Result = "";
+    Result = "ua";
+    Result = (typeof window !== 'undefined' && window.__retroLang === 'en') ? 'en' : 'ua';
+    return Result;
+  };
+  this.Loc = function (en, ua) {
+    var Result = "";
+    if ($mod.GameLang() === "en") {
+      Result = en}
+     else Result = ua;
+    return Result;
+  };
+});
+rtl.module("program",["System","t_graph","crt","nls"],function () {
   "use strict";
   var $mod = this;
   this.x1 = 0;
@@ -1912,6 +1942,7 @@ rtl.module("program",["System","t_graph","crt"],function () {
   this.y2 = 0;
   this.cx = 0;
   this.ch = 0;
+  this.hit = false;
   this.duration = 5000;
   this.InKey = function () {
     var Result = "";
@@ -1927,6 +1958,7 @@ rtl.module("program",["System","t_graph","crt"],function () {
     $mod.y1 = 1;
     $mod.y2 = 1;
     $mod.cx = 40;
+    $mod.hit = false;
     $mod.x1 = pas.System.Random(40) + 20;
     $mod.x2 = pas.System.Random(40) + 20;
     do {
@@ -1938,6 +1970,7 @@ rtl.module("program",["System","t_graph","crt"],function () {
       pas.System.Write(" ");
       pas.crt.GotoXY($mod.x1,$mod.y1);
       pas.System.Write("*");
+      if (($mod.y1 === 24) && ($mod.x1 === $mod.cx)) $mod.hit = true;
       if ($mod.y1 === 24) {
         pas.crt.GotoXY($mod.x1,24);
         pas.System.Write(" ");
@@ -1953,6 +1986,7 @@ rtl.module("program",["System","t_graph","crt"],function () {
         pas.System.Write(" ");
         pas.crt.GotoXY($mod.x2,$mod.y2);
         pas.System.Write("*");
+        if (($mod.y2 === 24) && ($mod.x2 === $mod.cx)) $mod.hit = true;
         $mod.y2 += 1;
         if ($mod.y2 >= 24) {
           $mod.y2 = 1;
@@ -1978,7 +2012,17 @@ rtl.module("program",["System","t_graph","crt"],function () {
       pas.crt.TextColor(2);
       await pas.crt.Delay(5000);
       if ($mod.y2 === 24) $mod.x2 = pas.System.Random(40) + 20;
-    } while (!($mod.ch === 27));
+    } while (!(($mod.ch === 27) || $mod.hit));
+    if ($mod.hit) {
+      pas.crt.TextBackground(0);
+      pas.crt.TextColor(15);
+      pas.crt.GotoXY(26,12);
+      pas.System.Write(pas.nls.Loc("*** CRASH ***","*** АВАРІЯ ***"));
+      pas.crt.GotoXY(24,13);
+      pas.System.Write(pas.nls.Loc("any key to leave","будь-яка клавіша — вихід"));
+      pas.crt.TextColor(2);
+      await pas.crt.WaitKey();
+    };
   };
   $mod.$main = function () {
     $mod.Main();

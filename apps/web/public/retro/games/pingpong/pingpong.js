@@ -3548,6 +3548,7 @@ rtl.module("program",["System","JS","crt","graph","mouse","dos","tpfiles","shifr
   this.ball = $mod.coordinates.$new();
   this.fly = $mod.coordinates.$new();
   this.ud = $mod.coordinates.$new();
+  this.prev = $mod.coordinates.$new();
   this.alfa = 0;
   this.c = 0;
   this.HeroX = 0;
@@ -3967,16 +3968,7 @@ rtl.module("program",["System","JS","crt","graph","mouse","dos","tpfiles","shifr
       $mod.MakeBall($mod.ball.x,$mod.ball.y,5,$mod.ColorFon);
       $mod.ball.y = 8;
     };
-    if ($mod.ball.y >= ($mod.HeroY + 10)) {
-      Result = true;
-      $mod.nv = -1;
-      $mod.MakeBall($mod.ball.x,$mod.ball.y,5,$mod.ColorFon);
-      $mod.ball.y = $mod.HeroY + 9;
-      $mod.Lives -= 1;
-      $mod.Clean(105,435,125,480,$mod.ColorGameMenu);
-      $mod.LinePlus();
-    };
-    if ((Math.abs($mod.ball.y - $mod.HeroY) <= 5) && ($mod.ball.x >= $mod.HeroX) && ($mod.ball.x <= ($mod.HeroX + $mod.HeroB))) {
+    if (((Math.abs($mod.ball.y - $mod.HeroY) <= 5) || (($mod.nv === 1) && ($mod.prev.y < ($mod.HeroY - 5)) && ($mod.ball.y >= ($mod.HeroY - 5)))) && ((($mod.ball.x >= $mod.HeroX) && ($mod.ball.x <= ($mod.HeroX + $mod.HeroB))) || (($mod.prev.x >= $mod.HeroX) && ($mod.prev.x <= ($mod.HeroX + $mod.HeroB))))) {
       Result = true;
       $mod.MakeBall($mod.ball.x,$mod.ball.y,5,$mod.ColorFon);
       $mod.nv = -1;
@@ -3998,6 +3990,15 @@ rtl.module("program",["System","JS","crt","graph","mouse","dos","tpfiles","shifr
           $mod.alfa = $mod.alfa + 3}
          else $mod.alfa = $mod.alfa - 3;
       };
+    };
+    if ($mod.ball.y >= ($mod.HeroY + 10)) {
+      Result = true;
+      $mod.nv = -1;
+      $mod.MakeBall($mod.ball.x,$mod.ball.y,5,$mod.ColorFon);
+      $mod.ball.y = $mod.HeroY + 9;
+      $mod.Lives -= 1;
+      $mod.Clean(105,435,125,480,$mod.ColorGameMenu);
+      $mod.LinePlus();
     };
     if ($mod.Shleyf) {
       if ($mod.left) {
@@ -4730,6 +4731,7 @@ rtl.module("program",["System","JS","crt","graph","mouse","dos","tpfiles","shifr
         $mod.radian = $mod.pi180 * $mod.alfa;
         $mod.fly.y = pas.System.Trunc($mod.c * Math.sin($mod.radian));
         $mod.fly.x = pas.System.Trunc($mod.c * Math.cos($mod.radian));
+        $mod.prev.$assign($mod.ball);
         $mod.ball.x = $mod.ud.x + ($mod.fly.x * $mod.ng);
         $mod.ball.y = $mod.ud.y + ($mod.fly.y * $mod.nv);
         $mod.c = $mod.c + $mod.BallSpeed;
@@ -5748,8 +5750,8 @@ rtl.module("program",["System","JS","crt","graph","mouse","dos","tpfiles","shifr
     await $mod.InitPingPong();
   };
   $mod.$main = function () {
-    pas.crt.DelayScale = 0.028444;
-    pas.crt.MinDelayMs = 142;
+    pas.crt.DelayScale = 0.023704;
+    pas.crt.MinDelayMs = 118;
     $mod.Main();
   };
 });

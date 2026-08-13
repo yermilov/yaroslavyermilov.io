@@ -27,11 +27,26 @@
   `>=` restores the intended wrap. It is a change to the original source, so
   it is called out here rather than hidden: bug-for-bug fidelity is the rule
   everywhere else in this folder, but a self-flooding screen is not a
-  playable exhibit. }
+  playable exhibit.
+
+  ⚠️ ДРУГЕ СВІДОМЕ ВІДХИЛЕННЯ (13.08.2026). Ярик спитав: «чому в cars машини
+  не зіштовхуються з перешкодами?» Відповідь — бо в джерелі 2005 року ЗІТКНЕНЬ
+  НЕМАЄ ВЗАГАЛІ: цикл малює зірки, рухає машинку і крутиться `until ch=27`,
+  жодної перевірки координат у ньому немає ніколи не було. (У CARS1 немає навіть
+  перешкод — там сама лише машинка в рамці, і це вся програма.) Тобто це не
+  регресія, а те, чого гра не вміла.
+  Додано мінімальну перевірку: якщо зірка опинилась у 24-му рядку — тому
+  самому, де їде машинка — і в тій самій колонці, це зіткнення, і партія
+  закінчується. Перевірка стоїть у місці, де зірку МАЛЮЮТЬ, бо блоки скидання
+  нижче одразу переставляють x1/x2, і після них порівнювати вже нема з чим.
+  Одна деталь чесності: cx у цей момент — позиція машинки з ПОПЕРЕДНЬОГО
+  кадру, тобто зірка влучає туди, де машинка щойно була; на ~5 к/с це
+  непомітно і радше на користь гравцеві. }
 program cars2;
-uses t_graph,crt;
+uses t_graph,crt,nls;
 var x1,hy,hx,i,y1,x2,y2,cx,cy:byte;
     ch:byte;
+    hit:boolean;
 const duration=5000;
 
 function InKey:char;
@@ -50,6 +65,7 @@ randomize;
 y1:=1;
 y2:=1;
 cx:=40;
+hit:=false;
 x1:=random(40)+20;
 x2:=random(40)+20;
 repeat
@@ -61,6 +77,7 @@ repeat
          write(' ');
          gotoxy(x1,y1);
          write('*');
+         if (y1=24) and (x1=cx) then hit:=true;
          if y1=24 then
          begin
          gotoxy(x1,24);
@@ -77,6 +94,7 @@ repeat
          write(' ');
          gotoxy(x2,y2);
          write('*');
+         if (y2=24) and (x2=cx) then hit:=true;
          inc(y2);
          if y2>=24 then   { was `=24` — see the 2005-bug note in the header }
          begin
@@ -104,7 +122,18 @@ repeat
          textcolor(green);
          await(delay(duration));
          if y2=24 then x2:=random(40)+20;
-until ch=27;
+until (ch=27) or hit;
+if hit then
+   begin
+        textbackground(0);
+        textcolor(white);
+        gotoxy(26,12);
+        write(Loc('*** CRASH ***','*** АВАРІЯ ***'));
+        gotoxy(24,13);
+        write(Loc('any key to leave','будь-яка клавіша — вихід'));
+        textcolor(green);
+        await(WaitKey);
+   end;
 end;
 
 begin

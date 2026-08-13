@@ -19,6 +19,7 @@ var n,q1,q2,h,m,s,d,t,t0,s1,s2,r1,r2,g1,g2,h1,h2:word;
     t1,t2,p1,p2:string;
     ch:char;
     home:byte;
+    shown:boolean;
 procedure Main; async;
 begin
      NoSound;
@@ -66,13 +67,19 @@ begin
      n:=random(6*p);
      GetTime(h,m,s,d);
      t0:=h*3600+m*60+s;
+     { ⚠️ РЕМОНТ 13.08.2026 — той самий чорний екран перед матчем, що і в
+       SNITCH.pas (де пояснення повністю): перший кадр чекав і на секунду
+       часу, і на випадкове співпадіння, а оберт циклу коштує 2560 мс.
+       shown робить перший оберт безумовним. }
+     shown:=false;
      repeat
            q1:=random(6*p);
            q2:=random(6*p);
            GetTime(h,m,s,d);
            t:=h*3600+m*60+s;
-           if (((t-t0) mod (random(5)+1)) = 0) and ((t-t0)<>0) then
+           if (not shown) or ((((t-t0) mod (random(5)+1)) = 0) and ((t-t0)<>0)) then
               begin
+                   shown:=true;
                    ClrScr;
                    if (t-t0) mod 60<10 then Writeln((t-t0) div 60,':0',(t-t0) mod 60)
                                        else Writeln((t-t0) div 60,':',(t-t0) mod 60);

@@ -18,6 +18,7 @@ var n,q1,q2,h,m,s,d,t,t0,s1,s2,r1,r2:word;
     t1,t2,p1,p2:string;
     ch:char;
     home:byte;
+    shown:boolean;
 procedure Main; async;
 begin
      NoSound;
@@ -62,13 +63,25 @@ begin
      n:=random(6*p);
      GetTime(h,m,s,d);
      t0:=h*3600+m*60+s;
+     { ⚠️ РЕМОНТ 13.08.2026 — «квідіч щось зависає перед початком гри».
+       Він не зависав: після clrscr екран лишався ЧОРНИМ, доки не збіглися дві
+       умови — (t-t0)<>0, тобто минула щонайменше секунда, І випадкове
+       (t-t0) mod (random(5)+1) = 0. А кожен оберт циклу закінчується
+       await(delay(60000)), що при DelayScale=0.042667 дорівнює 2560 мс. Тобто
+       до першого кадру легко проходило 2.5–10 секунд порожнечі, іноді більше.
+       Раніше це ховалось за вводом назв команд; відколи з'явився пресет, вибір
+       став миттєвим — і пауза стала єдиним, що видно.
+       Показуємо табло ОДРАЗУ: shown робить перший оберт безумовним, далі все
+       як було. }
+     shown:=false;
      repeat
            q1:=random(6*p);
            q2:=random(6*p);
            GetTime(h,m,s,d);
            t:=h*3600+m*60+s;
-           if (((t-t0) mod (random(5)+1)) = 0) and ((t-t0)<>0) then
+           if (not shown) or ((((t-t0) mod (random(5)+1)) = 0) and ((t-t0)<>0)) then
               begin
+                   shown:=true;
                    ClrScr;
                    if (t-t0) mod 60<10 then Writeln((t-t0) div 60,':0',(t-t0) mod 60)
                                        else Writeln((t-t0) div 60,':',(t-t0) mod 60);

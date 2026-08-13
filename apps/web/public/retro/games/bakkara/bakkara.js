@@ -2376,6 +2376,7 @@ rtl.module("program",["System","JS","crt","tpfiles","nls"],function () {
     var n = 0;
     var number_of_karts = rtl.arraySetLength(null,0,6);
     var flag = false;
+    var won = false;
     var chord = 0;
     var ch = "";
     balans = balan;
@@ -2396,8 +2397,8 @@ rtl.module("program",["System","JS","crt","tpfiles","nls"],function () {
         chord = pas.System.Trunc(await pas.crt.ReadKeyA());
         if (chord === 13) flag = true;
       } while (!flag);
-      flag = $mod.win(pl,number_of_karts.slice(0));
-      if (flag) {
+      won = $mod.win(pl,number_of_karts.slice(0));
+      if (won) {
         pas.System.Writeln(pas.nls.Loc("You won","Ви виграли"));
         pas.System.Writeln(pas.nls.Loc("You won ","Ви виграли "),post,pas.nls.Loc(" hryvnias"," гривень"));
         balans = balans + post;
@@ -2408,14 +2409,15 @@ rtl.module("program",["System","JS","crt","tpfiles","nls"],function () {
       };
       pas.System.Writeln();
       pas.System.Writeln(pas.nls.Loc("Save the game?","Зберегти гру?"));
-      pas.System.Writeln(pas.nls.Loc("y-yes            n-no","y-так            n-ні"));
+      pas.System.Writeln(pas.nls.Loc("y-yes            n-no            Esc-quit","y-так            n-ні            Esc-вийти"));
+      flag = false;
       do {
         ch = String.fromCharCode(pas.System.Trunc(await pas.crt.ReadKeyA()));
         var $tmp = ch;
-        if (($tmp === "y") || ($tmp === "Y") || ($tmp === "n") || ($tmp === "N")) flag = true;
+        if (($tmp === "y") || ($tmp === "Y") || ($tmp === "n") || ($tmp === "N") || ($tmp === "\x1B")) flag = true;
       } while (!flag);
       if ((ch === "y") || (ch === "Y")) await $mod.Save();
-    } while (!flag);
+    } while (!(ch === "\x1B"));
   };
   this.load = async function () {
     var fs = pas.tpfiles.Text.$new();

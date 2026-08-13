@@ -359,7 +359,7 @@ procedure start(balan:longint); async;
 var balans,post:longint;
     pl,n:byte;
     number_of_karts:array [1..6] of byte;
-    flag:boolean;
+    flag,won:boolean;
     chord:byte;
     ch:char;
 begin
@@ -389,8 +389,19 @@ begin
                  if chord=13 then flag:=true;
            until flag; { оригінал: until false — другий вічний цикл, ремонт (див. шапку) }
 
-           flag:=win(pl,number_of_karts);
-           if flag then
+           { ⚠️ РЕМОНТ 13.08.2026 — «баккара не реагує на кнопки після оголошення
+             результатів». Гра не зависала: вона ЗАКІНЧУВАЛАСЬ, а застиглий
+             екран уже нікому було оновлювати.
+             Причина — одна змінна `flag` на два різні сенси: спершу в неї
+             клали результат win(), а потім нею ж керували виходом із циклу
+             запиту «Зберегти гру?» І з зовнішнього циклу раунду. Тож коли
+             гравець ВИГРАВАВ, flag уже був true: запит приймав БУДЬ-ЯКУ
+             клавішу замість y/n, а зовнішній `until flag` одразу завершував
+             `start` — програма закінчувалась після одного раунду, мовчки.
+             Тепер результат живе у власній `won`, `flag` відповідає лише за
+             валідний y/n, а раунди тривають, доки не натиснеш Esc. }
+           won:=win(pl,number_of_karts);
+           if won then
                        begin
                             writeln (Loc('You won','Ви виграли'));
                             writeln (Loc('You won ','Ви виграли '),post,Loc(' hryvnias',' гривень'));
@@ -404,15 +415,19 @@ begin
                        end;
            writeln;
            writeln(Loc('Save the game?','Зберегти гру?'));
-           writeln(Loc('y-yes            n-no','y-так            n-ні'));
+           writeln(Loc('y-yes            n-no            Esc-quit',
+                       'y-так            n-ні            Esc-вийти'));
+           flag:=false;
            repeat
                  ch:=chr(trunc(await(double, ReadKeyA)));
                  case ch of
-                 'y','Y','n','N':flag:=true;
+                 'y','Y','n','N',#27:flag:=true;
                  end;
            until flag;
            if (ch='y') or (ch='Y') then await(Save());
-     until flag;
+     { Раунди тривають, доки гравець не вийде сам. Баланс переноситься між
+       раундами, тобто це вперше справді СЕРІЯ партій, а не одна. }
+     until ch=#27;
 end;
 
 procedure load; async;
