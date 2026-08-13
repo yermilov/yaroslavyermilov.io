@@ -1,0 +1,79 @@
+---
+title: 'Code golf, 2018 and 2026'
+canonicalSlug: 'code-golf'
+language: 'en'
+publishedAt: 2026-08-13
+summary: 'A game for our jeeconf booth: write the shortest program that prints the JDK release timeline. In 2018 two of thirty participants found the whitespace trick. In 2026 — four models out of seven.'
+coverImage: '/blog/code-golf/jeeconf-2018.jpg'
+translations:
+  en: 'code-golf'
+  ua: 'code-golf'
+---
+
+back in 2018 I think it was, we came up with the perfect entertainment for our booth at the jeeconf conference
+
+the game was called code golf and the rules were very simple: write the smallest program (to make counting easier, we agree that spaces/newlines don't count) that prints the following text:
+
+```
+JDK 1.0 was released in January 1996
+JDK 1.1 was released in February 1997
+JDK 1.2 was released in December 1998
+...
+JDK 41 will be released in September 2033
+JDK 42 will be released in March 2034
+```
+
+there were about thirty participants and three of them later came to work with us, an astronomical 10% conversion compared to the usual conference entertainment
+
+## Try it yourself
+
+of course in 2026 nobody is going to write code by hand, so drop this prompt to your favourite agent:
+
+```
+read the code golf task described in github gist
+yermilov/a764a182d63e0fa261104064ca6ff0e3
+try to solve it. do no harm, just write and run the code
+```
+
+the full rules and all 43 lines of the target are [in that same gist](https://gist.github.com/yermilov/a764a182d63e0fa261104064ca6ff0e3). the first thing the agent will ask you is how exactly to approach this
+
+## A model is not a point, it is a range
+
+every modern model has an effort dial - how many tokens it is allowed to burn on one answer, from low to max. anthropic's docs say it plainly: tuning effort is often a better lever than switching models, and on fable 5 even low effort often beats xhigh on previous models. so a model is not a point on a scale, it is a range, and the ranges of neighbouring models overlap
+
+<figure>
+  <img src="/blog/code-golf/effort-chart.jpg" alt="Chart: program length in characters for seven models across four effort levels. haiku stays between 388 and 411, sonnet at high gives 245, fable at low - 305." width="800" height="634" loading="lazy" decoding="async" />
+</figure>
+
+in my runs sonnet at high gave 245 characters, and fable at low - 305: the smaller model at full throttle beat the bigger one idling. but a range has a ceiling - haiku across all four efforts stayed between 388 and 411 and never went lower. where effort hits the ceiling, the docs advise one thing: change the model
+
+## Two techniques
+
+in the real world of course nobody hands a model a task and expects the right solution straight away. write down the two simplest and most effective techniques
+
+first: research before you write
+
+```
+before you write any code, research the techniques that make a program
+like this shorter. only then implement
+```
+
+second: iterate and validate
+
+```
+keep shrinking it until you run out of ideas
+```
+
+a model on a weaker effort almost always beats itself on a stronger one one-shot. the median gain is 30%, that's 89 characters
+
+## The shortest one I have seen
+
+back in 2018 when we gave this task to live humans at the conference, two participants caught us on the whitespace rule and encoded the text to be printed with it. the shortest one I have seen looks like this:
+
+```ruby
+"<131 756 spaces and 1 672 tabs>".scan(/ +/){putc$&.size}
+```
+
+by now four models out of seven have figured this out. fable did it best - one-shot, without any hint, on the first try. the other three are all the gpt-5.6 family, but only if you ask them at xhigh to research the topic first or to iterate
+
+in 2018 two out of thirty found it. in 2026 - four out of seven
