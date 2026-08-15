@@ -42,7 +42,7 @@ the full rules and all 43 lines of the target are [in that same gist](https://gi
 every modern model has an effort dial - how many tokens it is allowed to burn on one answer, from low to max. anthropic's docs say it plainly: tuning effort is often a better lever than switching models, and on fable 5 even low effort often beats xhigh on previous models. so a model is not a point on a scale, it is a range, and the ranges of neighbouring models overlap
 
 <figure>
-  <img src="/blog/code-golf/effort-chart.jpg" alt="Chart: program length in characters for seven models across four effort levels. haiku stays between 388 and 411, sonnet at high gives 245, fable at low - 305." width="800" height="634" loading="lazy" decoding="async" />
+  <img src="/blog/code-golf/en/effort.png" alt="Chart: the shortest program seven models wrote across four effort levels, one-shot. haiku stays between 388 and 411, sonnet at high gives 245, fable at low - 305." width="1500" height="900" loading="lazy" decoding="async" />
 </figure>
 
 in my runs sonnet at high gave 245 characters, and fable at low - 305: the smaller model at full throttle beat the bigger one idling. but a range has a ceiling - haiku across all four efforts stayed between 388 and 411 and never went lower. where effort hits the ceiling, the docs advise one thing: change the model
@@ -58,11 +58,19 @@ before you write any code, research the techniques that make a program
 like this shorter. only then implement
 ```
 
+<figure>
+  <img src="/blog/code-golf/en/research.png" alt="Seven small charts, one per model: the plain prompt against the prompt with research, at each of the four effort levels. An arrow points down wherever research produced a shorter program." width="1500" height="810" loading="lazy" decoding="async" />
+</figure>
+
 second: iterate and validate
 
 ```
 keep shrinking it until you run out of ideas
 ```
+
+<figure>
+  <img src="/blog/code-golf/en/iterate.png" alt="The same seven charts, but the plain prompt against the prompt with iterations, at each of the four effort levels." width="1500" height="810" loading="lazy" decoding="async" />
+</figure>
 
 a model on a weaker effort almost always beats itself on a stronger one one-shot. the median gain is 30%, that's 89 characters
 
@@ -75,5 +83,9 @@ back in 2018 when we gave this task to live humans at the conference, two partic
 ```
 
 by now four models out of seven have figured this out. fable did it best - one-shot, without any hint, on the first try. the other three are all the gpt-5.6 family, but only if you ask them at xhigh to research the topic first or to iterate
+
+<figure>
+  <img src="/blog/code-golf/en/loophole.png" alt="Horizontal chart: the shortest program each model ever wrote. fable 25, terra 32, sol 32 and luna 40 sit in a band labelled «found the 2018 loophole», then opus 140, sonnet 169, haiku 277." width="1500" height="810" loading="lazy" decoding="async" />
+</figure>
 
 in 2018 two out of thirty found it. in 2026 - four out of seven

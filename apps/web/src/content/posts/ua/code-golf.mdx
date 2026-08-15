@@ -42,7 +42,7 @@ try to solve it. do no harm, just write and run the code
 кожна модель має ручку ефорту - скільки токенів їй дозволено спалити на одну відповідь. крутити ефорт часто вигідніше ніж міняти модель, а на fable навіть низький ефорт часто обганяє xhigh попередніх моделей. тобто модель це не точка на шкалі, а діапазон, і діапазони сусідніх моделей перетинаються
 
 <figure>
-  <img src="/blog/code-golf/effort-chart.jpg" alt="Графік: довжина програми в символах для семи моделей на чотирьох рівнях ефорту. haiku тримається між 388 і 411, sonnet на high дає 245, fable на low - 305." width="800" height="634" loading="lazy" decoding="async" />
+  <img src="/blog/code-golf/ua/effort.png" alt="Графік: найкоротша програма семи моделей на чотирьох рівнях ефорту, ван-шот. haiku тримається між 388 і 411, sonnet на high дає 245, fable на low - 305." width="1500" height="900" loading="lazy" decoding="async" />
 </figure>
 
 sonnet на high дав 245 символів, а fable на low - 305: менша модель на повному ходу обігнала більшу на холостому. але в діапазону є стеля - haiku на всіх чотирьох ефортах лишився між 388 і 411 і нижче не пішов. там де ефорт впирається в стелю, документація радить одне: міняти модель
@@ -58,11 +58,19 @@ before you write any code, research the techniques that make a program
 like this shorter. only then implement
 ```
 
+<figure>
+  <img src="/blog/code-golf/ua/research.png" alt="Сім маленьких графіків, по одному на модель: звичайний промпт проти промпту з рісерчем на кожному з чотирьох рівнів ефорту. Стрілка вниз там, де рісерч дав коротшу програму." width="1500" height="810" loading="lazy" decoding="async" />
+</figure>
+
 друга: ітеруй і валідуй
 
 ```
 keep shrinking it until you run out of ideas
 ```
+
+<figure>
+  <img src="/blog/code-golf/ua/iterate.png" alt="Ті самі сім графіків, але звичайний промпт проти промпту з ітераціями на кожному з чотирьох рівнів ефорту." width="1500" height="810" loading="lazy" decoding="async" />
+</figure>
 
 модель на слабшому ефорті майже завжди обганяє себе ж на сильнішому ван-шотом. медіанний виграш - 30%, це 89 символів
 
@@ -75,5 +83,9 @@ keep shrinking it until you run out of ideas
 ```
 
 зараз до цього додумалися чотири моделі з семи. найкраще fable - у ван-шоті, без жодної підказки, з першої спроби. решта три це все сімейство gpt-5.6, але тільки якщо на xhigh попросити спершу дослідити тему або ітерувати
+
+<figure>
+  <img src="/blog/code-golf/ua/loophole.png" alt="Горизонтальний графік: найкоротша програма кожної моделі. fable 25, terra 32, sol 32 і luna 40 у смузі «знайшли лазівку 2018 року», далі opus 140, sonnet 169, haiku 277." width="1500" height="810" loading="lazy" decoding="async" />
+</figure>
 
 у 2018 до цього додумалися двоє з тридцяти. у 2026 - четверо з семи
