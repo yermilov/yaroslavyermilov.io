@@ -22,10 +22,12 @@ function bucketOf(days: number): Bucket {
 
 function daysBetween(iso: string): number {
   const target = new Date(iso);
-  target.setHours(0, 0, 0, 0);
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Math.round((target.getTime() - today.getTime()) / 86_400_000);
+  return Math.round(
+    (Date.UTC(target.getUTCFullYear(), target.getUTCMonth(), target.getUTCDate()) -
+      Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())) /
+      86_400_000,
+  );
 }
 
 export default function RelativeDays({ iso, bcp47, fallback, serverDays }: Props) {

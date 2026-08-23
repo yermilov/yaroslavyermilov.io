@@ -4,6 +4,7 @@ import { LOCALES, t, localePath, type Locale } from '@lib/i18n';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import SectionTabs from '@components/SectionTabs.astro';
 import SubstackList from '@components/SubstackList.astro';
+import UpcomingAppearances from '@components/UpcomingAppearances.astro';
 import { getWritingTalkingTimeline } from '@lib/content';
 
 export async function getStaticPaths() {
@@ -26,10 +27,11 @@ const tabs = [
   <section class="page-frame index">
     <h1 class="sr-only">{strings.sections.writingTalking.title}</h1>
     <SectionTabs tabs={tabs} label={strings.sections.writingTalking.title} />
+    <UpcomingAppearances locale={locale} />
     {entries.length === 0 ? (
       <p class="empty">{strings.empty.timeline}</p>
     ) : (
-      <SubstackList locale={locale} entries={entries} />
+      <SubstackList locale={locale} entries={entries} hideUpcoming />
     )}
   </section>
 </BaseLayout>

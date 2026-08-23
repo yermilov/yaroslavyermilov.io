@@ -1,15 +1,13 @@
 ---
 export const prerender = true;
-import { LOCALES, t, localePath, languageBadge, bcp47Locale, localized, type Locale } from '@lib/i18n';
+import { LOCALES, t, localePath, localized, type Locale } from '@lib/i18n';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import Timeline from '@components/Timeline.astro';
-import RelativeDays from '@components/RelativeDays.tsx';
+import UpcomingAppearances from '@components/UpcomingAppearances.astro';
 import {
   bookSlug,
-  getAnnouncements,
   getStampedBooks,
   getStampedLinks,
-  getTalks,
   getWritingTalkingTimeline,
 } from '@lib/content';
 
@@ -27,83 +25,6 @@ function atMidnight(d: Date): Date {
   x.setHours(0, 0, 0, 0);
   return x;
 }
-
-const allTalks = await getTalks();
-const upcomingTalks = allTalks
-  .filter((talk) => atMidnight(talk.data.date) >= today)
-  .reverse(); // soonest first
-
-/* "Catch me at" shows two different things that read as one list.
- *
- *  - A future-dated `talks` entry: an appearance already written up in the archive.
- *  - An `announcements` entry: announced, not yet delivered, and deliberately NOT in
- *    the archive — see content/config.ts for why they are separate collections.
- *
- * Normalised here into one shape so the block below stays a single template rather
- * than two near-identical ones. BOTH link IN, to their own detail page: an announcement
- * now has one (/announcements/<slug>/), which is where the conference link, the ticket
- * link and the abstract live. Sending the title straight out to the conference site —
- * what this used to do — spent the click before the reader had read anything.
- *
- * De-duplicated on event+day: once a talk graduates into the archive, its
- * announcement may still be sitting there, and the same appearance must not print
- * twice. The archive entry wins — it is the richer record. */
-interface ProgrammeItem {
-  key: string;
-  date: Date;
-  /** Last day this stays listed. Differs from `date` for a multi-day conference:
-      the tile shows the START, but the item must survive until the event ENDS. */
-  until: Date;
-  event: string;
-  title: string;
-  href: string;
-  external: boolean;
-  language?: 'en' | 'ua';
-  videoUrl?: string;
-}
-/* Calendar day as YYYY-MM-DD, read in UTC.
-   `z.coerce.date()` turns date-only frontmatter into midnight UTC. Serialising that as
-   an instant and re-parsing it client-side lands on the PREVIOUS day for any viewer west
-   of UTC — which would hide a 26–27 Nov conference through the whole of the 27th in New
-   York. Comparing plain date strings sidesteps time zones entirely. */
-const utcDay = (date: Date) =>
-  `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
-const dayKey = (event: string, date: Date) => `${event.toLowerCase()}|${atMidnight(date).getTime()}`;
-
-const talkItems: ProgrammeItem[] = upcomingTalks.map((talk) => ({
-  key: talk.slug,
-  date: talk.data.date,
-  until: talk.data.date,
-  event: talk.data.event,
-  title: talk.data.title,
-  href: localePath(locale, `talks/${talk.slug}`),
-  external: false,
-  ...(talk.data.language ? { language: talk.data.language } : {}),
-  ...(talk.data.videoUrl ? { videoUrl: talk.data.videoUrl } : {}),
-}));
-
-const announcementItems: ProgrammeItem[] = (await getAnnouncements()).map((a) => ({
-  key: a.data.talkSlug ?? dayKey(a.data.event, a.data.date),
-  date: a.data.date,
-  until: a.data.endDate ?? a.data.date,
-  event: (locale === 'ua' ? a.data.eventUk : undefined) ?? a.data.event,
-  title: (locale === 'ua' ? a.data.titleUk : undefined) ?? a.data.title,
-  href: localePath(locale, `announcements/${a.slug}`),
-  external: false,
-  ...(a.data.language ? { language: a.data.language } : {}),
-}));
-
-/* Both identities go in: an announcement matches EITHER by its explicit talkSlug or,
-   when it has none, by event+day. Seeding the set with only one of them would make the
-   documented fallback unreachable and print the same appearance twice. */
-const seen = new Set([
-  ...allTalks.map((t) => t.slug),
-  ...allTalks.map((t) => dayKey(t.data.event, t.data.date)),
-]);
-const upcoming: ProgrammeItem[] = [
-  ...talkItems,
-  ...announcementItems.filter((a) => !seen.has(a.key)),
-].sort((a, b) => a.date.getTime() - b.date.getTime());
 
 /* Recent stream: render the merged writing & talking timeline plus hidden
  * upcoming-talk candidates. Static builds can go stale overnight: the
@@ -167,14 +88,6 @@ function starsOf(rating: number | null): string | null {
   return rating ? '★'.repeat(rating) + '☆'.repeat(5 - rating) : null;
 }
 
-const monthFmt = new Intl.DateTimeFormat(bcp47Locale(locale), { month: 'short' });
-const rtf = new Intl.RelativeTimeFormat(bcp47Locale(locale), { numeric: 'auto' });
-const daysFromToday = (date: Date): number =>
-  Math.round((atMidnight(date).getTime() - today.getTime()) / 86_400_000);
-
-function calMonth(date: Date): string {
-  return monthFmt.format(date).replace(/\.$/, '').toUpperCase();
-}
 ---
 
 <BaseLayout locale={locale} description={strings.site.metaDescription} alternatePath="" fullViewport hideFooter>
@@ -217,77 +130,7 @@ function calMonth(date: Date): string {
 
     {/* ── Contents: programme on top, recent | shelf below ─────────── */}
     <div class="contents">
-      <section class="programme" data-programme="upcoming" hidden={upcoming.length === 0}>
-        <p class="workbench programme-label">→ {strings.home.catchMeAt}</p>
-        <ul class="programme-list" role="list">
-          {upcoming.map((item) => {
-            return (
-              <li
-                class="programme-item"
-                data-iso={item.date.toISOString()}
-                data-until={utcDay(item.until)}
-              >
-                <div class="cal-tile" aria-hidden="true">
-                  <span class="cal-mo">{calMonth(item.date)}</span>
-                  <span class="cal-day">{item.date.getDate()}</span>
-                  <span class="cal-yr">{item.date.getFullYear()}</span>
-                </div>
-                <div class="programme-content">
-                  <p class="workbench event">
-                    ▸ <span>{item.event}</span>
-                  </p>
-                  <h2 class="programme-title">
-                    {item.href ? (
-                      <a
-                        href={item.href}
-                        {...(item.external ? { target: '_blank', rel: 'noopener' } : {})}
-                      >
-                        {item.title}
-                      </a>
-                    ) : (
-                      /* Announced with nowhere to point yet — a speaker is often named
-                         before the organiser publishes a page. Show it anyway. */
-                      item.title
-                    )}
-                  </h2>
-                  <p class="workbench meta">
-                    <RelativeDays
-                      client:idle
-                      iso={item.date.toISOString()}
-                      bcp47={bcp47Locale(locale)}
-                      fallback={rtf.format(daysFromToday(item.date), 'day')}
-                      serverDays={daysFromToday(item.date)}
-                    />
-                    {item.language && (
-                      <>
-                        <span aria-hidden="true">·</span>
-                        <span>{languageBadge(item.language)}</span>
-                      </>
-                    )}
-                    {item.videoUrl && (
-                      <>
-                        <span aria-hidden="true">·</span>
-                        <a
-                          class="youtube-glyph"
-                          href={item.videoUrl}
-                          rel="noopener"
-                          aria-label={strings.labels.video}
-                          title={strings.labels.video}
-                        >
-                          <svg viewBox="0 0 24 16" aria-hidden="true" focusable="false">
-                            <path d="M23.5 2.5c-.3-1.1-1.1-1.9-2.2-2.2C19.4 0 12 0 12 0S4.6 0 2.7.3C1.6.6.8 1.4.5 2.5.2 4.4.2 8 .2 8s0 3.6.3 5.5c.3 1.1 1.1 1.9 2.2 2.2 1.9.3 9.3.3 9.3.3s7.4 0 9.3-.3c1.1-.3 1.9-1.1 2.2-2.2.3-1.9.3-5.5.3-5.5s0-3.6-.3-5.5Z" />
-                            <path class="youtube-glyph-triangle" d="M9.7 11.4V4.6L15.8 8l-6.1 3.4Z" />
-                          </svg>
-                        </a>
-                      </>
-                    )}
-                  </p>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
+      <UpcomingAppearances locale={locale} variant="home" />
 
       <div class="lower">
         <section class="recent" hidden={recent.length === 0}>
@@ -342,36 +185,6 @@ function calMonth(date: Date): string {
 </BaseLayout>
 
 <script>
-  // "Catch me at" self-corrects on stale static builds: hide passed talks,
-  // hide the whole block when none remain.
-  {
-    const section = document.querySelector<HTMLElement>('[data-programme="upcoming"]');
-    if (section) {
-      const now = new Date();
-      const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      let visible = 0;
-      section.querySelectorAll<HTMLElement>('.programme-item').forEach((item) => {
-        // Expire on data-until (the event's LAST day), not data-iso (its first) —
-        // otherwise a 26–27 Nov conference disappears on the 27th, mid-event.
-        // data-until is a plain YYYY-MM-DD (the event's LAST day). Compared as a
-        // string against the viewer's LOCAL calendar day, so no time zone can shift it
-        // — an instant would read as the previous day anywhere west of UTC.
-        const until = item.getAttribute('data-until');
-        const iso = item.getAttribute('data-iso');
-        if (!until && !iso) return;
-        const expires =
-          until ??
-          (() => {
-            const d = new Date(iso as string);
-            return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-          })();
-        if (expires < todayKey) item.hidden = true;
-        else visible += 1;
-      });
-      if (visible === 0) section.hidden = true;
-    }
-  }
-
   // Recent self-correction + clamp. Keep static builds fresh overnight: talks
   // rendered as hidden upcoming candidates become recent once their date is in
   // the past. Then cap to the newest visible items and, on viewport-locked
@@ -391,7 +204,7 @@ function calMonth(date: Date): string {
           const iso = li.getAttribute('data-iso');
           const isUpcomingTalk = li.hasAttribute('data-upcomable');
           if (iso && isUpcomingTalk) {
-            // Plain calendar-day comparison, same as the programme block above.
+            // Plain calendar-day comparison, same as UpcomingAppearances.
             // Parsing the midnight-UTC instant here instead would land on the previous
             // local day west of UTC and reveal the row while the programme still shows
             // it — the same appearance printed in both sections all day.
@@ -646,129 +459,6 @@ function calMonth(date: Date): string {
     padding: 0 var(--space-3) var(--space-4);
   }
 
-  .programme {
-    border-top: 2px solid var(--green-primary);
-    margin-top: var(--space-4);
-    padding-top: var(--space-3);
-  }
-  .programme-label {
-    color: var(--green-primary);
-    margin: 0 0 var(--space-3);
-  }
-  .programme-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  .programme-item {
-    display: flex;
-    gap: var(--space-3);
-    padding: var(--space-3) 0;
-    border-bottom: 1px solid var(--rule);
-    align-items: flex-start;
-  }
-  .programme-item:first-child {
-    padding-top: 0;
-  }
-  .programme-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  .cal-tile {
-    flex: 0 0 auto;
-    display: flex;
-    flex-direction: row;
-    align-items: baseline;
-    gap: 0.6rem;
-    border: 1px solid var(--rule);
-    background: var(--bg-elevated);
-    padding: 0.45rem 0.7rem;
-    font-family: var(--font-mono);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    line-height: 1.05;
-    user-select: none;
-  }
-  .cal-mo {
-    font-size: 0.78rem;
-    color: var(--ink-muted);
-  }
-  .cal-day {
-    font-family: var(--font-display);
-    font-size: 1.7rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin: 0;
-    color: var(--ink);
-  }
-  .cal-yr {
-    font-size: 0.7rem;
-    color: var(--ink-muted);
-    border-left: 1px dashed var(--rule);
-    padding-left: 0.6rem;
-  }
-
-  .programme-content {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-  .event {
-    margin: 0 0 0.4rem;
-    color: var(--green-primary);
-  }
-  .event-link {
-    border-bottom: none;
-    color: var(--green-primary);
-  }
-  .event-link:hover {
-    background: transparent;
-    color: var(--orange-accent);
-  }
-  .youtube-glyph {
-    display: inline-flex;
-    align-items: center;
-    vertical-align: -0.08em;
-    color: var(--orange-accent);
-    border-bottom: 0;
-  }
-  .youtube-glyph:hover,
-  .youtube-glyph:focus-visible {
-    background: transparent;
-    color: var(--ink);
-  }
-  .youtube-glyph svg {
-    width: 1.22rem;
-    height: 0.82rem;
-    display: block;
-    fill: currentColor;
-  }
-  .youtube-glyph-triangle {
-    fill: var(--bg-paper);
-  }
-  .programme-title {
-    font-family: var(--font-display);
-    font-size: clamp(1.2rem, 2.2vw, 1.5rem);
-    font-weight: 700;
-    letter-spacing: -0.015em;
-    line-height: 1.15;
-    margin: 0 0 0.4rem;
-  }
-  .programme-title a {
-    border-bottom: none;
-    color: inherit;
-  }
-  .programme-title a:hover {
-    background: transparent;
-    color: var(--orange-accent);
-  }
-  .meta {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin: 0;
-  }
-
   /* ── Recent — the merged writing & talking stream ───────────────── */
   .recent {
     border-top: 1px solid var(--rule);
@@ -948,33 +638,6 @@ function calMonth(date: Date): string {
       padding: var(--space-3) var(--space-4);
     }
 
-    .programme {
-      flex: 0 0 auto;
-      margin-top: 0;
-      padding-top: 0;
-      border-top: none;
-      border-bottom: 1px solid var(--rule);
-      padding-bottom: var(--space-3);
-    }
-    .programme-label {
-      margin-bottom: var(--space-2);
-    }
-    /* Upcoming talks sit side by side to spend width, not height. */
-    .programme-list {
-      display: flex;
-      gap: var(--space-4);
-    }
-    .programme-item {
-      flex: 1 1 0;
-      min-width: 0;
-      padding: 0;
-      border-bottom: none;
-    }
-    .programme-item + .programme-item {
-      border-left: 1px dashed var(--rule);
-      padding-left: var(--space-4);
-    }
-
     .lower {
       flex: 1 1 auto;
       min-height: 0;
@@ -1047,13 +710,11 @@ function calMonth(date: Date): string {
   @media (prefers-reduced-motion: no-preference) {
     .cover-body,
     .elsewhere,
-    .programme,
     .recent,
     .shelf {
       animation: home-rise 480ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
     }
     .cover-body { animation-delay: 40ms; }
-    .programme { animation-delay: 120ms; }
     .recent { animation-delay: 200ms; }
     .shelf { animation-delay: 280ms; }
     .elsewhere { animation-delay: 360ms; }

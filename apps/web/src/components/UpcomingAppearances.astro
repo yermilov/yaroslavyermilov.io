@@ -1,0 +1,330 @@
+---
+/**
+ * Future appearances, shared by the homepage and the writing/talking archive.
+ * Announcements stay separate from delivered talks in content, but readers see
+ * one de-duplicated programme. Static builds self-correct after an event ends.
+ */
+import RelativeDays from '@components/RelativeDays.tsx';
+import YouTubeGlyph from '@components/YouTubeGlyph.astro';
+import { getAnnouncements, getTalks } from '@lib/content';
+import {
+  bcp47Locale,
+  languageBadge,
+  localePath,
+  localized,
+  t,
+  type Locale,
+} from '@lib/i18n';
+
+interface Props {
+  locale: Locale;
+  variant?: 'home' | 'section';
+}
+
+const { locale, variant = 'section' } = Astro.props;
+const strings = t(locale);
+
+const today = new Date();
+
+interface ProgrammeItem {
+  key: string;
+  date: Date;
+  /** The tile shows the first day; expiry follows the final conference day. */
+  until: Date;
+  event: string;
+  title: string;
+  href: string;
+  language?: 'en' | 'ua';
+  videoUrl?: string;
+}
+
+/** Date-only frontmatter is midnight UTC. Compare YYYY-MM-DD strings so a
+ * viewer west of UTC does not lose an event a day early. */
+const utcDay = (date: Date) =>
+  `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+const todayDay = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+const dayKey = (event: string, date: Date) =>
+  `${event.toLowerCase()}|${utcDay(date)}`;
+
+const allTalks = await getTalks();
+const talkItems: ProgrammeItem[] = allTalks
+  .filter((talk) => utcDay(talk.data.date) >= todayDay)
+  .map((talk) => ({
+    key: talk.slug,
+    date: talk.data.date,
+    until: talk.data.date,
+    event: localized(locale, talk.data.event, talk.data.eventUk),
+    title: localized(locale, talk.data.title, talk.data.titleUk),
+    href: localePath(locale, `talks/${talk.slug}`),
+    ...(talk.data.language ? { language: talk.data.language } : {}),
+    ...(talk.data.videoUrl ? { videoUrl: talk.data.videoUrl } : {}),
+  }));
+
+const announcementItems: ProgrammeItem[] = (await getAnnouncements()).map((announcement) => ({
+  key: announcement.data.talkSlug ?? dayKey(announcement.data.event, announcement.data.date),
+  date: announcement.data.date,
+  until: announcement.data.endDate ?? announcement.data.date,
+  event: localized(locale, announcement.data.event, announcement.data.eventUk),
+  title: localized(locale, announcement.data.title, announcement.data.titleUk),
+  href: localePath(locale, `announcements/${announcement.slug}`),
+  ...(announcement.data.language ? { language: announcement.data.language } : {}),
+}));
+
+/* Once an announcement graduates into the talk archive, the richer talk wins.
+ * Match either its explicit talk slug or the documented event+day fallback. */
+const seen = new Set([
+  ...allTalks.map((talk) => talk.slug),
+  ...allTalks.map((talk) => dayKey(talk.data.event, talk.data.date)),
+]);
+const appearances = [
+  ...talkItems,
+  ...announcementItems.filter((announcement) => !seen.has(announcement.key)),
+].sort((a, b) => a.date.getTime() - b.date.getTime());
+
+const monthFmt = new Intl.DateTimeFormat(bcp47Locale(locale), { month: 'short', timeZone: 'UTC' });
+const relativeFmt = new Intl.RelativeTimeFormat(bcp47Locale(locale), { numeric: 'auto' });
+const daysFromToday = (date: Date): number =>
+  Math.round(
+    (Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) -
+      Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())) /
+      86_400_000,
+  );
+const calMonth = (date: Date): string =>
+  monthFmt.format(date).replace(/\.$/, '').toUpperCase();
+const label = variant === 'home' ? strings.home.catchMeAt : strings.talks.nextUp;
+---
+
+<section
+  class:list={['programme', `programme-${variant}`]}
+  data-upcoming-appearances
+  hidden={appearances.length === 0}
+>
+  <p class="workbench programme-label">→ {label}</p>
+  <ul class="programme-list" role="list">
+    {appearances.map((item) => (
+      <li
+        class="programme-item"
+        data-iso={item.date.toISOString()}
+        data-until={utcDay(item.until)}
+      >
+        <div class="cal-tile" aria-hidden="true">
+          <span class="cal-mo">{calMonth(item.date)}</span>
+          <span class="cal-day">{item.date.getUTCDate()}</span>
+          <span class="cal-yr">{item.date.getUTCFullYear()}</span>
+        </div>
+        <div class="programme-content">
+          <p class="workbench event">▸ <span>{item.event}</span></p>
+          <h2 class="programme-title"><a href={item.href}>{item.title}</a></h2>
+          <p class="workbench meta">
+            <RelativeDays
+              client:idle
+              iso={item.date.toISOString()}
+              bcp47={bcp47Locale(locale)}
+              fallback={relativeFmt.format(daysFromToday(item.date), 'day')}
+              serverDays={daysFromToday(item.date)}
+            />
+            {item.language && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>{languageBadge(item.language)}</span>
+              </>
+            )}
+            {item.videoUrl && (
+              <>
+                <span aria-hidden="true">·</span>
+                <YouTubeGlyph href={item.videoUrl} label={strings.labels.video} />
+              </>
+            )}
+          </p>
+        </div>
+      </li>
+    ))}
+  </ul>
+</section>
+
+<script>
+  // A prerender can outlive an event. Expire on its final calendar day and
+  // hide the whole section when no future appearance remains.
+  document.querySelectorAll<HTMLElement>('[data-upcoming-appearances]').forEach((section) => {
+    const now = new Date();
+    const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    let visible = 0;
+    section.querySelectorAll<HTMLElement>('.programme-item').forEach((item) => {
+      const until = item.dataset.until;
+      if (!until) return;
+      if (until < todayKey) item.hidden = true;
+      else visible += 1;
+    });
+    if (visible === 0) section.hidden = true;
+  });
+</script>
+
+<style>
+  [hidden] {
+    display: none !important;
+  }
+  .programme {
+    border-top: 2px solid var(--green-primary);
+    padding-top: var(--space-3);
+  }
+  .programme-home {
+    margin-top: var(--space-4);
+  }
+  .programme-section {
+    max-width: 46rem;
+    margin: 0 0 var(--space-4);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--rule);
+  }
+  .programme-label {
+    color: var(--green-primary);
+    margin: 0 0 var(--space-3);
+  }
+  .programme-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .programme-item {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: flex-start;
+  }
+  .programme-item:first-child {
+    padding-top: 0;
+  }
+  .programme-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .cal-tile {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.6rem;
+    border: 1px solid var(--rule);
+    background: var(--bg-elevated);
+    padding: 0.45rem 0.7rem;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.05;
+    user-select: none;
+  }
+  .cal-mo {
+    font-size: 0.78rem;
+    color: var(--ink-muted);
+  }
+  .cal-day {
+    font-family: var(--font-display);
+    font-size: 1.7rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: var(--ink);
+  }
+  .cal-yr {
+    font-size: 0.7rem;
+    color: var(--ink-muted);
+    border-left: 1px dashed var(--rule);
+    padding-left: 0.6rem;
+  }
+  .programme-content {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .event {
+    margin: 0 0 0.4rem;
+    color: var(--green-primary);
+  }
+  .programme-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.2rem, 2.2vw, 1.5rem);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+    margin: 0 0 0.4rem;
+  }
+  .programme-title a {
+    border-bottom: none;
+    color: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .programme-title a:active {
+    color: var(--green-primary);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .programme-title a:hover {
+      background: transparent;
+      color: var(--orange-accent);
+    }
+  }
+  @media (hover: none) {
+    .programme-title a:hover {
+      background: transparent;
+      color: inherit;
+    }
+  }
+  .meta {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: 0;
+  }
+
+  @media (max-width: 520px) {
+    .programme-item {
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+    .programme-content {
+      width: 100%;
+    }
+  }
+
+  @media (min-width: 960px) {
+    .programme-home {
+      flex: 0 0 auto;
+      margin-top: 0;
+      padding: 0 0 var(--space-3);
+      border-top: none;
+      border-bottom: 1px solid var(--rule);
+    }
+    .programme-home .programme-label {
+      margin-bottom: var(--space-2);
+    }
+    .programme-home .programme-list {
+      display: flex;
+      gap: var(--space-4);
+    }
+    .programme-home .programme-item {
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 0;
+      border-bottom: none;
+    }
+    .programme-home .programme-item + .programme-item {
+      border-left: 1px dashed var(--rule);
+      padding-left: var(--space-4);
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .programme-home {
+      animation: programme-rise 480ms cubic-bezier(0.22, 0.61, 0.36, 1) 120ms both;
+    }
+  }
+  @keyframes programme-rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>

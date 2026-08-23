@@ -5,16 +5,20 @@
  * with an optional square thumbnail on the right) reinterpreted in the site's Field
  * Journal aesthetic: 1px rule dividers between rows, paper/ink tones, serif titles + mono
  * meta, NO drop shadows or rounded "card" chrome. Posts and talks share the row grammar;
- * each row is one focusable link to the piece. Pure CSS — no JS.
+ * the title keeps the full-row click target while recordings remain distinct links.
+ * A tiny date check lets stale prerenders graduate an upcoming talk into the archive.
  */
 import { postSlug, type TimelineEntry } from '@lib/content';
 import { languageBadge, localePath, localized, t, type Locale } from '@lib/i18n';
+import YouTubeGlyph from '@components/YouTubeGlyph.astro';
 
 interface Props {
   locale: Locale;
   entries: TimelineEntry[];
+  /** Keep future talks out of the archive feed until their date passes. */
+  hideUpcoming?: boolean;
 }
-const { locale, entries } = Astro.props;
+const { locale, entries, hideUpcoming = false } = Astro.props;
 const strings = t(locale);
 
 const dateFmt = new Intl.DateTimeFormat(locale === 'ua' ? 'uk-UA' : 'en', {
@@ -26,11 +30,11 @@ const dateFmt = new Intl.DateTimeFormat(locale === 'ua' ? 'uk-UA' : 'en', {
 // Future-dated talks are "upcoming" (matches Timeline). Computed at build; a small script
 // below re-checks on load so a stale prerender stops flagging a talk once its date passes.
 const today = new Date();
-today.setHours(0, 0, 0, 0);
+const todayDay = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+const utcDay = (date: Date) =>
+  `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
 function isUpcoming(d: Date): boolean {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x >= today;
+  return utcDay(d) >= todayDay;
 }
 
 type Row = {
@@ -42,8 +46,10 @@ type Row = {
   metaExtra: string | undefined;
   badge: string | undefined;
   thumb: string | undefined;
+  videoUrl: string | undefined;
   date: Date;
   iso: string;
+  day: string;
   upcoming: boolean;
 };
 
@@ -60,8 +66,10 @@ for (const entry of entries) {
       metaExtra: undefined,
       badge: languageBadge(p.data.language),
       thumb: p.data.coverImage,
+      videoUrl: undefined,
       date: entry.date,
       iso: entry.date.toISOString(),
+      day: utcDay(entry.date),
       upcoming: false,
     });
   } else if (entry.kind === 'talk') {
@@ -79,8 +87,10 @@ for (const entry of entries) {
       // An explicit `cover` (promo still / key art) wins; otherwise borrow the first event photo,
       // which is how every talk got its thumbnail before `cover` existed.
       thumb: tk.data.cover ?? tk.data.photos?.[0],
+      videoUrl: tk.data.videoUrl,
       date: entry.date,
       iso: entry.date.toISOString(),
+      day: utcDay(entry.date),
       upcoming: isUpcoming(entry.date),
     });
   }
@@ -90,8 +100,14 @@ for (const entry of entries) {
 <ul class="feed" role="list">
   {
     rows.map((row) => (
-      <li class="item" data-iso={row.iso} data-upcomable={row.upcoming ? '' : undefined}>
-        <a class={`row row-${row.kind}`} href={row.href}>
+      <li
+        class="item"
+        data-iso={row.iso}
+        data-day={row.day}
+        data-upcomable={row.upcoming ? '' : undefined}
+        hidden={hideUpcoming && row.upcoming}
+      >
+        <article class={`row row-${row.kind}`}>
           <span class="body">
             <span class="meta">
               <span class="kind">{row.kindLabel}</span>
@@ -101,8 +117,14 @@ for (const entry of entries) {
               {row.metaExtra ? <span class="meta-part"> · {row.metaExtra}</span> : null}
               <span class="meta-part"> · {dateFmt.format(row.date)}</span>
               {row.badge ? <span class="badge">{row.badge}</span> : null}
+              {row.videoUrl ? (
+                <>
+                  <span aria-hidden="true"> · </span>
+                  <YouTubeGlyph href={row.videoUrl} label={strings.labels.video} />
+                </>
+              ) : null}
             </span>
-            <span class="title">{row.title}</span>
+            <span class="title"><a class="title-link" href={row.href}>{row.title}</a></span>
             {row.dek ? <span class="dek">{row.dek}</span> : null}
           </span>
           {row.thumb ? (
@@ -110,7 +132,7 @@ for (const entry of entries) {
               <img src={row.thumb} alt="" loading="lazy" />
             </span>
           ) : null}
-        </a>
+        </article>
       </li>
     ))
   }
@@ -119,14 +141,14 @@ for (const entry of entries) {
 <script>
   // A static build's "today" goes stale between deploys — re-check upcoming talks on load
   // so a talk whose date has passed loses its "upcoming" tag (mirrors Timeline).
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const todayDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   document.querySelectorAll<HTMLElement>('[data-upcomable]').forEach((el) => {
-    const iso = el.dataset.iso;
-    if (!iso) return;
-    const d = new Date(iso);
-    d.setHours(0, 0, 0, 0);
-    if (d < today) el.querySelector('[data-upcoming-tag]')?.remove();
+    const day = el.dataset.day;
+    if (day && day < todayDay) {
+      el.hidden = false;
+      el.querySelector('[data-upcoming-tag]')?.remove();
+    }
   });
 </script>
 
@@ -145,21 +167,13 @@ for (const entry of entries) {
     border-bottom: 1px solid var(--rule);
   }
   .row {
+    position: relative;
     display: flex;
     align-items: flex-start;
     gap: var(--space-3);
     padding: var(--space-3) var(--space-1);
-    color: inherit;
-    text-decoration: none;
     /* Field Journal depth is tonal + rule, never shadow. */
     transition: background-color 0.16s ease;
-  }
-  .row:hover {
-    background: var(--bg-elevated);
-  }
-  .row:focus-visible {
-    outline: none;
-    box-shadow: var(--focus-ring);
   }
   .body {
     display: flex;
@@ -199,8 +213,44 @@ for (const entry of entries) {
     color: var(--ink);
     transition: color 0.16s ease;
   }
-  .row:hover .title {
-    color: var(--green-primary);
+  .title-link {
+    color: inherit;
+    border-bottom: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Preserve the feed's full-row click target while keeping the YouTube glyph
+     as its own valid link instead of nesting one anchor inside another. */
+  .title-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+  .title-link:hover {
+    background: transparent;
+  }
+  .title-link:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+  .title-link:focus-visible::after {
+    border-radius: 2px;
+    box-shadow: var(--focus-ring);
+  }
+  .row:has(.title-link:active) {
+    background: var(--orange-soft);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .row:hover {
+      background: var(--bg-elevated);
+    }
+    .row:hover .title {
+      color: var(--green-primary);
+    }
+  }
+  @media (hover: none) {
+    .title-link:hover {
+      color: inherit;
+    }
   }
   .dek {
     display: -webkit-box;
