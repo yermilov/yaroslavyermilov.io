@@ -3,10 +3,16 @@ title: "The Mythical Man-Month: Essays on Software Engineering"
 canonicalSlug: "mythical-man-month"
 author: "Frederick P. Brooks Jr."
 cover: "/books/mythical-man-month/cover.jpg"
-status: backlog
-addedAt: 2026-07-04
+rating: 4
+readAt: 2026-08-23
 language: "ua"
-summary: "Brooks's classic essays on software project management — the source of Brooks's Law: adding people to a late project makes it later. Currently reading."
-summaryUk: "Класичні есеї Брукса про управління софтверними проєктами — джерело закону Брукса: додавання людей до проєкту, який запізнюється, затримує його ще більше. Зараз читаю."
+summary: "An extraordinary historical artifact: many project-management ideas we now take for granted were first described here more than 50 years ago."
+summaryUk: "Неймовірний історичний артефакт: багато ідей з проджект-менеджменту, які зараз здаються очевидними, вперше описані тут понад 50 років тому."
 ---
-Зараз читаю.
+неймовірний історичний артефакт. дуже багато речей з області проджект менеджменту які ми зараз сприймаємо як очевидність вперше описуються саме в цій книзі більше ніж 50 років тому
+
+варто прочитати хоча б тому що деякі з цих ідей стали настільки для нас очевидними і заїждженими що їх чи то забувати чи то ігнорувати
+
+✅ деякі есе як наприклад "The Joys of the Craft" - це ще й суцільна насолода для читача
+
+🅱️ все ж таки мінімум третина книги вже неактуальна. в деяких місцях це артефакт часу (чого варта тільки документація до проєкту яка періодично роздруковується і розсилається усім членам команди *звичайною* поштою), а в деяких Брукс виявився просто неправим в свої передбаченнях
