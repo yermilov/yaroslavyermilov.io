@@ -1982,9 +1982,12 @@ rtl.module("tpfiles",["System"],function () {
     s = String(n);
     $mod.WritelnT(f,s);
   };
-  this.Eof = function () {
+  this.EofT = function (f) {
     var Result = false;
-    Result = false;
+    var lines = undefined;
+    lines = $impl.GetLines(f.name);
+    Result = true;
+    Result = (lines == null) || (f.cursor >= lines.length);
     return Result;
   };
   this.Halt = function () {
@@ -2424,45 +2427,52 @@ rtl.module("program",["System","JS","crt","tpfiles","nls"],function () {
     var str = "";
     var st = "";
     var ch = "";
-    var n = 0;
     pas.crt.ClrScr();
     pas.tpfiles.Assign(fs,"c:\\cash\\bakkara\\saves.txt");
     pas.tpfiles.Reset(fs);
     pas.System.Writeln(pas.nls.Loc("The save list follows: line 1 is the name, line 2 the balance","Зараз зʼявиться список збережень: рядок 1 — назва, рядок 2 — баланс"));
-    while (!pas.tpfiles.Eof()) {
-      for (n = 1; n <= 23; n++) {
-        pas.tpfiles.ReadlnT(fs,{get: function () {
-            return str;
-          }, set: function (v) {
-            str = v;
-          }});
-        pas.System.Writeln(str);
-      };
-      do {
-      } while (!(pas.System.Trunc(await pas.crt.ReadKeyA()) === 13));
+    while (!pas.tpfiles.EofT(fs)) {
+      pas.tpfiles.ReadlnT(fs,{get: function () {
+          return str;
+        }, set: function (v) {
+          str = v;
+        }});
+      pas.System.Writeln(str);
     };
     pas.System.Writeln(pas.nls.Loc('Enter your save name, or "Exit" to quit',"Введіть імʼя збереження, або «Вихід» щоб вийти"));
     str = await pas.crt.AskString(pas.nls.Loc("Save name","Імʼя збереження"));
-    if (str === pas.nls.Loc("Exit","Вихід")) await $mod.choice();
-    while (!pas.tpfiles.Eof()) {
-      st = await pas.crt.AskString("");
+    if (str === pas.nls.Loc("Exit","Вихід")) return;
+    pas.tpfiles.Reset(fs);
+    while (!pas.tpfiles.EofT(fs)) {
+      pas.tpfiles.ReadlnT(fs,{get: function () {
+          return st;
+        }, set: function (v) {
+          st = v;
+        }});
+      if (pas.tpfiles.EofT(fs)) break;
+      pas.tpfiles.ReadlnLong(fs,{p: $mod, get: function () {
+          return this.p.balans;
+        }, set: function (v) {
+          this.p.balans = v;
+        }});
       if (st === str) {
         pas.System.Writeln(pas.nls.Loc("Save found","Збереження знайдено"));
-        pas.tpfiles.ReadlnLong(fs,{p: $mod, get: function () {
-            return this.p.balans;
-          }, set: function (v) {
-            this.p.balans = v;
-          }});
-        pas.System.Writeln(pas.nls.Loc("Press Esc to start, or n to search again","Натисніть Esc, щоб почати, або n для повторного пошуку"));
+        pas.System.Writeln(pas.nls.Loc("Press Enter to start, n to search again, or Esc to quit","Натисніть Enter, щоб почати, n для повторного пошуку, або Esc щоб вийти"));
         do {
           ch = String.fromCharCode(pas.System.Trunc(await pas.crt.ReadKeyA()));
-          var $tmp = ch;
-          if ($tmp === "\x1B") {
-            await $mod.start($mod.balans)}
-           else if (($tmp === "n") || ($tmp === "N")) await $mod.load();
-        } while (!false);
+        } while (!((ch === "\r") || (ch === "\x1B") || (ch === "n") || (ch === "N")));
+        if ((ch === "n") || (ch === "N")) {
+          await $mod.load()}
+         else if (ch === "\r") await $mod.start($mod.balans);
+        return;
       };
     };
+    pas.System.Writeln(pas.nls.Loc("Save not found","Збереження не знайдено"));
+    pas.System.Writeln(pas.nls.Loc("Press n to search again, or Esc to return","Натисніть n для повторного пошуку, або Esc щоб повернутися"));
+    do {
+      ch = String.fromCharCode(pas.System.Trunc(await pas.crt.ReadKeyA()));
+    } while (!((ch === "\x1B") || (ch === "n") || (ch === "N")));
+    if ((ch === "n") || (ch === "N")) await $mod.load();
   };
   this.options = async function () {
     var fo = pas.tpfiles.Text.$new();

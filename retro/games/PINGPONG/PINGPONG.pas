@@ -215,10 +215,10 @@ var ball,fly,ud,prev:coordinates;
          Bar(0,0,641,481);
          SetColor(ColorMenuText);
          SetTextStyle(1,HorizDir,4);
-         OutTextXy(175,10,'Congretulations!');
+         OutTextXy(175,10,'Congratulations!');
          OutTextXy(10,60,'Your name goes to the "Best Scores"');
          OutTextXy(100,110,'Please enter your name');
-         OutTextXy(80,160,'Please not more 15 leters');
+         OutTextXy(80,160,'Please enter up to 15 letters');
          st:='';
          for n:=1 to 255 do
              begin

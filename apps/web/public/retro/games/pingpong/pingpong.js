@@ -3730,10 +3730,10 @@ rtl.module("program",["System","JS","crt","graph","mouse","dos","tpfiles","shifr
     pas.graph.Bar(0,0,641,481);
     pas.graph.SetColor($mod.ColorMenuText);
     pas.graph.SetTextStyle(1,0,4);
-    pas.graph.OutTextXY(175,10,"Congretulations!");
+    pas.graph.OutTextXY(175,10,"Congratulations!");
     pas.graph.OutTextXY(10,60,'Your name goes to the "Best Scores"');
     pas.graph.OutTextXY(100,110,"Please enter your name");
-    pas.graph.OutTextXY(80,160,"Please not more 15 leters");
+    pas.graph.OutTextXY(80,160,"Please enter up to 15 letters");
     st = "";
     for (n = 1; n <= 255; n++) ;
     pas.graph.SetFillStyle(1,$mod.ColorMenuText);

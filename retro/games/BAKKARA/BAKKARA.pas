@@ -38,7 +38,7 @@
   відкритого масиву. Далі: меню
   диспатчиться один раз (після підменю гра завершується — goto, що мав би
   повертати, був мертвим кодом і в оригіналі); Save's «m» — глухий кут;
-  load падає з Runtime error 100; «g» після сейву виходить із гри (halt
+  «g» після сейву виходить із гри (halt
   перед a:=1); сейв пише ГЛОБАЛЬНИЙ balans=500, а не виграний локальний
   (start затіняє глобальну змінну). Esc завжди повертає в NC. }
 program bakkara;
@@ -433,43 +433,58 @@ end;
 procedure load; async;
 var fs:Text;
     str,st:string;
-    flag:boolean;
     ch:char;
-    n:byte;
 begin
      ClrScr;
      Assign(fs,'c:\cash\bakkara\saves.txt');
      Reset(fs);
      writeln(Loc('The save list follows: line 1 is the name, line 2 the balance','Зараз зʼявиться список збережень: рядок 1 — назва, рядок 2 — баланс'));
-     while (not Eof) do
+     { РЕМОНТ 23.08.2026 — список збережень падав з Runtime error 100.
+       Оригінал перевіряв безаргументний Eof (тобто консоль) і читав файл
+       блоками рівно по 23 рядки. Після звичайного дворядкового збереження цикл
+       тому гарантовано читав за кінцем файла. Тут показуємо фактичні рядки і
+       перевіряємо EOF саме відкритого файла. }
+     while (not EofT(fs)) do
            begin
-                for n:=1 to 23 do
-                    begin
-                         ReadlnT(fs,str);
-                         writeln(str);
-                    end;
-                repeat until trunc(await(double, ReadKeyA))=13; { readln; — чекання Enter }
+                ReadlnT(fs,str);
+                writeln(str);
            end;
      writeln(Loc('Enter your save name, or "Exit" to quit','Введіть імʼя збереження, або «Вихід» щоб вийти'));
      str:=await(string, AskString(Loc('Save name','Імʼя збереження')));
-     if (str=Loc('Exit','Вихід')) then await(choice());
-     while (not Eof) do
+     if (str=Loc('Exit','Вихід')) then exit;
+
+     { Listing consumed the file. Rewind it, then read each name/balance pair
+       from the FILE — the original second loop accidentally read `st` from
+       the keyboard and again checked console EOF, so it could never finish a
+       real lookup even after the listing crash was removed. }
+     Reset(fs);
+     while (not EofT(fs)) do
            begin
-                st:=await(string, AskString(''));
+                ReadlnT(fs,st);
+                if EofT(fs) then break; { ignore an incomplete trailing record }
+                ReadlnLong(fs,balans);
                 if st=str then
                               begin
                                    writeln(Loc('Save found','Збереження знайдено'));
-                                   ReadlnLong(fs,balans);
-                                   writeln(Loc('Press Esc to start, or n to search again','Натисніть Esc, щоб почати, або n для повторного пошуку'));
+                                   { Esc belongs to the lab shell and closes the sandboxed game.
+                                     Starting a save on Esc therefore worked only on the standalone
+                                     bundle, not on the reported /lab/retro-games page. }
+                                   writeln(Loc('Press Enter to start, n to search again, or Esc to quit',
+                                               'Натисніть Enter, щоб почати, n для повторного пошуку, або Esc щоб вийти'));
                                    repeat
                                          ch:=chr(trunc(await(double, ReadKeyA)));
-                                         case ch of
-                                         #27:await(start(balans));
-                                         'n','N':await(load());
-                                         end;
-                                   until false;
+                                   until (ch=#13) or (ch=#27) or (ch='n') or (ch='N');
+                                   if (ch='n') or (ch='N') then await(load())
+                                   else if ch=#13 then await(start(balans));
+                                   exit;
                               end;
            end;
+     writeln(Loc('Save not found','Збереження не знайдено'));
+     writeln(Loc('Press n to search again, or Esc to return','Натисніть n для повторного пошуку, або Esc щоб повернутися'));
+     repeat
+           ch:=chr(trunc(await(double, ReadKeyA)));
+     until (ch=#27) or (ch='n') or (ch='N');
+     if (ch='n') or (ch='N') then await(load());
 end;
 
 procedure options; async;
