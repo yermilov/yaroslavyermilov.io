@@ -192,6 +192,30 @@ Frontmatter must include `islandComponent` pointing to a path under
 `apps/web/src/components/lab/`. The body MDX renders inside the
 inverted-theme `LabLayout`.
 
+## How to announce an upcoming talk
+
+```
+apps/web/src/content/announcements/<stable-slug>.md
+```
+
+An appearance that hasn't happened yet. It needs no code: `UpcomingAppearances.astro`
+(home + writing-talking) and `/{locale}/announcements/<slug>/` both pick the file up,
+and `getAnnouncements()` **hides it by date on its own** the day after `endDate ?? date`
+— nobody deletes it. The detail page outlives that (`getAllAnnouncements`), because
+slugs are forever. When the talk is delivered and a `talks/` entry lands, set
+`talkSlug` so the two records de-duplicate into one appearance.
+
+Only `title`, `event` and `date` are required; `summary`/`abstract` are optional on
+purpose (a conference often announces a speaker before the programme). `*Uk` fields
+override on `/ua/`, and `coverAlt` is REQUIRED whenever `cover` is set — the schema
+`.refine()` fails the build otherwise.
+
+⚠️ **Paragraphs in a `>-` folded scalar need TWO blank lines, not one.** The detail page
+splits `abstract` on `/\n\n+/`, but YAML folding turns a single blank line into ONE
+`\n` — so a normally-spaced abstract silently renders as one run-on paragraph, with no
+error anywhere. Copy the spacing from an existing announcement, and check the built
+page rather than the source.
+
 ## Files NEVER edit by hand
 
 - `apps/web/public/pagefind/` — Pagefind index (rebuilt every build).
