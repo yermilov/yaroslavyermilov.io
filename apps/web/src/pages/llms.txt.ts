@@ -33,7 +33,7 @@ export const GET: APIRoute = async ({ site }) => {
   const lines: string[] = [
     '# Yaroslav Yermilov',
     '',
-    '> Principal Software Engineer @ Superhuman (formerly Grammarly), based in Kyiv, Ukraine.',
+    '> Principal Engineer @ Preply, based in Kyiv, Ukraine. Previously ~9 years at Grammarly (now Superhuman).',
     '> Writes and speaks on AI-first software engineering, developer productivity, and building',
     '> with LLM agents. Bilingual — English and Ukrainian. This site is his field journal:',
     '> posts, conference talks, interactive lab experiments, and an inspiration archive.',
