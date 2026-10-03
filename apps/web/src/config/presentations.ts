@@ -14,6 +14,7 @@ export const PRESENTATION_SLUGS = [
   'how-to-make-your-team-ai-first-en',
   'revenge-of-the-skill-en',
   'dou-days-2026',
+  'claude-strangelove-ua',
   'spock-talk',
   'old-blog',
 ] as const;

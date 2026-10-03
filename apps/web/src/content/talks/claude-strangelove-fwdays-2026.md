@@ -1,23 +1,11 @@
 ---
 title: 'Claude Strangelove, or: How I Learned to Stop Worrying and Reading AI-Generated Code'
 titleUk: 'Клод Стрейнджлав, або як я перестав хвилюватися і читати код, згенерований AI'
-event: 'Fwdays Tech Summit'
+event: "Fwdays Tech Summit'26, online"
+eventUk: "Fwdays Tech Summit'26, онлайн"
+eventUrl: "https://fwdays.com/event/tech-summit-26"
 date: 2026-10-03
-location: 'Online'
-locationUk: 'Онлайн'
-language: ua
-summary: >-
-  How would you call a tech lead who reads and checks every single line of code their team
-  writes? Today every one of us has become a tech lead of a team of AI agents, and we ask
-  ourselves and each other the same question: how do you call a person who does not read the
-  code their agents generate? In this talk I will show pragmatic recipes for building AI
-  development that will bring you closer to trusting the code your AI agents write.
-summaryUk: >-
-  Як би ви назвали техліда який читає і перевіряє кожен рядок коду, що написала його команда?
-  Сьогодні кожен із нас став тімлідом команди АІ агентів і ми задаємо собі і один одному
-  аналогічне питання: як називати людину що не читає код, який генерують його агенти? У цій
-  доповіді я покажу прагматичні рецепти побудови АІ розробки, що наблизитимуть вас до довіри
-  до коду, написаного вашими АІ агентами.
+language: "ua"
 abstract: >-
   How would you call a tech lead who reads and checks every single line of code their team
   writes? For me it is not a rhetorical question: in my career I built the contribution process
@@ -53,8 +41,7 @@ abstractUk: >-
 
   У цій доповіді я покажу прагматичні рецепти побудови АІ розробки, що наблизитимуть вас до
   довіри до коду, написаного вашими АІ агентами.
-eventUrl: 'https://fwdays.com/event/tech-summit-26'
-ticketsUrl: 'https://fwdays.com/event/tech-summit-26#price-event'
-announcementUrl: 'https://fwdays.com/event/tech-summit-26/review/claude-strangelove-or-how-i-learned-to-stop-worrying-and-reading-ai-generated-code'
-talkSlug: 'claude-strangelove-fwdays-2026'
+slidesUrl: "https://yermilov.github.io/claude-strangelove-ua/"
+repoUrl: "https://github.com/yermilov/claude-strangelove-ua"
+cover: "/talks/claude-strangelove-fwdays-2026/cover.jpg"
 ---
