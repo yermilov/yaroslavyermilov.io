@@ -51,7 +51,6 @@ export interface Strings {
     personal: string;
     workshop: string;
     lab: string;
-    about: string;
   };
   subnav: { all: string; writing: string; talking: string; kit: string };
   site: {
@@ -200,7 +199,6 @@ const STRINGS: Record<Locale, Strings> = {
       personal: 'personal',
       workshop: 'workshop',
       lab: 'labs',
-      about: 'About',
     },
     subnav: { all: 'all', writing: 'writing', talking: 'talking', kit: 'about me kit' },
     site: {
@@ -356,7 +354,6 @@ const STRINGS: Record<Locale, Strings> = {
       personal: 'особисте',
       workshop: 'воркшоп',
       lab: 'лаба',
-      about: 'Про',
     },
     subnav: { all: 'усе', writing: 'тексти', talking: 'виступи', kit: 'про мене · kit' },
     site: {
