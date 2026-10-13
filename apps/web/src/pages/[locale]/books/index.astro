@@ -65,8 +65,10 @@ const coverSrc = (url: string | null) =>
                   <span class="cover">
                     {coverSrc(b.coverUrl) ? <img src={coverSrc(b.coverUrl)!} alt="" loading="lazy" /> : null}
                   </span>
-                  <span class="title">{b.title}</span>
-                  {b.authors.length > 0 && <span class="byline">{b.authors.join(', ')}</span>}
+                  <span class="now-body">
+                    <span class="title">{b.title}</span>
+                    {b.authors.length > 0 && <span class="byline">{b.authors.join(', ')}</span>}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -89,16 +91,18 @@ const coverSrc = (url: string | null) =>
                       {coverSrc(b.coverUrl) ? <img src={coverSrc(b.coverUrl)!} alt="" loading="lazy" /> : null}
                     </span>
                     <span class="row-body">
-                      <span class="title">{b.title}</span>
-                      {b.authors.length > 0 && <span class="byline">{b.authors.join(', ')}</span>}
-                      {r != null ? (
-                        <span class="stars" aria-label={`${strings.books.rating}: ${r}/5`}>
-                          <span class="stars-filled">{'★'.repeat(r)}</span>
-                          <span class="stars-empty">{'★'.repeat(5 - r)}</span>
-                        </span>
-                      ) : (
-                        <span class="unranked workbench">{strings.books.unranked}</span>
-                      )}
+                      <span class="row-head">
+                        <span class="title">{b.title}</span>
+                        {b.authors.length > 0 && <span class="byline">{b.authors.join(', ')}</span>}
+                        {r != null ? (
+                          <span class="stars" aria-label={`${strings.books.rating}: ${r}/5`}>
+                            <span class="stars-filled">{'★'.repeat(r)}</span>
+                            <span class="stars-empty">{'★'.repeat(5 - r)}</span>
+                          </span>
+                        ) : (
+                          <span class="unranked workbench">{strings.books.unranked}</span>
+                        )}
+                      </span>
                       {feedback && (
                         <details class="feedback">
                           <summary class="workbench">{strings.books.feedback}</summary>
@@ -138,16 +142,18 @@ const coverSrc = (url: string | null) =>
   .title {
     display: block;
     font-family: var(--font-display);
-    font-size: 1.08rem;
-    line-height: 1.25;
+    font-size: 1.45rem;
+    line-height: 1.22;
     color: var(--ink);
+    text-wrap: balance;
   }
   .byline {
     display: block;
-    margin-top: 0.15rem;
+    margin-top: 0.4rem;
     font-family: var(--font-mono);
-    font-size: 0.72rem;
+    font-size: 0.85rem;
     letter-spacing: 0.02em;
+    line-height: 1.45;
     color: var(--ink-muted);
   }
 
@@ -168,22 +174,32 @@ const coverSrc = (url: string | null) =>
     object-fit: cover;
   }
 
-  /* ── Reading now: a row of covers, title beneath. ──────────────── */
+  /* ── Reading now: one card per book — cover left, title and author
+   * right — on the lifted paper tone, framed by a hairline. ──────── */
   .now {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr));
     gap: var(--space-3);
   }
   .now-card {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 9.5rem 1fr;
+    gap: var(--space-3);
+    align-items: center;
+    padding: var(--space-2);
+    background: var(--bg-elevated);
+    border: 1px solid var(--rule);
     min-width: 0;
   }
-  .now-card .cover {
-    margin-bottom: var(--space-1);
+  .now-body {
+    min-width: 0;
+    padding-right: var(--space-1);
+  }
+  .now-card .title {
+    font-size: 1.6rem;
   }
 
   /* ── The ranking: a numbered ledger, one row per book. ─────────── */
@@ -195,26 +211,32 @@ const coverSrc = (url: string | null) =>
   }
   .row {
     display: grid;
-    grid-template-columns: 2.75rem 8rem 1fr;
-    gap: var(--space-3);
+    grid-template-columns: 4rem 8rem 1fr;
+    gap: var(--space-4);
     align-items: start;
-    padding: var(--space-3) 0;
+    padding: var(--space-4) 0;
     border-bottom: 1px solid var(--rule);
   }
+  /* The rank is set in the reading serif, large and green: the number is
+   * the point of the list. */
   .rank {
-    font-size: 1.15rem;
-    line-height: 1.2;
+    font-family: var(--font-display);
+    font-size: 2.6rem;
+    line-height: 0.9;
     color: var(--green-primary);
-    font-variant-numeric: tabular-nums;
+    font-variant-numeric: lining-nums tabular-nums;
+    letter-spacing: -0.02em;
   }
   .row-body {
     min-width: 0;
+    max-width: 62ch;
   }
   .stars {
     display: block;
-    margin-top: 0.3rem;
-    font-size: 0.8rem;
-    letter-spacing: 0.05em;
+    margin-top: 0.7rem;
+    font-size: 1.35rem;
+    line-height: 1;
+    letter-spacing: 0.12em;
   }
   .stars-filled {
     color: var(--orange-accent);
@@ -224,30 +246,45 @@ const coverSrc = (url: string | null) =>
   }
   .unranked {
     display: block;
-    margin-top: 0.3rem;
-    font-size: 0.68rem;
+    margin-top: 0.7rem;
+    font-size: 0.8rem;
     color: var(--ink-muted);
   }
 
-  /* My feedback: folded by default, one click away. */
+  /* My feedback: folded by default, one click away. A mono +/− instead of
+   * the browser's triangle, so the toggle reads as part of the journal. */
   .feedback {
-    margin-top: var(--space-2);
-    max-width: 62ch;
+    margin-top: var(--space-3);
   }
   .feedback > summary {
     cursor: pointer;
     width: fit-content;
-    font-size: 0.72rem;
+    list-style: none;
+    font-size: 0.85rem;
     color: var(--ink-muted);
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 0.1rem;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .feedback > summary::-webkit-details-marker {
+    display: none;
+  }
+  .feedback > summary::before {
+    content: '+ ';
+    color: var(--orange-accent);
+  }
+  .feedback[open] > summary::before {
+    content: '− ';
   }
   .feedback > summary:hover,
   .feedback[open] > summary {
     color: var(--ink);
+    border-color: var(--orange-accent);
   }
   .feedback-body {
-    margin-top: var(--space-1);
-    font-size: 0.95rem;
-    line-height: 1.55;
+    margin-top: var(--space-2);
+    font-size: 1.075rem;
+    line-height: 1.65;
     color: var(--ink);
   }
   .feedback-body :global(p) {
@@ -268,17 +305,49 @@ const coverSrc = (url: string | null) =>
     padding-left: 1.25em;
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    .feedback > summary {
+      transition: none;
+    }
+  }
+
   @media (max-width: 34rem) {
-    .row {
-      grid-template-columns: 1.75rem 5.5rem 1fr;
+    .title {
+      font-size: 1.2rem;
+    }
+    .byline {
+      font-size: 0.78rem;
+    }
+    .now-card {
+      grid-template-columns: 6.5rem 1fr;
       gap: var(--space-2);
+    }
+    .now-card .title {
+      font-size: 1.25rem;
+    }
+    .row {
+      grid-template-columns: 2.25rem 5.5rem 1fr;
+      gap: var(--space-2);
+      padding: var(--space-3) 0;
     }
     .rank {
-      font-size: 0.95rem;
+      font-size: 1.6rem;
     }
-    .now {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: var(--space-2);
+    .stars {
+      font-size: 1.1rem;
+      letter-spacing: 0.08em;
+    }
+    /* The feedback column beside a phone-sized cover is a few words wide;
+     * unfold it under the whole row instead. */
+    .row-body {
+      display: contents;
+    }
+    .feedback {
+      grid-column: 2 / -1;
+      margin-top: 0;
+    }
+    .feedback-body {
+      font-size: 1rem;
     }
   }
 </style>
