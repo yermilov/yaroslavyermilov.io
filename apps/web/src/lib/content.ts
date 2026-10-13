@@ -8,9 +8,6 @@ type LabEntry = CollectionEntry<'labs'>;
 type BookEntry = CollectionEntry<'books'>;
 type LinkEntry = CollectionEntry<'links'>;
 
-/** Placeholder date for undated (backlog) entries; never displayed. */
-const EPOCH = new Date(0);
-
 const isProd = import.meta.env.PROD;
 function isPublished<T extends { data: { draft?: boolean } }>(entry: T): boolean {
   return !(isProd && entry.data.draft);
@@ -151,9 +148,8 @@ export async function getLabByCanonicalSlug(
   );
 }
 
-/** readAt / addedAt are optional; treat missing as epoch for ordering. */
+/** readAt is optional; treat missing as epoch for ordering. */
 const readAtTime = (e: { data: { readAt?: Date } }): number => e.data.readAt?.getTime() ?? 0;
-const addedAtTime = (e: { data: { addedAt?: Date } }): number => e.data.addedAt?.getTime() ?? 0;
 
 /**
  * All published books, stamped (read) ones newest-first, backlog after.
@@ -192,22 +188,6 @@ export async function getStampedBooks(locale: Locale): Promise<BookEntry[]> {
     .sort((a, b) => readAtTime(b) - readAtTime(a));
 }
 
-async function getBacklogBooksRaw(locale: Locale): Promise<BookEntry[]> {
-  const all = await getCollection('books', isPublished);
-  return dedupeBooksByLocale(all, locale).filter((b) => b.data.status === 'backlog');
-}
-
-async function getLinksByStatus(status: 'stamped' | 'backlog'): Promise<LinkEntry[]> {
-  const all = await getCollection('links', isPublished);
-  return all.filter((l) => (l.data.status ?? 'stamped') === status);
-}
-
-/** Links I've read/tried — newest first. */
-export async function getStampedLinks(): Promise<LinkEntry[]> {
-  const links = await getLinksByStatus('stamped');
-  return links.sort((a, b) => readAtTime(b) - readAtTime(a));
-}
-
 /** Resolve a book's per-locale entry by canonicalSlug, falling back to the
  *  other language when no translation exists (so the page never 404s). */
 export async function getBookByCanonicalSlug(
@@ -228,8 +208,8 @@ export async function getAllBookCanonicalSlugs(): Promise<string[]> {
 
 /* ── Unified timelines ─────────────────────────────────────────────
  * The "writing & talking" section interleaves posts and talks into a
- * single reverse-chronological stream; "inspiration" wraps books the
- * same way so podcasts/links can join later without reshaping pages.
+ * single reverse-chronological stream. (Books moved to /books/, which
+ * renders the live shelf from juggernaut rather than this collection.)
  */
 
 export type TimelineEntry =
@@ -258,44 +238,6 @@ export async function getWritingTalkingTimeline(locale: Locale): Promise<Timelin
     ...talks.map((talk): TimelineEntry => ({ kind: 'talk', date: talk.data.date, talk })),
   ];
   return entries.sort(byDateDesc);
-}
-
-/** The "stamped" archive: books + links read/tried, dated, newest first. */
-export async function getInspirationTimeline(locale: Locale): Promise<TimelineEntry[]> {
-  const [books, links] = await Promise.all([getStampedBooks(locale), getLinksByStatus('stamped')]);
-  const entries: TimelineEntry[] = [
-    ...books.map((book): TimelineEntry => ({
-      kind: 'book',
-      date: book.data.readAt ?? EPOCH,
-      book,
-      approx: book.data.readApprox,
-    })),
-    ...links.map((link): TimelineEntry => ({
-      kind: 'link',
-      date: link.data.readAt ?? EPOCH,
-      link,
-      approx: link.data.readApprox,
-    })),
-  ];
-  return entries.sort(byDateDesc);
-}
-
-/**
- * The backlog: planned books + links, undated. Rendered in addedAt order
- * (most recently added first), with title as the tiebreaker.
- */
-export async function getBacklogTimeline(locale: Locale): Promise<TimelineEntry[]> {
-  const [books, links] = await Promise.all([getBacklogBooksRaw(locale), getLinksByStatus('backlog')]);
-  const items = [
-    ...books.map((book) => ({ entry: { kind: 'book', date: EPOCH, book } as TimelineEntry, item: book })),
-    ...links.map((link) => ({ entry: { kind: 'link', date: EPOCH, link } as TimelineEntry, item: link })),
-  ];
-  items.sort(
-    (a, b) =>
-      addedAtTime(b.item) - addedAtTime(a.item) ||
-      a.item.data.title.localeCompare(b.item.data.title),
-  );
-  return items.map((i) => i.entry);
 }
 
 /**

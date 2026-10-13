@@ -34,10 +34,10 @@ async function buildCards(): Promise<OgCard[]> {
       title: strings.sections.writingTalking.title,
     });
     cards.push({
-      id: `inspiration-${locale}`,
+      id: `books-${locale}`,
       language: locale,
       eyebrow: 'VOL. 02',
-      title: strings.sections.inspiration.title,
+      title: strings.sections.books.title,
     });
     cards.push({
       id: `personal-${locale}`,

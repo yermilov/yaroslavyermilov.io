@@ -1,0 +1,328 @@
+---
+/**
+ * /books/ — the live shelf (task 5abd736c). Rendered on every request (with a
+ * 10-minute server cache in @lib/shelf) from juggernaut's /books miniapp:
+ *   1. what is being read right now, with progress;
+ *   2. every finished book in Yarik's own ranking — the same order the
+ *      miniapp shows (stars, then the duels that break ties) — with his
+ *      summary in the page's language.
+ * A ledger, not a masonry wall: a ranking has to read in order, and CSS
+ * columns fill top-to-bottom, which scrambles it.
+ */
+export const prerender = false;
+import { LOCALES, bcp47Locale, localePath, t, type Locale } from '@lib/i18n';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import { getBooks } from '@lib/content';
+import { authorSurnames, getShelf, shelfTitleKey, type ShelfFinishedBook } from '@lib/shelf';
+
+const locale = Astro.params.locale as Locale;
+if (!LOCALES.includes(locale)) {
+  return Astro.rewrite('/404/');
+}
+const strings = t(locale);
+const shelf = await getShelf();
+// Short shared cache: the server already holds a 10-minute copy, this only
+// spares it a re-render on a burst of visits. The "unavailable" page is never
+// cached — it would outlive the server's own one-minute retry.
+Astro.response.headers.set('cache-control', shelf ? 'public, max-age=120' : 'no-store');
+
+// The frozen /books/<slug>/ pages (the `books` collection) carry the longer
+// notes. juggernaut's books have no slugs, so a shelf row links to its page
+// only when exactly ONE collection book shares both its title (before any
+// subtitle) and an author surname — never on a guess.
+const byTitle = new Map<string, Map<string, Set<string>>>();
+for (const b of await getBooks()) {
+  const key = shelfTitleKey(b.data.title);
+  const slugs = byTitle.get(key) ?? new Map<string, Set<string>>();
+  slugs.set(b.data.canonicalSlug, authorSurnames(b.data.author.split(',')));
+  byTitle.set(key, slugs);
+}
+const detailHref = (book: ShelfFinishedBook) => {
+  const surnames = authorSurnames(book.authors);
+  const matches = [...(byTitle.get(shelfTitleKey(book.title)) ?? new Map()).entries()].filter(
+    ([, theirs]) => [...surnames].some((s) => theirs.has(s)),
+  );
+  return matches.length === 1 ? localePath(locale, `books/${matches[0]![0]}`) : null;
+};
+
+const dateFmt = new Intl.DateTimeFormat(bcp47Locale(locale), {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+const fmtDate = (iso: string | null) => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? null : dateFmt.format(d);
+};
+const summaryOf = (b: ShelfFinishedBook) =>
+  locale === 'ua' ? (b.summary.uk ?? b.summary.en) : (b.summary.en ?? b.summary.uk);
+const rating = (r: number | null) => (r != null && r >= 1 && r <= 5 ? r : null);
+// A few covers come from juggernaut as inline data: URIs, which land in this
+// HTML byte for byte (`loading="lazy"` cannot defer them). Keep a small one,
+// drop a heavy one rather than let the page grow with the shelf.
+const MAX_INLINE_COVER_CHARS = 48 * 1024;
+const coverSrc = (url: string | null) =>
+  url && url.startsWith('data:') && url.length > MAX_INLINE_COVER_CHARS ? null : url;
+---
+
+<BaseLayout
+  locale={locale}
+  title={strings.sections.books.title}
+  description={strings.sections.books.lede}
+  alternatePath="books"
+  ogImage={`/og/books-${locale}.png`}
+>
+  <section class="page-frame index">
+    <h1 class="sr-only">{strings.sections.books.title}</h1>
+
+    {!shelf ? (
+      <p class="empty">{strings.books.unavailable}</p>
+    ) : shelf.reading.length === 0 && shelf.finished.length === 0 ? (
+      <p class="empty">{strings.empty.books}</p>
+    ) : (
+      <>
+        {shelf.reading.length > 0 && (
+          <section class="sub" aria-labelledby="reading-now">
+            <h2 id="reading-now" class="workbench sub-label">/ {strings.books.readingNow}</h2>
+            <ul class="now" role="list">
+              {shelf.reading.map((b) => {
+                const started = fmtDate(b.startedAt);
+                const pct = b.progressPercent == null ? null : Math.round(b.progressPercent);
+                return (
+                  <li class="now-card">
+                    {coverSrc(b.coverUrl) ? (
+                      <span class="now-cover">
+                        <img src={coverSrc(b.coverUrl)} alt="" loading="lazy" />
+                      </span>
+                    ) : null}
+                    <span class="now-meta">
+                      <span class="title">{b.title}</span>
+                      {b.authors.length > 0 && <span class="byline">{b.authors.join(', ')}</span>}
+                      {pct != null && (
+                        <span class="progress" role="img" aria-label={`${pct}% ${strings.books.progress}`}>
+                          <span class="progress-fill" style={`width: ${pct}%`} />
+                        </span>
+                      )}
+                      <span class="now-stamp workbench">
+                        {[pct != null ? `${pct}% ${strings.books.progress}` : null, started ? `${strings.books.started} ${started}` : null]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
+        {shelf.finished.length > 0 && (
+          <section class="sub" aria-labelledby="ranking">
+            <h2 id="ranking" class="workbench sub-label">/ {strings.books.ranking}</h2>
+            <ol class="ledger" role="list">
+              {shelf.finished.map((b) => {
+                const r = rating(b.rating);
+                const summary = summaryOf(b);
+                const href = detailHref(b);
+                return (
+                  <li class="row">
+                    <span class="rank workbench" aria-hidden={b.rank == null ? 'true' : undefined}>
+                      {b.rank != null ? String(b.rank).padStart(2, '0') : '—'}
+                    </span>
+                    <span class="thumb">
+                      {coverSrc(b.coverUrl) ? <img src={coverSrc(b.coverUrl)!} alt="" loading="lazy" /> : null}
+                    </span>
+                    <span class="row-body">
+                      {href ? (
+                        <a class="title title-link" href={href}>{b.title}</a>
+                      ) : (
+                        <span class="title">{b.title}</span>
+                      )}
+                      {b.authors.length > 0 && <span class="byline">{b.authors.join(', ')}</span>}
+                      {r != null ? (
+                        <span class="stars" aria-label={`${strings.books.rating}: ${r}/5`}>
+                          <span class="stars-filled">{'★'.repeat(r)}</span>
+                          <span class="stars-empty">{'★'.repeat(5 - r)}</span>
+                        </span>
+                      ) : (
+                        <span class="unranked workbench">{strings.books.unranked}</span>
+                      )}
+                      {summary && <p class="summary">{summary}</p>}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        )}
+      </>
+    )}
+  </section>
+</BaseLayout>
+
+<style>
+  .index {
+    padding: var(--space-4) var(--space-3) var(--space-6);
+  }
+  .sub + .sub {
+    margin-top: var(--space-6);
+  }
+  .sub-label {
+    color: var(--ink-muted);
+    margin: 0 0 var(--space-3);
+    font-weight: inherit;
+    font-size: inherit;
+  }
+  .empty {
+    color: var(--ink-muted);
+    font-style: italic;
+  }
+
+  .title {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.08rem;
+    line-height: 1.25;
+    color: var(--ink);
+  }
+  .title-link {
+    text-decoration: underline;
+    text-decoration-color: var(--rule);
+    text-underline-offset: 0.2em;
+    transition: text-decoration-color 0.18s ease;
+  }
+  .title-link:hover {
+    text-decoration-color: var(--green-primary);
+  }
+  .title-link:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+  .byline {
+    display: block;
+    margin-top: 0.15rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    color: var(--ink-muted);
+  }
+
+  /* ── Reading now: paper cards, cover beside the progress. ──────── */
+  .now {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+    gap: var(--space-2);
+  }
+  .now-card {
+    display: flex;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    background: var(--bg-elevated);
+  }
+  .now-cover {
+    flex: 0 0 4.5rem;
+  }
+  .now-cover img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--rule);
+  }
+  .now-meta {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .progress {
+    display: block;
+    margin-top: var(--space-2);
+    height: 4px;
+    background: var(--rule);
+  }
+  .progress-fill {
+    display: block;
+    height: 100%;
+    background: var(--green-primary);
+  }
+  .now-stamp {
+    margin-top: 0.4rem;
+    color: var(--ink-muted);
+    font-size: 0.7rem;
+  }
+
+  /* ── The ranking: a numbered ledger, one row per book. ─────────── */
+  .ledger {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--rule);
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 2.75rem 3.5rem 1fr;
+    gap: var(--space-2);
+    align-items: start;
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .rank {
+    font-size: 1.15rem;
+    line-height: 1.2;
+    color: var(--green-primary);
+    font-variant-numeric: tabular-nums;
+  }
+  .thumb img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--rule);
+  }
+  .row-body {
+    min-width: 0;
+  }
+  .stars {
+    display: block;
+    margin-top: 0.3rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+  }
+  .stars-filled {
+    color: var(--orange-accent);
+  }
+  .stars-empty {
+    color: var(--rule);
+  }
+  .unranked {
+    display: block;
+    margin-top: 0.3rem;
+    font-size: 0.68rem;
+    color: var(--ink-muted);
+  }
+  .summary {
+    margin: 0.5rem 0 0;
+    max-width: 62ch;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+
+  @media (max-width: 34rem) {
+    .row {
+      grid-template-columns: 2rem 2.75rem 1fr;
+      gap: var(--space-1);
+    }
+    .rank {
+      font-size: 0.95rem;
+    }
+    .now {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

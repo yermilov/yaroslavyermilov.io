@@ -25,7 +25,7 @@ poking at a lab, or browsing the timeline of talks — not skimming a funnel.
 
 A long-lived personal home on the web — blog, lab, talks, books, photos,
 and a workshop prospectus — organized as a **Field Journal** of shared-timeline
-"volumes" (writing-talking, inspiration, personal, workshop). It exists so
+"volumes" (writing-talking, books, personal, workshop). It exists so
 Yaroslav's thinking and making have a permanent, self-owned address that reads as
 carefully as it's built. Success = a visitor trusts the person behind it, reads
 more than they planned to, and the archive still feels right five years from now.

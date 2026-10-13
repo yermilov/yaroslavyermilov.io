@@ -7,7 +7,6 @@ import UpcomingAppearances from '@components/UpcomingAppearances.astro';
 import {
   bookSlug,
   getStampedBooks,
-  getStampedLinks,
   getWritingTalkingTimeline,
 } from '@lib/content';
 
@@ -38,8 +37,9 @@ const recent = [
   ...timeline.filter((e) => !(e.kind === 'talk' && atMidnight(e.date) >= today)).slice(0, RECENT_COUNT),
 ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
-/* From the shelf: promote any inspiration entry worth recommending — books
- * and links alike, gated at 4–5 stars. Newest server-rendered; the whole
+/* From the shelf: promote a book worth recommending, gated at 4–5 stars.
+ * Books only — its "all books" link leads to /books/, which shows nothing
+ * else (the `links` entries left the site with /inspiration/). Newest server-rendered; the whole
  * pool serialized so a tiny script can deal a random one per visit. */
 interface ShelfItem {
   title: string;
@@ -51,7 +51,7 @@ interface ShelfItem {
   external: boolean;
   date: number;
 }
-const [stampedBooks, stampedLinks] = await Promise.all([getStampedBooks(locale), getStampedLinks()]);
+const stampedBooks = await getStampedBooks(locale);
 const shelfPool: ShelfItem[] = [
   ...stampedBooks.map((book): ShelfItem => ({
     title: book.data.title,
@@ -65,18 +65,6 @@ const shelfPool: ShelfItem[] = [
     href: localePath(locale, `books/${bookSlug(book)}`),
     external: false,
     date: book.data.readAt?.getTime() ?? 0,
-  })),
-  ...stampedLinks.map((link): ShelfItem => ({
-    title: link.data.title,
-    byline: link.data.source,
-    cover: link.data.thumbnail ?? null,
-    rating: link.data.rating ?? null,
-    // Same as books above: localize the shelf blurb so /ua/ doesn't print the
-    // English summary of a promoted link next to an otherwise Ukrainian page.
-    summary: localized(locale, link.data.summary, link.data.summaryUk) ?? '',
-    href: link.data.url,
-    external: true,
-    date: link.data.readAt?.getTime() ?? 0,
   })),
 ];
 const shelf = shelfPool
@@ -149,8 +137,8 @@ function starsOf(rating: number | null): string | null {
           <section class="shelf">
             <div class="recent-head">
               <p class="workbench recent-label">/ {strings.home.fromTheShelf}</p>
-              <a class="workbench recent-all" href={localePath(locale, 'inspiration')}>
-                {strings.home.moreInspiration}
+              <a class="workbench recent-all" href={localePath(locale, 'books')}>
+                {strings.home.moreBooks}
               </a>
             </div>
             <div class="shelf-card" data-shelf-card>
@@ -241,8 +229,7 @@ function starsOf(rating: number | null): string | null {
     }
   }
 
-  // From the shelf: deal a random recommended inspiration entry (book or
-  // link) per visit. The newest is server-rendered as the no-JS fallback.
+  // From the shelf: deal a random recommended book per visit. The newest is server-rendered as the no-JS fallback.
   {
     const data = document.querySelector<HTMLScriptElement>('[data-shelf-data]');
     const card = document.querySelector<HTMLElement>('[data-shelf-card]');

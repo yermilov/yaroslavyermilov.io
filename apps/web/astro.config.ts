@@ -35,7 +35,8 @@ const sectionRedirects = Object.fromEntries(
   ['en', 'ua'].flatMap((l) => [
     [`/${l}/blog`, `/${l}/writing-talking/writing/`],
     [`/${l}/talks`, `/${l}/writing-talking/talking/`],
-    [`/${l}/books`, `/${l}/inspiration/`],
+    // /inspiration/ became /books/ (task 5abd736c) — the live shelf read from juggernaut.
+    [`/${l}/inspiration`, `/${l}/books/`],
     [`/${l}/gallery`, `/${l}/personal/`],
     [`/${l}/conference-kit`, `/${l}/writing-talking/kit/`],
     // check-network moved from the lab to the blog (2026-07-19) — keep the old lab URL alive.
@@ -68,6 +69,9 @@ export default defineConfig({
     mdx(),
     react(),
     sitemap({
+      // /books/ renders on request (live shelf from juggernaut), so the
+      // integration cannot discover it from the build output.
+      customPages: ['en', 'ua'].map((l) => `https://yaroslavyermilov.io/${l}/books/`),
       filter: (page) => !unlistedLabUrls.some((url) => page.endsWith(url)),
       i18n: {
         defaultLocale: 'en',

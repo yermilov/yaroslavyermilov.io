@@ -47,7 +47,7 @@ export interface Strings {
   nav: {
     home: string;
     writingTalking: string;
-    inspiration: string;
+    books: string;
     personal: string;
     workshop: string;
     lab: string;
@@ -64,13 +64,13 @@ export interface Strings {
     timeline: string;
     writing: string;
     talking: string;
-    inspiration: string;
+    books: string;
     personal: string;
     lab: string;
   };
   sections: {
     writingTalking: { title: string; lede: string };
-    inspiration: { title: string; lede: string };
+    books: { title: string; lede: string };
     personal: { title: string; lede: string };
   };
   stats: {
@@ -104,14 +104,20 @@ export interface Strings {
     read: string;
     notes: string;
     backlog: string;
-    stamped: string;
+    /** /books/ — the live shelf read from juggernaut. */
+    readingNow: string;
+    ranking: string;
+    started: string;
+    progress: string;
+    unranked: string;
+    unavailable: string;
   };
   home: {
     catchMeAt: string;
     recent: string;
     everything: string;
     fromTheShelf: string;
-    moreInspiration: string;
+    moreBooks: string;
     role: string;
     location: string;
     followLinkedIn: string;
@@ -195,7 +201,7 @@ const STRINGS: Record<Locale, Strings> = {
     nav: {
       home: 'Home',
       writingTalking: 'writing & talking',
-      inspiration: 'inspiration',
+      books: 'books',
       personal: 'personal',
       workshop: 'workshop',
       lab: 'labs',
@@ -213,7 +219,7 @@ const STRINGS: Record<Locale, Strings> = {
       timeline: 'Nothing here yet.',
       writing: 'No posts yet.',
       talking: 'No talks yet.',
-      inspiration: 'Nothing on the shelf yet.',
+      books: 'Nothing on the shelf yet.',
       personal: 'No photos yet.',
       lab: 'No lab entries yet.',
     },
@@ -222,9 +228,9 @@ const STRINGS: Record<Locale, Strings> = {
         title: 'writing & talking',
         lede: 'Everything I have written and said out loud, on one timeline.',
       },
-      inspiration: {
-        title: 'inspiration',
-        lede: 'Books that shaped how I think. Podcasts, links and people — coming later.',
+      books: {
+        title: 'books',
+        lede: 'What I am reading now, and every book I have finished — ranked, with my take on each.',
       },
       personal: {
         title: 'personal',
@@ -259,18 +265,23 @@ const STRINGS: Record<Locale, Strings> = {
     books: {
       by: 'by',
       rating: 'Rating',
-      backToBooks: '← Back to inspiration',
+      backToBooks: '← Back to books',
       read: 'Read',
       notes: 'From my notes',
       backlog: 'Backlog',
-      stamped: 'Stamped',
+      readingNow: 'Reading now',
+      ranking: 'My ranking',
+      started: 'started',
+      progress: 'read',
+      unranked: 'not ranked yet',
+      unavailable: 'The shelf is not reachable right now — try again in a minute.',
     },
     home: {
       catchMeAt: 'Catch me at',
       recent: 'Recently',
       everything: 'everything →',
       fromTheShelf: 'From the shelf',
-      moreInspiration: 'more inspiration →',
+      moreBooks: 'all books →',
       role: 'Principal Engineer @ Preply',
       location: 'Kyiv, Ukraine',
       followLinkedIn: 'Follow me on LinkedIn',
@@ -350,7 +361,7 @@ const STRINGS: Record<Locale, Strings> = {
     nav: {
       home: 'Головна',
       writingTalking: 'пишу й виступаю',
-      inspiration: 'натхнення',
+      books: 'книги',
       personal: 'особисте',
       workshop: 'воркшоп',
       lab: 'лаба',
@@ -368,7 +379,7 @@ const STRINGS: Record<Locale, Strings> = {
       timeline: 'Поки нічого нема.',
       writing: 'Поки нема дописів.',
       talking: 'Поки нема доповідей.',
-      inspiration: 'На полиці поки порожньо.',
+      books: 'На полиці поки порожньо.',
       personal: 'Поки нема фото.',
       lab: 'Поки нема записів у лабі.',
     },
@@ -377,9 +388,9 @@ const STRINGS: Record<Locale, Strings> = {
         title: 'пишу й виступаю',
         lede: 'Усе, що я написав і сказав уголос, — на одній стрічці часу.',
       },
-      inspiration: {
-        title: 'натхнення',
-        lede: 'Книги, які вплинули на те, як я думаю. Подкасти, посилання й люди — згодом.',
+      books: {
+        title: 'книги',
+        lede: 'Що я читаю зараз і всі прочитані книжки — у моєму рейтингу, з коротким враженням про кожну.',
       },
       personal: {
         title: 'особисте',
@@ -412,18 +423,23 @@ const STRINGS: Record<Locale, Strings> = {
     books: {
       by: 'автор —',
       rating: 'Оцінка',
-      backToBooks: '← До натхнення',
+      backToBooks: '← До книг',
       read: 'Прочитано',
       notes: 'Мої нотатки',
       backlog: 'Черга',
-      stamped: 'Опрацьовано',
+      readingNow: 'Зараз читаю',
+      ranking: 'Мій рейтинг',
+      started: 'почав',
+      progress: 'прочитано',
+      unranked: 'ще без місця',
+      unavailable: 'Полиця зараз недоступна — спробуйте за хвилину.',
     },
     home: {
       catchMeAt: 'Побачимося',
       recent: 'Нещодавно',
       everything: 'усе →',
       fromTheShelf: 'З полиці',
-      moreInspiration: 'більше натхнення →',
+      moreBooks: 'усі книги →',
       role: 'Principal Engineer @ Preply',
       location: 'Київ, Україна',
       followLinkedIn: 'Підписатися в LinkedIn',
