@@ -151,17 +151,6 @@ export async function getLabByCanonicalSlug(
 /** readAt is optional; treat missing as epoch for ordering. */
 const readAtTime = (e: { data: { readAt?: Date } }): number => e.data.readAt?.getTime() ?? 0;
 
-/**
- * All published books, stamped (read) ones newest-first, backlog after.
- * Locale-agnostic — books appear under both /en/books/ and /ua/books/.
- * The detail page shows the entry in its own language regardless of which
- * locale shell wraps it.
- */
-export async function getBooks(): Promise<BookEntry[]> {
-  const all = await getCollection('books', isPublished);
-  return all.sort((a, b) => readAtTime(b) - readAtTime(a));
-}
-
 /** URL slug for a book — strip the locale dir (content/books/{en,ua}/<slug>). */
 export function bookSlug(entry: BookEntry): string {
   return entry.slug.split('/').pop() ?? entry.slug;
@@ -186,24 +175,6 @@ export async function getStampedBooks(locale: Locale): Promise<BookEntry[]> {
   return dedupeBooksByLocale(all, locale)
     .filter((b) => b.data.status !== 'backlog')
     .sort((a, b) => readAtTime(b) - readAtTime(a));
-}
-
-/** Resolve a book's per-locale entry by canonicalSlug, falling back to the
- *  other language when no translation exists (so the page never 404s). */
-export async function getBookByCanonicalSlug(
-  canonicalSlug: string,
-  locale: Locale,
-): Promise<BookEntry | undefined> {
-  const all = await getCollection('books', isPublished);
-  return (
-    all.find((b) => b.data.canonicalSlug === canonicalSlug && b.data.language === locale) ??
-    all.find((b) => b.data.canonicalSlug === canonicalSlug)
-  );
-}
-
-export async function getAllBookCanonicalSlugs(): Promise<string[]> {
-  const all = await getCollection('books', isPublished);
-  return [...new Set(all.map((b) => b.data.canonicalSlug))];
 }
 
 /* ── Unified timelines ─────────────────────────────────────────────

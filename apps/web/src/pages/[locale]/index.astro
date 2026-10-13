@@ -1,11 +1,10 @@
 ---
 export const prerender = true;
-import { LOCALES, t, localePath, localized, type Locale } from '@lib/i18n';
+import { LOCALES, t, localePath, type Locale } from '@lib/i18n';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import Timeline from '@components/Timeline.astro';
 import UpcomingAppearances from '@components/UpcomingAppearances.astro';
 import {
-  bookSlug,
   getStampedBooks,
   getWritingTalkingTimeline,
 } from '@lib/content';
@@ -46,7 +45,6 @@ interface ShelfItem {
   byline: string;
   cover: string | null;
   rating: number | null;
-  summary: string;
   href: string;
   external: boolean;
   date: number;
@@ -58,11 +56,8 @@ const shelfPool: ShelfItem[] = [
     byline: `${strings.books.by} ${book.data.author}`,
     cover: book.data.cover,
     rating: book.data.rating ?? null,
-    // The shelf card is the one place a book's blurb skipped localized() — /ua/ printed the
-    // English summary next to an otherwise Ukrainian page. Feeds the SSR card AND the
-    // client-side shuffle payload, so this single line covers both.
-    summary: localized(locale, book.data.summary, book.data.summaryUk),
-    href: localePath(locale, `books/${bookSlug(book)}`),
+    // No blurb and no per-book page any more: every card leads to the shelf.
+    href: localePath(locale, 'books'),
     external: false,
     date: book.data.readAt?.getTime() ?? 0,
   })),
@@ -161,7 +156,6 @@ function starsOf(rating: number | null): string | null {
                   <a href={shelfFirst.href} data-shelf-link {...(shelfFirst.external ? { target: '_blank', rel: 'noopener' } : {})}>{shelfFirst.title}</a>
                 </h2>
                 <p class="shelf-author" data-shelf-author>{shelfFirst.byline}</p>
-                <p class="shelf-summary" data-shelf-summary>{shelfFirst.summary}</p>
               </div>
             </div>
             <script is:inline type="application/json" data-shelf-data set:html={JSON.stringify({ items: shelf })} />
@@ -241,7 +235,6 @@ function starsOf(rating: number | null): string | null {
             byline: string;
             cover: string | null;
             rating: number | null;
-            summary: string;
             href: string;
             external: boolean;
           }>;
@@ -254,7 +247,6 @@ function starsOf(rating: number | null): string | null {
             const coverLink = card.querySelector<HTMLAnchorElement>('[data-shelf-cover]');
             const link = card.querySelector<HTMLAnchorElement>('[data-shelf-link]');
             const author = card.querySelector<HTMLElement>('[data-shelf-author]');
-            const summary = card.querySelector<HTMLElement>('[data-shelf-summary]');
             const stars = card.querySelector<HTMLElement>('[data-shelf-stars]');
             const setTarget = (a: HTMLAnchorElement | null) => {
               if (!a) return;
@@ -281,7 +273,6 @@ function starsOf(rating: number | null): string | null {
             setTarget(link);
             if (link) link.textContent = pick.title;
             if (author) author.textContent = pick.byline;
-            if (summary) summary.textContent = pick.summary;
             if (stars) {
               if (pick.rating) {
                 stars.textContent = '★'.repeat(pick.rating) + '☆'.repeat(5 - pick.rating);
@@ -545,10 +536,6 @@ function starsOf(rating: number | null): string | null {
     color: var(--ink-muted);
     margin: 0 0 var(--space-2);
   }
-  .shelf-summary {
-    color: var(--ink-muted);
-    margin: 0 0 var(--space-2);
-  }
 
   @media (max-width: 600px) {
     .cover-banner {
@@ -668,12 +655,6 @@ function starsOf(rating: number | null): string | null {
     .shelf-cover img,
     .shelf-glyph {
       width: clamp(90px, 8vw, 124px);
-    }
-    .shelf-summary {
-      display: -webkit-box;
-      -webkit-line-clamp: 4;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
     }
   }
 

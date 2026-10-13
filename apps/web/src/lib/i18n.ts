@@ -100,15 +100,11 @@ export interface Strings {
   books: {
     by: string;
     rating: string;
-    backToBooks: string;
-    read: string;
-    notes: string;
-    backlog: string;
     /** /books/ — the live shelf read from juggernaut. */
     readingNow: string;
     ranking: string;
-    started: string;
-    progress: string;
+    /** The fold that holds my feedback on a ranked book. */
+    feedback: string;
     unranked: string;
     unavailable: string;
   };
@@ -265,14 +261,9 @@ const STRINGS: Record<Locale, Strings> = {
     books: {
       by: 'by',
       rating: 'Rating',
-      backToBooks: '← Back to books',
-      read: 'Read',
-      notes: 'From my notes',
-      backlog: 'Backlog',
       readingNow: 'Reading now',
       ranking: 'My ranking',
-      started: 'started',
-      progress: 'read',
+      feedback: 'My take',
       unranked: 'not ranked yet',
       unavailable: 'The shelf is not reachable right now — try again in a minute.',
     },
@@ -423,14 +414,9 @@ const STRINGS: Record<Locale, Strings> = {
     books: {
       by: 'автор —',
       rating: 'Оцінка',
-      backToBooks: '← До книг',
-      read: 'Прочитано',
-      notes: 'Мої нотатки',
-      backlog: 'Черга',
       readingNow: 'Зараз читаю',
       ranking: 'Мій рейтинг',
-      started: 'почав',
-      progress: 'прочитано',
+      feedback: 'Мій відгук',
       unranked: 'ще без місця',
       unavailable: 'Полиця зараз недоступна — спробуйте за хвилину.',
     },

@@ -6,7 +6,7 @@ export const prerender = true;
  */
 import type { APIRoute, GetStaticPaths } from 'astro';
 import { LOCALES, bcp47Locale, t, type Locale } from '@lib/i18n';
-import { getAllAnnouncements, getBooks, getPosts, getTalks, postSlug } from '@lib/content';
+import { getAllAnnouncements, getPosts, getTalks, postSlug } from '@lib/content';
 import { renderOgCard, type OgCard } from '@lib/og-card';
 
 function fmtDate(date: Date, locale: Locale): string {
@@ -86,20 +86,6 @@ async function buildCards(): Promise<OgCard[]> {
       language,
       eyebrow: `UPCOMING · ${announcement.data.event.toUpperCase()} · ${fmtDate(announcement.data.date, language)}`,
       title: announcement.data.title,
-    });
-  }
-
-  // One card per canonicalSlug (the cover + English title/author are
-  // language-neutral); the id matches the detail page's ogImage path.
-  const seenBooks = new Set<string>();
-  for (const book of await getBooks()) {
-    if (seenBooks.has(book.data.canonicalSlug)) continue;
-    seenBooks.add(book.data.canonicalSlug);
-    cards.push({
-      id: `book-${book.data.canonicalSlug}`,
-      language: book.data.language,
-      eyebrow: `BOOK · ${book.data.author.toUpperCase()}`,
-      title: book.data.title,
     });
   }
 

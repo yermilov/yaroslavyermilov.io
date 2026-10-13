@@ -113,20 +113,23 @@ mono date stamps, serif year milestones):
   sub-routes `writing/`, `talking/`, and `kit/` (the about-me kit)
 - `/{locale}/books/` — the LIVE shelf (replaced `/inspiration/`, which now
   redirects here): "reading now" + every finished book in Yarik's own ranking,
-  with his summary. Rendered on request (`prerender = false`) from juggernaut's
+  with his feedback folded under each ranked book (no per-book pages; the old
+  `/books/<slug>/` URLs redirect here). Rendered on request (`prerender = false`) from juggernaut's
   `/books` miniapp via `@lib/shelf` — a server-side fetch of
   `JUGGERNAUT_BOOKS_URL` with the bearer `JUGGERNAUT_BOOKS_TOKEN` (Railway env
   on the web service; the token must never reach a client island), cached 10
-  minutes, last good copy served when juggernaut is down. Summaries are edited
-  in juggernaut (book sheet, or the `books_set_summary` MCP tool), not here.
-  The `books` content collection still backs the frozen `/books/<slug>/` pages
-  and the home page's "From the shelf".
+  minutes, last good copy served when juggernaut is down. The feedback is
+  markdown kept in juggernaut's book summary (book sheet, or the
+  `books_set_summary` MCP tool), not here; the page renders it via `marked`
+  with raw HTML escaped. The `books` content collection now only backs the home
+  page's "From the shelf" card.
 - `/{locale}/personal/` — photo moments (standalone gallery entries +
   talk photos, grouped by day+caption)
 - `/{locale}/workshop/` — workshop prospectus + LinkedIn DM CTA
 
-Detail URLs are unchanged and frozen: `/blog/<slug>/`, `/talks/<slug>/`,
-`/books/<slug>/`. Old landing pages (`/blog/`, `/talks/`, `/inspiration/`,
+Detail URLs are unchanged and frozen: `/blog/<slug>/`, `/talks/<slug>/`.
+`/books/<slug>/` was retired on Yarik's request (2026-10-13) and every old slug
+redirects to `/books/` (`bookPageRedirects` in `astro.config.ts`). Old landing pages (`/blog/`, `/talks/`, `/inspiration/`,
 `/gallery/`, `/conference-kit/`) are meta-refresh redirects enumerated
 per locale in `astro.config.ts` — static builds can't expand `[locale]`
 params in redirect-only routes, so they're listed explicitly.

@@ -14,6 +14,7 @@
  * renders its "unavailable" state instead of a 500. A failure is not retried
  * for a minute, so an outage does not make every request wait out the timeout.
  */
+import { marked } from 'marked';
 
 export interface ShelfReadingBook {
   id: string;
@@ -42,30 +43,26 @@ export interface Shelf {
   finished: ShelfFinishedBook[];
 }
 
-/** A title's identity for matching a shelf book to the `books` collection:
- *  the part before any subtitle colon, letters and digits only. */
-export function shelfTitleKey(title: string): string {
-  return (title.split(':')[0] ?? title).toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+/** Yarik's feedback on a finished book, as HTML. It is his own markdown,
+ *  edited in juggernaut (the `summary` field), so it is trusted for meaning but
+ *  rendered defensively all the same: raw HTML comes out as visible text rather
+ *  than markup, and only http(s) links survive. */
+export function feedbackHtml(markdown: string): string {
+  return marked.parse(markdown, { async: false, gfm: true, breaks: false, renderer: feedbackRenderer });
 }
 
-const NAME_SUFFIXES = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'phd']);
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-/** The surname of each author — the last word that is not a suffix like
- *  "Jr." — letters only. Enough to tell two books with the same short title
- *  apart ("Frederick P. Brooks" and "Frederick P. Brooks Jr." agree). */
-export function authorSurnames(names: readonly string[]): Set<string> {
-  const out = new Set<string>();
-  for (const name of names) {
-    const words = name
-      .trim()
-      .split(/\s+/)
-      .map((w) => w.toLowerCase().replace(/[^\p{L}]/gu, ''))
-      .filter((w) => w && !NAME_SUFFIXES.has(w));
-    const last = words.pop();
-    if (last) out.add(last);
-  }
-  return out;
-}
+const feedbackRenderer = new marked.Renderer();
+const renderLink = feedbackRenderer.link.bind(feedbackRenderer);
+// Block and inline HTML alike reach this hook; print it, never inject it.
+feedbackRenderer.html = (token) => escapeHtml(token.text);
+// A link with any other scheme keeps its words and loses the href; an image
+// keeps only its alt text (which marked has already escaped).
+feedbackRenderer.link = (token) =>
+  /^https?:\/\//i.test(token.href) ? renderLink(token) : feedbackRenderer.parser.parseInline(token.tokens);
+feedbackRenderer.image = (token) => token.text;
 
 const FRESH_MS = 10 * 60 * 1000;
 const TIMEOUT_MS = 5000;

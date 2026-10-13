@@ -28,6 +28,20 @@ const unlistedLabUrls = (() => {
   return urls;
 })();
 
+// The per-book pages /{locale}/books/<slug>/ were folded into the live shelf
+// (task 5abd736c): my feedback now sits in a fold on each ranked row there. The
+// old URLs keep working as redirects to it. Slugs come straight off disk — this
+// config can't import `astro:content`.
+const bookPageRedirects = (() => {
+  const root = fileURLToPath(new URL('./src/content/books/en', import.meta.url));
+  const slugs = readdirSync(root)
+    .filter((f) => /\.mdx?$/.test(f))
+    .map((f) => f.replace(/\.mdx?$/, ''));
+  return Object.fromEntries(
+    ['en', 'ua'].flatMap((l) => slugs.map((slug) => [`/${l}/books/${slug}`, `/${l}/books/`])),
+  );
+})();
+
 // Old section landing pages → new IA. Detail URLs (/blog/<slug> etc.) are
 // frozen forever and unaffected. Enumerated per locale because static builds
 // can't expand `[locale]` params in redirect-only routes.
@@ -53,7 +67,7 @@ export default defineConfig({
   output: 'server',
   adapter: node({ mode: 'standalone' }),
   trailingSlash: 'always',
-  redirects: sectionRedirects,
+  redirects: { ...sectionRedirects, ...bookPageRedirects },
   build: {
     format: 'directory',
   },
