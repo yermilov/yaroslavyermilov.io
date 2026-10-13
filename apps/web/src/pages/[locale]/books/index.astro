@@ -134,11 +134,7 @@ const coverSrc = (url: string | null) =>
                       {coverSrc(b.coverUrl) ? <img src={coverSrc(b.coverUrl)!} alt="" loading="lazy" /> : null}
                     </span>
                     <span class="row-body">
-                      {href ? (
-                        <a class="title title-link" href={href}>{b.title}</a>
-                      ) : (
-                        <span class="title">{b.title}</span>
-                      )}
+                      <span class="title">{href ? <a href={href}>{b.title}</a> : b.title}</span>
                       {b.authors.length > 0 && <span class="byline">{b.authors.join(', ')}</span>}
                       {r != null ? (
                         <span class="stars" aria-label={`${strings.books.rating}: ${r}/5`}>
@@ -185,19 +181,6 @@ const coverSrc = (url: string | null) =>
     font-size: 1.08rem;
     line-height: 1.25;
     color: var(--ink);
-  }
-  .title-link {
-    text-decoration: underline;
-    text-decoration-color: var(--rule);
-    text-underline-offset: 0.2em;
-    transition: text-decoration-color 0.18s ease;
-  }
-  .title-link:hover {
-    text-decoration-color: var(--green-primary);
-  }
-  .title-link:focus-visible {
-    outline: none;
-    box-shadow: var(--focus-ring);
   }
   .byline {
     display: block;
