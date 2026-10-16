@@ -53,7 +53,7 @@ const stampedBooks = await getStampedBooks(locale);
 const shelfPool: ShelfItem[] = [
   ...stampedBooks.map((book): ShelfItem => ({
     title: book.data.title,
-    byline: `${strings.books.by} ${book.data.author}`,
+    byline: book.data.author,
     cover: book.data.cover,
     rating: book.data.rating ?? null,
     // No blurb and no per-book page any more: every card leads to the shelf.
@@ -67,9 +67,6 @@ const shelf = shelfPool
   .sort((a, b) => b.date - a.date)
   .map(({ date: _date, ...rest }) => rest);
 const shelfFirst = shelf[0];
-function starsOf(rating: number | null): string | null {
-  return rating ? '★'.repeat(rating) + '☆'.repeat(5 - rating) : null;
-}
 
 ---
 
@@ -149,13 +146,20 @@ function starsOf(rating: number | null): string | null {
                 <span class="shelf-glyph" data-shelf-glyph aria-hidden="true" hidden={!!shelfFirst.cover}>✦</span>
               </a>
               <div class="shelf-meta">
-                {starsOf(shelfFirst.rating) && (
-                  <p class="workbench shelf-stars" data-shelf-stars>{starsOf(shelfFirst.rating)}</p>
-                )}
                 <h2 class="shelf-title">
                   <a href={shelfFirst.href} data-shelf-link {...(shelfFirst.external ? { target: '_blank', rel: 'noopener' } : {})}>{shelfFirst.title}</a>
                 </h2>
                 <p class="shelf-author" data-shelf-author>{shelfFirst.byline}</p>
+                {/* Same stars as the /books/ ranking: filled orange, the rest in the rule tone. */}
+                <p
+                  class="shelf-stars"
+                  data-shelf-stars
+                  data-label={strings.books.rating}
+                  aria-label={shelfFirst.rating ? `${strings.books.rating}: ${shelfFirst.rating}/5` : undefined}
+                  hidden={!shelfFirst.rating}
+                >
+                  <span class="stars-filled" data-shelf-stars-filled>{'★'.repeat(shelfFirst.rating ?? 0)}</span><span class="stars-empty" data-shelf-stars-empty>{'★'.repeat(5 - (shelfFirst.rating ?? 0))}</span>
+                </p>
               </div>
             </div>
             <script is:inline type="application/json" data-shelf-data set:html={JSON.stringify({ items: shelf })} />
@@ -274,8 +278,12 @@ function starsOf(rating: number | null): string | null {
             if (link) link.textContent = pick.title;
             if (author) author.textContent = pick.byline;
             if (stars) {
-              if (pick.rating) {
-                stars.textContent = '★'.repeat(pick.rating) + '☆'.repeat(5 - pick.rating);
+              const filled = stars.querySelector<HTMLElement>('[data-shelf-stars-filled]');
+              const empty = stars.querySelector<HTMLElement>('[data-shelf-stars-empty]');
+              if (pick.rating && filled && empty) {
+                filled.textContent = '★'.repeat(pick.rating);
+                empty.textContent = '★'.repeat(5 - pick.rating);
+                stars.setAttribute('aria-label', `${stars.dataset.label}: ${pick.rating}/5`);
                 stars.hidden = false;
               } else {
                 stars.hidden = true;
@@ -465,76 +473,88 @@ function starsOf(rating: number | null): string | null {
     border-bottom-color: var(--orange-accent);
   }
 
-  /* ── From the shelf — one dealt card ────────────────────────────── */
+  /* ── From the shelf — one dealt card, drawn the way /books/ draws a
+   * book: cover left, title and author right, on the lifted paper tone
+   * inside a hairline frame. No shadows, no rounding. ─────────────── */
   .shelf {
     border-top: 2px solid var(--green-primary);
     margin-top: var(--space-4);
     padding-top: var(--space-3);
   }
   .shelf-card {
-    display: flex;
+    display: grid;
+    grid-template-columns: 9.5rem minmax(0, 1fr);
     gap: var(--space-3);
-    align-items: flex-start;
+    align-items: center;
+    padding: var(--space-2);
+    background: var(--bg-elevated);
+    border: 1px solid var(--rule);
+    max-width: 36rem;
   }
   .shelf-cover {
-    flex: 0 0 auto;
-    border: none;
     display: block;
+    border: none;
   }
   .shelf-cover:hover {
     background: transparent;
   }
   .shelf-cover img,
   .shelf-glyph {
-    width: 110px;
+    width: 100%;
     aspect-ratio: 2 / 3;
     object-fit: cover;
     display: block;
     border: 1px solid var(--rule);
     background: var(--bg-elevated);
-    box-shadow: 4px 5px 0 0 var(--rule);
-    transition: transform 160ms ease, box-shadow 160ms ease;
   }
-  /* Placeholder plate for links without a thumbnail. */
+  /* Placeholder plate for a book without a cover. */
   .shelf-glyph {
     display: grid;
     place-items: center;
     font-size: 2rem;
     color: var(--green-primary);
   }
-  .shelf-card:hover .shelf-cover img,
-  .shelf-card:hover .shelf-glyph {
-    transform: translate(-2px, -2px);
-    box-shadow: 6px 7px 0 0 var(--rule);
-  }
   .shelf-meta {
     min-width: 0;
-    max-width: var(--measure);
-  }
-  .shelf-stars {
-    color: var(--orange-accent);
-    letter-spacing: 0.08em;
-    margin: 0 0 0.4rem;
+    padding-right: var(--space-1);
   }
   .shelf-title {
-    font-size: clamp(1.3rem, 2.4vw, 1.7rem);
-    font-weight: 700;
-    letter-spacing: -0.015em;
-    line-height: 1.12;
-    margin: 0 0 0.35rem;
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 400;
+    letter-spacing: normal;
+    line-height: 1.22;
+    text-wrap: balance;
+    margin: 0;
   }
   .shelf-title a {
     border-bottom: none;
-    color: inherit;
+    color: var(--ink);
+    transition: color 140ms ease;
   }
   .shelf-title a:hover {
     background: transparent;
     color: var(--orange-accent);
   }
   .shelf-author {
-    font-style: italic;
+    margin: 0.4rem 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    line-height: 1.45;
     color: var(--ink-muted);
-    margin: 0 0 var(--space-2);
+  }
+  .shelf-stars {
+    margin: 0.7rem 0 0;
+    font-size: 1.35rem;
+    line-height: 1;
+    letter-spacing: 0.12em;
+  }
+  .stars-filled {
+    color: var(--orange-accent);
+  }
+  .stars-empty {
+    color: var(--rule);
   }
 
   @media (max-width: 600px) {
@@ -547,9 +567,19 @@ function starsOf(rating: number | null): string | null {
       margin-top: -52px;
       border-width: 4px;
     }
-    .shelf-cover img,
-    .shelf-glyph {
-      width: 96px;
+    .shelf-card {
+      grid-template-columns: 6.5rem minmax(0, 1fr);
+      gap: var(--space-2);
+    }
+    .shelf-title {
+      font-size: 1.25rem;
+    }
+    .shelf-author {
+      font-size: 0.78rem;
+    }
+    .shelf-stars {
+      font-size: 1.1rem;
+      letter-spacing: 0.08em;
     }
   }
 
@@ -652,9 +682,10 @@ function starsOf(rating: number | null): string | null {
       border-left: 1px solid var(--rule);
       padding-left: var(--space-4);
     }
-    .shelf-cover img,
-    .shelf-glyph {
-      width: clamp(90px, 8vw, 124px);
+    /* The shelf column is narrow at 960–1280px: keep the cover big, but
+     * let it give way before the title is squeezed to a word a line. */
+    .shelf-card {
+      grid-template-columns: clamp(7rem, 10vw, 9.5rem) minmax(0, 1fr);
     }
   }
 
