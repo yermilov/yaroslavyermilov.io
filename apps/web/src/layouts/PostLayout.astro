@@ -11,6 +11,7 @@ interface Props {
   publishedAt: Date;
   updatedAt?: Date | undefined;
   coverImage?: string | undefined;
+  coverAlt?: string | undefined;
   alternatePath?: string | undefined;
   alternateMissing?: boolean;
   /** the original-language post body is being shown as a fallback */
@@ -30,6 +31,7 @@ const {
   publishedAt,
   updatedAt,
   coverImage,
+  coverAlt,
   alternatePath,
   alternateMissing = false,
   translationPending = false,
@@ -67,7 +69,7 @@ const fmt = new Intl.DateTimeFormat(bcp47Locale(locale), { dateStyle: 'long' });
     </header>
     {coverImage && (
       <figure class="post-cover prose-column">
-        <img src={coverImage} alt="" loading="eager" />
+        <img src={coverImage} alt={coverAlt ?? ''} loading="eager" />
       </figure>
     )}
     <div class="post-body prose-column">

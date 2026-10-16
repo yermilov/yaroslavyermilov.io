@@ -20,6 +20,7 @@ const posts = defineCollection({
     featured: z.boolean().default(false),
     interactive: z.enum(['none', 'tier1', 'tier2', 'tier3']).default('none'),
     coverImage: z.string().optional(),
+    coverAlt: z.string().optional(),
     draft: z.boolean().default(false),
   }),
 });
