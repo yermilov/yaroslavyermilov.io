@@ -4,6 +4,8 @@ canonicalSlug: "three-agentic-development-trends"
 language: "en"
 publishedAt: 2026-10-16
 summary: "Managing costs, the search for a new GitHub, and the blurring line between local and cloud environments — three trends in agentic development, plus a question about whether we still need CI."
+coverImage: "/blog/three-agentic-development-trends/01.jpg"
+coverAlt: "A futuristic city on a slender stalk above a sea of clouds at sunset: white and golden domes and spires, with small shuttles flying between the platforms."
 translations:
   en: "three-agentic-development-trends"
   ua: "three-agentic-development-trends"

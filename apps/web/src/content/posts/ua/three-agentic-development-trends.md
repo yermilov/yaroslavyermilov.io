@@ -4,6 +4,8 @@ canonicalSlug: "three-agentic-development-trends"
 language: "ua"
 publishedAt: 2026-10-16
 summary: "Управління костами, пошуки нового гітхабу і стерті кордони між локальним та клауд-середовищем — три тренди агентської розробки і питання про те, чи потрібен нам ще СІ."
+coverImage: "/blog/three-agentic-development-trends/01.jpg"
+coverAlt: "Футуристичне місто на тонкій опорі над морем хмар на заході сонця: білі й золотаві куполи та шпилі, між платформами літають невеликі шатли."
 translations:
   en: "three-agentic-development-trends"
   ua: "three-agentic-development-trends"
