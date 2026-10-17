@@ -14,4 +14,7 @@ videoUrl: "https://www.youtube.com/watch?v=sUV-be-tKhA"
 slidesUrl: "https://www.slideshare.net/slideshow/dmitry-tiagulskyi-yaroslav-yermilov-it-scales-until-it-doesnt/116282023"
 photos:
   - "/talks/it-scales-devoxx-2018/01.jpg"
+  - "/talks/it-scales-devoxx-2018/02.jpg"
+  - "/talks/it-scales-devoxx-2018/03.jpg"
+  - "/talks/it-scales-devoxx-2018/04.jpg"
 ---

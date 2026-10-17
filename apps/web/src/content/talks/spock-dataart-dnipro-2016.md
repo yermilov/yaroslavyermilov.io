@@ -15,6 +15,7 @@ photos:
   - "/talks/spock-dataart-dnipro-2016/06.jpg"
   - "/talks/spock-dataart-dnipro-2016/07.jpg"
   - "/talks/spock-dataart-dnipro-2016/08.jpg"
+  - "/talks/spock-dataart-dnipro-2016/09.jpg"
 photoBursts:
   - ["/talks/spock-dataart-dnipro-2016/02.jpg", "/talks/spock-dataart-dnipro-2016/03.jpg", "/talks/spock-dataart-dnipro-2016/05.jpg", "/talks/spock-dataart-dnipro-2016/06.jpg", "/talks/spock-dataart-dnipro-2016/07.jpg", "/talks/spock-dataart-dnipro-2016/08.jpg"]
 ---

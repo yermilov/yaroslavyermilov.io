@@ -14,4 +14,7 @@ abstract: |
   - Emoji that make you cry
   - Services in other languages — what is the true length of my Java string?
 slidesUrl: "https://www.slideshare.net/slideshow/string-and-text-processing-in-java-on-a-scale/145296175"
+photos:
+  - "/talks/string-processing-jeeconf-2019/01.jpg"
+  - "/talks/string-processing-jeeconf-2019/02.jpg"
 ---
