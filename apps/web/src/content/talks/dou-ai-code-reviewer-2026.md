@@ -5,6 +5,8 @@ event: "DOU"
 eventUk: "DOU"
 format: "interview"
 eventUrl: "https://dou.ua/lenta/articles/ai-reviewer-instead-of-a-human/"
+# The article IS the appearance — the card links straight to DOU, no /talks/<slug>/ page.
+externalUrl: "https://dou.ua/lenta/articles/ai-reviewer-instead-of-a-human/"
 date: 2026-10-21
 language: "ua"
 abstract: "An expert roundup on DOU with engineers from GitLab, Preply, Superhuman and Shalb/Kube-DC on AI agents for code review. My part: how Superhuman's reviewer agent started from a single “review this pull request” prompt that already got ~80% of the way, learned to argue with developers in GitHub threads, and grew into an orchestrator running 3–15 specialised sub-agents (error handling, design system, infra efficiency) whose findings it deduplicates down to what matters — plus advice on defining what review is for, iterating from a simple prompt, and trying off-the-shelf tools when there's no strong in-house team."

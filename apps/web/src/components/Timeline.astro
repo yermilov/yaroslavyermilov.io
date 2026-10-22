@@ -10,7 +10,7 @@
  * client-side so a stale static build self-corrects on load.
  */
 import type { TimelineEntry } from '@lib/content';
-import { postSlug } from '@lib/content';
+import { postSlug, talkHref } from '@lib/content';
 import { bcp47Locale, languageBadge, localePath, localized, t, type Locale } from '@lib/i18n';
 import TweetCard from '@components/TweetCard.astro';
 import YouTubeGlyph from '@components/YouTubeGlyph.astro';
@@ -173,7 +173,7 @@ function kindLabel(kind: KindLabelKey): string {
 
     if (entry.kind === 'talk') {
       const talk = entry.talk;
-      const href = localePath(locale, `talks/${talk.slug}`);
+      const href = talkHref(locale, talk);
       const talkTitle = localized(locale, talk.data.title, talk.data.titleUk);
       const talkEvent = localized(locale, talk.data.event, talk.data.eventUk);
       const firstPara = localized(locale, talk.data.abstract, talk.data.abstractUk).split(/\n\n+/)[0];

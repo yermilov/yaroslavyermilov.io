@@ -1,5 +1,5 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
-import type { Locale } from '@lib/i18n';
+import { localePath, type Locale } from '@lib/i18n';
 
 type PostEntry = CollectionEntry<'posts'>;
 type TalkEntry = CollectionEntry<'talks'>;
@@ -62,6 +62,12 @@ export async function getPostByCanonicalSlug(canonicalSlug: string, locale: Loca
 export async function getAllCanonicalSlugs(): Promise<string[]> {
   const all = await getCollection('posts', isPublished);
   return [...new Set(all.map((p) => p.data.canonicalSlug))];
+}
+
+/** Where a talk's card links: its own /talks/<slug>/ page, or `externalUrl` when the talk
+ * has no detail page (see the schema). */
+export function talkHref(locale: Locale, talk: TalkEntry): string {
+  return talk.data.externalUrl ?? localePath(locale, `talks/${talk.slug}`);
 }
 
 export async function getTalks(): Promise<TalkEntry[]> {

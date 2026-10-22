@@ -8,6 +8,7 @@ import {
   getStampedBooks,
   postSlug,
   labSlug,
+  talkHref,
 } from '@lib/content';
 
 /**
@@ -54,7 +55,7 @@ export const GET: APIRoute = async ({ site }) => {
         ]
       : []),
     '## Talks',
-    ...talks.map((tk) => `- [${tk.data.title}](${abs(`/en/talks/${tk.slug}/`)})`),
+    ...talks.map((tk) => `- [${tk.data.title}](${tk.data.externalUrl ?? abs(talkHref('en', tk))})`),
     '',
     '## Labs (interactive experiments)',
     ...labs.map((l) => `- [${l.data.title}](${abs(`/en/lab/${labSlug(l)}/`)})`),

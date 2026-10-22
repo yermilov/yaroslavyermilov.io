@@ -8,7 +8,8 @@ import LinkedInCard from '@components/LinkedInCard.astro';
 import '@styles/playbill.css';
 
 export async function getStaticPaths() {
-  const talks = await getCollection('talks');
+  // externalUrl entries link straight out from their card — no detail page.
+  const talks = (await getCollection('talks')).filter((t) => !t.data.externalUrl);
   return talks.flatMap((talk) =>
     LOCALES.map((locale) => ({
       params: { locale, slug: talk.slug },

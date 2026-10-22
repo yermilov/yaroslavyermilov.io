@@ -62,7 +62,8 @@ async function buildCards(): Promise<OgCard[]> {
     });
   }
 
-  for (const talk of await getTalks()) {
+  // externalUrl talks have no detail page to carry an OG card.
+  for (const talk of (await getTalks()).filter((t) => !t.data.externalUrl)) {
     const language = talk.data.language ?? 'en';
     cards.push({
       id: `talk-${talk.slug}`,

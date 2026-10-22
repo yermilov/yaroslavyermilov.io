@@ -50,6 +50,10 @@ const talks = defineCollection({
     slidesUrl: z.string().url().optional(),
     repoUrl: z.string().url().optional(),
     eventUrl: z.string().url().optional(),
+    /** when set, the writing-talking card links straight here (external) and NO detail page is
+     * generated — for an appearance that lives entirely elsewhere, e.g. an article on DOU that
+     * quotes me. Same contract as `labs.externalUrl`. */
+    externalUrl: z.string().url().optional(),
     /**
      * Card thumbnail for the writing-talking list, path under public/. Use this — NOT `photos` —
      * for a promo still / key art / poster: `photos` are PHOTOS OF THE EVENT and every one of them
